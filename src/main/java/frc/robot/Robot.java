@@ -26,6 +26,8 @@ public class Robot extends TimedRobot {
     public void robotPeriodic() {
         CommandScheduler.getInstance().run();
         Monologue.updateAll();
+        GameDataClient.updateGameData();
+
     }
 
     @Override

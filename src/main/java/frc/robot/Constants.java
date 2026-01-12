@@ -11,6 +11,7 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
+import frc.excalib.additional_utilities.AllianceUtils;
 import frc.excalib.control.gains.Gains;
 import frc.excalib.control.imu.IMU;
 import frc.excalib.control.imu.Pigeon;
@@ -151,22 +152,16 @@ public final class Constants {
     }
 
     public static class FieldConstants {
-        public static final Translation3d CLOSE_HUB_PLACEMENT = new Translation3d(5.06, 4.03, 1.83);
-        public static final Translation3d FAR_HUB_PLACEMENT = new Translation3d(11.91, 4.03, 1.83);
-        public static final Translation3d CLOSE_TOWER_PLACEMENT_L1 = new Translation3d(1.148, 4.32, 0.6858);
-        public static final Translation3d CLOSE_TOWER_PLACEMENT_L2 = new Translation3d(1.148, 4.32, 1.143);
-        public static final Translation3d CLOSE_TOWER_PLACEMENT_L3 = new Translation3d(1.148, 4.32, 1.6002);
-        public static final Translation3d FAR_TOWER_PLACEMENT_L1 = new Translation3d(15.39, 3.74958, 0.6858);
-        public static final Translation3d FAR_TOWER_PLACEMENT_L2 = new Translation3d(15.39, 3.74958, 1.143);
-        public static final Translation3d FAR_TOWER_PLACEMENT_L3 = new Translation3d(15.39, 3.74958, 1.6002);
-        public static final Translation2d CLOSE_OUTPOST_PLACEMENT = new Translation2d(0,0.63);
-        public static final Translation2d FAR_OUTPOST_PLACEMENT = new Translation2d(16.54, 7.43);
-        public static final Translation2d CLOSE_DOWN_TRENCH_PLACEMENT = new Translation2d(5.06, 0.63);
-        public static final Translation2d FAR_DOWN_TRENCH_PLACEMENT = new Translation2d(11.91, 0.63);
-        public static final Translation2d CLOSE_UP_TRENCH_PLACEMENT = new Translation2d(5.06, 7.43);
-        public static final Translation2d FAR_UP_TRENCH_PLACEMENT = new Translation2d(11.91, 7.43);
-        public static final Translation2d CLOSE_PICKUP_FUEL_PLACEMENT = new Translation2d(0.685, 5.976);
-        public static final Translation2d FAR_PICKUP_FUEL_PLACEMENT = new Translation2d(15.84, 2.104);
+        // all the units of length are in meters
+        public static final Translation3d BLUE_HUB_CENTER_POSE= new Translation3d(5.06, 4.03, 1.83);
+        public static final Translation3d BLUE_TOWER_POSE_L1 = new Translation3d(1.148, 4.32, 0.6858);
+        public static final Translation3d BLUE_TOWER_POSE_L2 = new Translation3d(1.148, 4.32, 1.143);
+        public static final Translation3d BLUE_TOWER_POSE_L3 = new Translation3d(1.148, 4.32, 1.6002);
+        public static final Translation2d BLUE_OUTPOST_POSE = new Translation2d(0,0.63);
+        public static final Translation2d BLUE_DOWN_TRENCH_POSE = new Translation2d(5.06, 0.63);
+        public static final Translation2d BLUE_UP_TRENCH_PLACEMENT = new Translation2d(5.06, 7.43);
+        public static final Translation2d BLUE_PICKUP_FUEL_PLACEMENT = new Translation2d(0.685, 5.976);
+
     }
 
 }

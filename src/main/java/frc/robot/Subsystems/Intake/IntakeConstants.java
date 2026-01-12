@@ -1,7 +1,5 @@
 package frc.robot.Subsystems.Intake;
 
-import java.util.function.Consumer;
-
 public class IntakeConstants {
     public static final int FOUR_BAR_MOTOR_ID = 0;
     public static final int ROLLER_MOTOR_ID = 0;

@@ -13,8 +13,8 @@ import static edu.wpi.first.wpilibj.DriverStation.Alliance.Blue;
  * @author Shai Grossman
  */
 public class AllianceUtils {
-    public static final double FIELD_LENGTH_METERS = 17.548;
-    public static final double FIELD_WIDTH_METERS = 8.052;
+    public static final double FIELD_LENGTH_METERS = 16.54;
+    public static final double FIELD_WIDTH_METERS = 8.07;
 
     /**
      * @return whether the robot is on the blue alliance

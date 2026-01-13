@@ -153,14 +153,24 @@ public final class Constants {
 
     public static class FieldConstants {
         // all the units of length are in meters
-        public static final Translation3d BLUE_HUB_CENTER_POSE= new Translation3d(5.06, 4.03, 1.83);
-        public static final Translation3d BLUE_TOWER_POSE_L1 = new Translation3d(1.148, 4.32, 0.6858);
-        public static final Translation3d BLUE_TOWER_POSE_L2 = new Translation3d(1.148, 4.32, 1.143);
-        public static final Translation3d BLUE_TOWER_POSE_L3 = new Translation3d(1.148, 4.32, 1.6002);
-        public static final Translation2d BLUE_OUTPOST_POSE = new Translation2d(0,0.63);
-        public static final Translation2d BLUE_DOWN_TRENCH_POSE = new Translation2d(5.06, 0.63);
-        public static final Translation2d BLUE_UP_TRENCH_PLACEMENT = new Translation2d(5.06, 7.43);
-        public static final Translation2d BLUE_PICKUP_FUEL_PLACEMENT = new Translation2d(0.685, 5.976);
+        public static final Translation3d BLUE_HUB_CENTER_POSE = new
+                Translation3d(5.06, 4.03, 1.83);
+        public static final Translation3d BLUE_CLIMB_TOWER_POSE_L1 = new
+                Translation3d(1.148, 4.32, 0.6858);
+        public static final Translation3d BLUE_CLIMB_TOWER_POSE_L2 = new
+                Translation3d(1.148, 4.32, 1.143);
+        public static final Translation3d BLUE_CLIMB_TOWER_POSE_L3 = new
+                Translation3d(1.148, 4.32, 1.6002);
+        public static final Translation2d BLUE_OUTPOST_POSE = new
+                Translation2d(0,0.63);
+        public static final Translation2d BLUE_DOWN_FIELD_TRENCH_POSE = new
+                Translation2d(5.06, 0.63);
+        public static final Translation2d BLUE_UP_FIELD_TRENCH_PLACEMENT = new
+                Translation2d(5.06, 7.43);
+        public static final Translation2d BLUE_UP_FIELD_PICKUP_FUEL_PLACEMENT = new
+                Translation2d(0.34, 6.509);
+        public static final Translation2d BLUE_DOWN_FIELD_PICKUP_FUEL_PLACEMENT = new
+                Translation2d(0.34, 4.829);
 
     }
 

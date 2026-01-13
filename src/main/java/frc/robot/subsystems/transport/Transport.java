@@ -17,7 +17,7 @@ public class Transport extends SubsystemBase {
     private TalonFXMotor drumMotor;
     private CANcoder drumEncoder;
     public Turret drumMechanism;
-    DoubleSupplier angleSupllier;
+    DoubleSupplier angleSupplier;
     public Trigger atPositionTrigger;
 
 
@@ -26,18 +26,22 @@ public class Transport extends SubsystemBase {
         drumEncoder = new CANcoder(ENCODER_ID);
         drumMechanism = new Turret(drumMotor,
                 new ContinuousSoftLimit(() -> Double.NEGATIVE_INFINITY, () -> Double.POSITIVE_INFINITY),
-                GAINS, PIDTOLERANCE, angleSupllier);
+                GAINS, PIDTOLERANCE, angleSupplier);
     }
 
     public Command manualCommand(DoubleSupplier output) {
         return drumMechanism.manualCommand(output, this);
     }
 
-    public Command rotateCommand(int spaces) {
-        return drumMechanism.setPositionCommand(() -> new Rotation2d((angleOfSlots * spaces)), this);
+    public Command shootCommand(){
+        return manualCommand(()-> SHOOTING_VOLTAGE);
     }
 
-    public Command defaultCommand(){
-        return rotateCommand(0);
+    public Command shootCommand(DoubleSupplier output){
+        return manualCommand(output);
+    }
+
+    public Command defaultCommand() {
+        return manualCommand(()->DEFAULT_VOLTAGE);
     }
 }

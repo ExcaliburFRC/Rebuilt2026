@@ -24,12 +24,15 @@ public class Shooter extends SubsystemBase {
 
     public final FlyWheel flyWheelMechanism;
     public final Mechanism supportWheelMechanism, hoodMechanism;
-    public final SoftLimit hoodSoftLimit;
+    public final Mechanism transportMechanism;
+
     public final TalonFXMotor transportMotor;
     public final DoubleSupplier hoodAngleSupplier;
+    public final SoftLimit hoodSoftLimit;
+
     public final DigitalInput beamBreak;
     public final Trigger hasFuel;
-    public final Mechanism transportMechanism;
+
 
     public Shooter() {
         hoodMotor = new TalonFXMotor(HOOD_MOTOR_ID);
@@ -41,7 +44,8 @@ public class Shooter extends SubsystemBase {
         hoodAngleSupplier = () -> (hoodMotor.getPosition().getValueAsDouble() * POSITION_CONVERSION_FACTOR);
         transportMechanism = new Mechanism(transportMotor);
         hoodMechanism = new Mechanism(hoodMotor);
-        flyWheelMechanism = new FlyWheel(flyWheelMotor, FLY_WHEEL_MAX_ACCELERATION, FLY_WHEEL_MAX_JERK, FLYWHEEL_GAINS);
+        flyWheelMechanism = new FlyWheel(flyWheelMotor, FLY_WHEEL_MAX_ACCELERATION,
+                FLY_WHEEL_MAX_JERK, FLYWHEEL_GAINS);
         supportWheelMechanism = new Mechanism(supportWheelMotor);
         hoodSoftLimit = new SoftLimit(
                 () -> HOOD_MIN_ANGLE_LIMIT,
@@ -63,13 +67,13 @@ public class Shooter extends SubsystemBase {
                                     new TrapezoidProfile.State(
                                             hoodAngleSupplier.getAsDouble(),
                                             hoodMotor.getMotorVelocity()),
-                                    new TrapezoidProfile.State(angleSetpoint.getAsDouble(), 0)
+                                    new TrapezoidProfile.State(angleSetpoint.getAsDouble(), FINALE_VEL)
                             );
 
                     double pidValue = angleController.calculate(angleSetpoint.getAsDouble(), state.position);
 
                     hoodMechanism.setVoltage(pidValue);
-                }
+                } , this
         );
     }
 
@@ -79,7 +83,7 @@ public class Shooter extends SubsystemBase {
 
     public Command getFuelCommand() {
         return new RunCommand(
-                () -> transportMechanism.setVoltage(TRANSPORT_VOLTAGE)
+                () -> transportMechanism.setVoltage(TRANSPORT_VOLTAGE) , this
         ).until(hasFuel.negate()).withTimeout(0.1);
     }
 

@@ -13,7 +13,7 @@ public class ShooterConstants {
     public static final int FLY_WHEEL_MAX_JERK = 0;
     public static final int HOOD_MIN_ANGLE_LIMIT = 0;
     public static final int HOOD_MAX_ANGLE_LIMIT = 0;
-    public static final Gains FLYWHEEL_GAINS = new Gains();
+    public static final Gains FLYWHEEL_GAINS = new Gains(0.1, 0.0, 0.01);
     public static final double HOOD_MAX_VELOCITY_LIMIT = 0;
     public static final double HOOD_MAX_ACCELERATION_LIMIT = 0;
     public static final double POSITION_CONVERSION_FACTOR = 0;

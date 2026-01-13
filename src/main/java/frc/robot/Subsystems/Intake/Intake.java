@@ -50,19 +50,19 @@ public class Intake extends SubsystemBase {
         fourBarMechanism = new Arm(fourBarMotor, angleSupplier, armVLimit, armGains, armMass);
     }
     public Command openIntakeCommand(){
-        Command openIntakeCommand = new ConditionalCommand(fourBarMechanism.anglePositionControlCommand(
+        Command openIntakeCommand = fourBarMechanism.anglePositionControlCommand(
                 ()-> FLOOR_INTAKE_ANGLE,
-                (__) -> false,
+                at -> at = false,
                 MAX_OFFSET,
-                this));
+                this);
         return openIntakeCommand;
     }
     public Command closeIntakeCommand(){
-        Command closeIntakeCommand = new ConditionalCommand(fourBarMechanism.anglePositionControlCommand(
+        Command closeIntakeCommand = fourBarMechanism.anglePositionControlCommand(
                 ()-> CLOSE_INTAKE_ANGLE,
-                (__)-> false,
+                at -> at = false,
                 MAX_OFFSET,
-                this));
+                this);
         return closeIntakeCommand;
     }
 

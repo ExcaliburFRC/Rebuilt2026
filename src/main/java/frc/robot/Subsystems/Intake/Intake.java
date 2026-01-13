@@ -49,21 +49,20 @@ public class Intake extends SubsystemBase {
                 * 2 * Math.PI) < CLOSE_INTAKE_ANGLE_TOLERANCE);
         fourBarMechanism = new Arm(fourBarMotor, angleSupplier, armVLimit, armGains, armMass);
     }
+
     public Command openIntakeCommand(){
-        Command openIntakeCommand = fourBarMechanism.anglePositionControlCommand(
+        return fourBarMechanism.anglePositionControlCommand(
                 ()-> FLOOR_INTAKE_ANGLE,
                 at -> at = false,
                 MAX_OFFSET,
                 this);
-        return openIntakeCommand;
     }
+
     public Command closeIntakeCommand(){
-        Command closeIntakeCommand = fourBarMechanism.anglePositionControlCommand(
+        return fourBarMechanism.anglePositionControlCommand(
                 ()-> CLOSE_INTAKE_ANGLE,
                 at -> at = false,
                 MAX_OFFSET,
                 this);
-        return closeIntakeCommand;
     }
-
 }

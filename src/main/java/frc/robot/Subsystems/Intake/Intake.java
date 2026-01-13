@@ -1,4 +1,4 @@
-package frc.robot.Subsystems.Intake;
+package frc.robot.subsystems.intake;
 
 import com.ctre.phoenix6.controls.compound.Diff_VoltageOut_Velocity;
 import com.ctre.phoenix6.hardware.CANcoder;

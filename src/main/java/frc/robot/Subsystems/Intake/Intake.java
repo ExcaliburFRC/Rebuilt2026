@@ -27,10 +27,9 @@ public class Intake extends SubsystemBase {
     public final CANcoder angleEncoder;
     public final DoubleSupplier angleSupplier;
     public final Mass armMass;
-    public final SoftLimit intakeMaxAngle;
-    public final Trigger isOpenTrigger;
-    public final Trigger isClosedTrigger;
-
+    public final SoftLimit intakeAngleLimit;
+    public final Trigger atPositionTrigger;
+    public double targetPosition;
 
     public Intake(){
         angleEncoder = new CANcoder(ANGLE_ENCODER_ID);
@@ -39,8 +38,6 @@ public class Intake extends SubsystemBase {
         transportMotor = new TalonFXMotor(TRANSPORT_MOTOR_ID);
         transportMotorMechanism = new Mechanism(transportMotor);
         rollerMotorMechanism = new Mechanism(rollerMotor);
-        // rollerMotorMechanism.setVoltage(INTAKE_ROLLER_VOTAGE);
-        // transportMotorMechanism.setVoltage(TRANSPORT_MOTOR_VOLTAGE);
         armVLimit = new SoftLimit(() -> ARM_MIN_V_LIMIT,
                 () -> ARM_MAX_V_LIMIT);
         armGains = new Gains();
@@ -48,34 +45,56 @@ public class Intake extends SubsystemBase {
         armMass = new Mass(() -> Math.cos(angleSupplier.getAsDouble() + ARM_MASS_TO_AXIS),
                            () -> Math.sin(angleSupplier.getAsDouble() + ARM_MASS_TO_AXIS),
                                  ARM_MASS);
-        intakeMaxAngle = new SoftLimit(()-> INTAKE_MIN_ANGLE,()-> INTAKE_MAX_ANGLE);
-        isOpenTrigger = new Trigger(()-> Math.abs( FLOOR_INTAKE_ANGLE - angleEncoder.getPosition().getValueAsDouble()
-                * 2 * Math.PI) < FLOOR_INTAKE_ANGLE_TOLERANCE);
-        isClosedTrigger = new Trigger(()-> Math.abs( CLOSE_INTAKE_ANGLE - angleEncoder.getPosition().getValueAsDouble()
-                * 2 * Math.PI) < CLOSE_INTAKE_ANGLE_TOLERANCE);
+        intakeAngleLimit = new SoftLimit(()-> INTAKE_MIN_ANGLE,()-> INTAKE_MAX_ANGLE);
+        targetPosition = CLOSE_INTAKE_ANGLE;
+        atPositionTrigger = new Trigger(
+                () -> (Math.abs(targetPosition - angleSupplier.getAsDouble()) < INTAKE_ANGLE_TOLERANCE)
+        );
         fourBarMechanism = new Arm(fourBarMotor, angleSupplier, armVLimit, armGains, armMass);
+
+        setDefaultCommand(
+            fourBarMechanism.anglePositionControlCommand(
+                    () -> intakeAngleLimit.limit(targetPosition),
+                    at -> at = false,
+                    MAX_OFFSET,
+                    this)
+
+        );
     }
 
-    public Command openIntakeCommand(){
-        return fourBarMechanism.anglePositionControlCommand(
-                ()-> FLOOR_INTAKE_ANGLE,
-                at -> at = false,
-                MAX_OFFSET,
-                this).until(isOpenTrigger);
+    public Command setAnglePosition(double targetPosition) {
+        return new InstantCommand(
+                () -> this.targetPosition = targetPosition
+        );
     }
 
-    public Command closeIntakeCommand(){
-        return fourBarMechanism.anglePositionControlCommand(
-                ()-> CLOSE_INTAKE_ANGLE,
-                at -> at = false,
-                MAX_OFFSET,
-                this).until(isClosedTrigger);
+    public Command rollerManualCommand(double voltage) {
+        return rollerMotorMechanism.manualCommand(() -> voltage, this);
     }
 
-    public Command intake(){
-        return new SequentialCommandGroup(
-                openIntakeCommand(),
-                rollerMotorMechanism.manualCommand(() -> INTAKE_ROLLER_VOLTAGE,this),
-                transportMotorMechanism.manualCommand(() -> TRANSPORT_MOTOR_VOLTAGE,this));
+    public Command openFloorIntakeCommand(){
+        return new ConditionalCommand(
+                new ParallelCommandGroup(
+                        rollerManualCommand(INTAKE_ROLLER_VOLTAGE),
+                        setAnglePosition(FLOOR_INTAKE_ANGLE)
+                ),
+                new InstantCommand(
+                        () -> {}
+                ),
+                () -> (targetPosition != FLOOR_INTAKE_ANGLE)
+        );
+    }
+
+    public Command closeIntakeCommand() {
+        return new ConditionalCommand(
+                new ParallelCommandGroup(
+                        rollerManualCommand(STOW_ROLLER_VOLTAGE),
+                        setAnglePosition(CLOSE_INTAKE_ANGLE)
+                ),
+                new InstantCommand(
+                        () -> {}
+                ),
+                () -> (targetPosition != CLOSE_INTAKE_ANGLE)
+        );
     }
 }

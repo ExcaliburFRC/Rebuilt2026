@@ -10,6 +10,7 @@ public class IntakeConstants {
 
     // ==== Voltages ==== //
     public static final int INTAKE_ROLLER_VOLTAGE = 0;
+    public static final int STOW_ROLLER_VOLTAGE = 0;
     public static final int TRANSPORT_MOTOR_VOLTAGE = 0;
 
     // ==== Arm Initialization Constants ==== //
@@ -24,6 +25,5 @@ public class IntakeConstants {
     // ==== Intake Angels and Tolerances ==== //
     public static final double FLOOR_INTAKE_ANGLE = 0;
     public static final int CLOSE_INTAKE_ANGLE = 0;
-    public static final int FLOOR_INTAKE_ANGLE_TOLERANCE = 0;
-    public static final int CLOSE_INTAKE_ANGLE_TOLERANCE = 0;
+    public static final int INTAKE_ANGLE_TOLERANCE = 0;
 }

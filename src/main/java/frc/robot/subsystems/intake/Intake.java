@@ -1,4 +1,4 @@
-package frc.robot.Subsystems.Intake;
+package frc.robot.subsystems.intake;
 
 import com.ctre.phoenix6.hardware.CANcoder;
 import edu.wpi.first.wpilibj2.command.*;
@@ -12,7 +12,7 @@ import frc.excalib.mechanisms.Mechanism;
 
 import java.util.function.DoubleSupplier;
 
-import static frc.robot.Subsystems.Intake.IntakeConstants.*;
+import static frc.robot.subsystems.intake.IntakeConstants.*;
 
 public class Intake extends SubsystemBase {
 

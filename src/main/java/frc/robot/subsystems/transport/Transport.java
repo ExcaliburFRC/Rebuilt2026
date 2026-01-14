@@ -1,4 +1,4 @@
-package frc.robot.Subsystems.Transport;
+package frc.robot.subsystems.transport;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -7,7 +7,7 @@ import frc.excalib.mechanisms.Mechanism;
 
 import java.util.function.DoubleSupplier;
 
-import static frc.robot.Subsystems.Transport.Constants.*;
+import static frc.robot.subsystems.transport.Constants.*;
 
 public class Transport extends SubsystemBase {
     private TalonFXMotor drumMotor;

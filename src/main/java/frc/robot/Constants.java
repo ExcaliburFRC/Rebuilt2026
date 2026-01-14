@@ -11,6 +11,7 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
+import frc.excalib.additional_utilities.AllianceUtils;
 import frc.excalib.control.gains.Gains;
 import frc.excalib.control.imu.IMU;
 import frc.excalib.control.imu.Pigeon;
@@ -152,8 +153,8 @@ public final class Constants {
 
     public static class FieldConstants {
         // all the units of length are in meters
-        public static final Translation3d BLUE_HUB_CENTER_POSE = new
-                Translation3d(5.06, 4.03, 1.83);
+        public static final AllianceUtils.AlliancePose BLUE_HUB_CENTER_POSE = new
+                AllianceUtils.AlliancePose(5.06, 4.03, 1.83, 0);
         public static final Translation3d BLUE_CLIMB_TOWER_POSE_L1 = new
                 Translation3d(1.148, 4.32, 0.6858);
         public static final Translation3d BLUE_CLIMB_TOWER_POSE_L2 = new

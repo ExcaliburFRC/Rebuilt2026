@@ -1,15 +1,13 @@
-package frc.robot.Subsystems.Shooter;
+package frc.robot.subsystems.shooter;
 
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.RunCommand;
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.excalib.control.limits.SoftLimit;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
@@ -20,8 +18,7 @@ import frc.robot.Constants;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
-import static frc.robot.Subsystems.Shooter.ShooterConstants.*;
-import static frc.robot.Constants.FieldConstants.*;
+import static frc.robot.subsystems.shooter.ShooterConstants.*;
 
 public class Shooter extends SubsystemBase {
 
@@ -60,7 +57,7 @@ public class Shooter extends SubsystemBase {
 
     }
 
-    public Command setHoodAngleCommand(DoubleSupplier angleSetpoint){
+    public Command setHoodAngleCommand(DoubleSupplier angleSetpoint) {
         TrapezoidProfile trapezoidProfile = new TrapezoidProfile(HOOD_CONSTRAINTS);
         PIDController angleController = new PIDController(HOOD_PID_GAINS.kp, HOOD_PID_GAINS.ki, HOOD_PID_GAINS.kd);
 
@@ -78,7 +75,7 @@ public class Shooter extends SubsystemBase {
                     double pidValue = angleController.calculate(angleSetpoint.getAsDouble(), state.position);
 
                     hoodMechanism.setVoltage(pidValue);
-                } , this
+                }, this
         );
     }
 
@@ -86,32 +83,37 @@ public class Shooter extends SubsystemBase {
         return flyWheelMechanism.smartVelocityCommand(() -> velocity, this);
     }
 
-    public Command getFuelCommand() {
-        return new RunCommand(
-                () -> transportMechanism.setVoltage(TRANSPORT_VOLTAGE) , this
-        ).until(hasFuel.negate()).withTimeout(0.1);
+    public Command setFlyWheelVelocityCommand(DoubleSupplier velocity) {
+        return flyWheelMechanism.smartVelocityCommand(velocity);
     }
 
-    public Translation2d velocityAndAngle(Translation3d target){
+    public Command getFuelCommand() {
+        return new RunCommand(() -> transportMechanism.setVoltage(TRANSPORT_VOLTAGE));
+    }
+
+    public Translation2d calculateShootParameters(Pose3d targetPose, Pose3d currentPose) {
         return null;
     }
 
-    public Command shootCommand() {
-        double angle = velocityAndAngle(Constants.FieldConstants.BLUE_HUB_CENTER_POSE).getAngle().getRadians();
-        double flyWheelSpeed = velocityAndAngle(Constants.FieldConstants.BLUE_HUB_CENTER_POSE).getNorm();
-        return new SequentialCommandGroup(
-                flyWheelWarmupCommand(flyWheelSpeed),
-                setHoodAngleCommand(() -> angle),
-                getFuelCommand()
-        );
-    }
-    public Command deliveryCommand(){
-        double angle = velocityAndAngle(new Translation3d(0,0,0)).getAngle().getRadians();
-        double flyWheelSpeed = velocityAndAngle(new Translation3d(0,0,0)).getNorm();
-        return new SequentialCommandGroup(
-                flyWheelWarmupCommand(flyWheelSpeed),
-                setHoodAngleCommand(() -> angle),
-                getFuelCommand()
+    public Command adjustShooterForShootingCommand(Supplier<Translation2d> currentPose, Supplier<Pose3d> targetPose) {
+
+        DoubleSupplier angle = ()-> calculateShootParameters(
+                targetPose.get(),
+                new Pose3d(
+                        new Translation3d(currentPose.get()),
+                        new Rotation3d())
+        ).getAngle().getRadians();
+
+        DoubleSupplier flyWheelVelocity = ()-> calculateShootParameters(
+                targetPose.get(),
+                new Pose3d(
+                        new Translation3d(currentPose.get()),
+                        new Rotation3d())
+        ).getNorm();
+
+        return new ParallelCommandGroup(
+                setFlyWheelVelocityCommand(flyWheelVelocity),
+                setHoodAngleCommand(angle)
         );
     }
 }

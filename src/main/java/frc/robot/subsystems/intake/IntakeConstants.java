@@ -1,6 +1,4 @@
-package frc.robot.Subsystems.Intake;
-
-import java.util.function.Consumer;
+package frc.robot.subsystems.intake;
 
 public class IntakeConstants {
 

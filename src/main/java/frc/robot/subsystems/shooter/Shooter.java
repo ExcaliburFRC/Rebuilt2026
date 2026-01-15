@@ -49,10 +49,12 @@ public class Shooter extends SubsystemBase {
         flyWheelMechanism = new FlyWheel(flyWheelMotor, FLY_WHEEL_MAX_ACCELERATION,
                 FLY_WHEEL_MAX_JERK, FLYWHEEL_GAINS);
         supportWheelMechanism = new Mechanism(supportWheelMotor);
+
         hoodSoftLimit = new SoftLimit(
                 () -> HOOD_MIN_ANGLE_LIMIT,
                 () -> HOOD_MAX_ANGLE_LIMIT
         );
+
         hasFuel = new Trigger(beamBreak::get);
 
     }

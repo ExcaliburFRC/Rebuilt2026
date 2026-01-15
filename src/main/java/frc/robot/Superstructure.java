@@ -60,15 +60,22 @@ public class Superstructure {
     }
 
     public Command shootForDeliveryCommand(Translation2d current_position){
+        Rotation2d targetAngle;
         double distenceToDeliveryForRight =
-                FieldConstants.BLUE_RIGHT_BLUE_SIDE_FOR_DELIVERY.getDistance(current_position);
+                FieldConstants.BLUE_RIGHT_BLUE_SIDE_FOR_DELIVERY.get().getTranslation().getDistance(current_position);
         double distenceToDeliveryForLeft =
-                FieldConstants.BLUE_LEFT_BLUE_SIDE_FOR_DELIVERY.getDistance(current_position);
-        if (distenceToDeliveryForLeft > distenceToDeliveryForRight){
-            Rotation2d targetAngle = new Rotation2d(
-                    Math.atan2(FieldConstants.BLUE_LEFT_BLUE_SIDE_FOR_DELIVERY.getY() - swerve.getPose2D().getY(),
-                            swerve.getPose2D().getX() - FieldConstants.BLUE_LEFT_BLUE_SIDE_FOR_DELIVERY.getX())
+                FieldConstants.BLUE_LEFT_BLUE_SIDE_FOR_DELIVERY.get().getTranslation().getDistance(current_position);
+        if (distenceToDeliveryForLeft > distenceToDeliveryForRight) {
+            targetAngle = new Rotation2d(
+                    Math.atan2(FieldConstants.BLUE_LEFT_BLUE_SIDE_FOR_DELIVERY.get().getY() - swerve.getPose2D().getY(),
+                            swerve.getPose2D().getX() - FieldConstants.BLUE_LEFT_BLUE_SIDE_FOR_DELIVERY.get().getX())
             );
+        }else {
+            targetAngle = new Rotation2d(
+                Math.atan2(FieldConstants.BLUE_RIGHT_BLUE_SIDE_FOR_DELIVERY.get().getY() - swerve.getPose2D().getY(),
+                        swerve.getPose2D().getX() - FieldConstants.BLUE_RIGHT_BLUE_SIDE_FOR_DELIVERY.get().getX())
+            );
+        }
 
             Command shootForDeliveryCommand = new ParallelCommandGroup(
                 swerve.turnToAngleCommand(
@@ -78,7 +85,7 @@ public class Superstructure {
                     shooter.adjustShooterForShootingCommand(
                             () -> swerve.getPose2D().getTranslation(),
                             () -> new Pose3d(
-                                    new Translation3d(FieldConstants.BLUE_LEFT_BLUE_SIDE_FOR_DELIVERY),
+                                    new Translation3d(FieldConstants.BLUE_LEFT_BLUE_SIDE_FOR_DELIVERY.get().getTranslation()),
                                     new Rotation3d()
                             )),
 
@@ -88,29 +95,5 @@ public class Superstructure {
             shootForDeliveryCommand(swerve.getTranslationSetpoint()).addRequirements(shooter);
             return shootForDeliveryCommand(swerve.getTranslationSetpoint());
         }
-        else {
-            Rotation2d targetAngle = new Rotation2d(
-                Math.atan2(FieldConstants.BLUE_RIGHT_BLUE_SIDE_FOR_DELIVERY.getY() - swerve.getPose2D().getY(),
-                        swerve.getPose2D().getX() - FieldConstants.BLUE_RIGHT_BLUE_SIDE_FOR_DELIVERY.getX())
-        );
 
-            Command hootForDeliveryCommand = new ParallelCommandGroup(
-                swerve.turnToAngleCommand(
-                            () -> new Vector2D(0, 0),
-                            () -> targetAngle.minus(Rotation2d.kPi)),
-
-                    shooter.adjustShooterForShootingCommand(
-                            () -> swerve.getPose2D().getTranslation(),
-                            () -> new Pose3d(
-                                    new Translation3d(FieldConstants.BLUE_RIGHT_BLUE_SIDE_FOR_DELIVERY),
-                                    new Rotation3d()
-                            )),
-
-                    shooter.getFuelCommand(),
-                    transport.manualCommand(() -> SHOOTING_VOLTAGE));
-
-            shootForDeliveryCommand(swerve.getTranslationSetpoint()).addRequirements(shooter);
-            return shootForDeliveryCommand(swerve.getTranslationSetpoint());
-        }
-    }
 }

@@ -176,6 +176,8 @@ public final class Constants {
         public static final Translation2d BLUE_DOWN_FIELD_PICKUP_FUEL_PLACEMENT = new
                 Translation2d(0.34, 4.829);
 
+        public static final double FUEL_DIAMETER = 1; //todo
+
     }
 
 }

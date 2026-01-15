@@ -59,13 +59,13 @@ public class Superstructure {
         return shootToHubCommand;
     }
 
-    public Command shootForDeliveryCommand(Translation2d current_position){
+    public Command deliveryShootCommand(Translation2d current_position){
         Rotation2d targetAngle;
-        double distenceToDeliveryForRight =
+        double distanceToDeliveryForRight =
                 FieldConstants.BLUE_RIGHT_BLUE_SIDE_FOR_DELIVERY.get().getTranslation().getDistance(current_position);
-        double distenceToDeliveryForLeft =
+        double distanceToDeliveryForLeft =
                 FieldConstants.BLUE_LEFT_BLUE_SIDE_FOR_DELIVERY.get().getTranslation().getDistance(current_position);
-        if (distenceToDeliveryForLeft > distenceToDeliveryForRight) {
+        if (distanceToDeliveryForLeft > distanceToDeliveryForRight) {
             targetAngle = new Rotation2d(
                     Math.atan2(FieldConstants.BLUE_LEFT_BLUE_SIDE_FOR_DELIVERY.get().getY() - swerve.getPose2D().getY(),
                             swerve.getPose2D().getX() - FieldConstants.BLUE_LEFT_BLUE_SIDE_FOR_DELIVERY.get().getX())
@@ -92,8 +92,8 @@ public class Superstructure {
                     shooter.getFuelCommand(),
                     transport.manualCommand(() -> SHOOTING_VOLTAGE));
 
-            shootForDeliveryCommand(swerve.getTranslationSetpoint()).addRequirements(shooter);
-            return shootForDeliveryCommand(swerve.getTranslationSetpoint());
+            deliveryShootCommand(swerve.getTranslationSetpoint()).addRequirements(shooter);
+            return deliveryShootCommand(swerve.getTranslationSetpoint());
         }
 
 }

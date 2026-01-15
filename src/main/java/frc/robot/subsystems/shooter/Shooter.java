@@ -13,7 +13,6 @@ import frc.excalib.control.limits.SoftLimit;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
 import frc.excalib.mechanisms.Mechanism;
 import frc.excalib.mechanisms.fly_wheel.FlyWheel;
-import frc.robot.Constants;
 
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
@@ -99,14 +98,14 @@ public class Shooter extends SubsystemBase {
 
     public Command adjustShooterForShootingCommand(Supplier<Translation2d> currentPose, Supplier<Pose3d> targetPose) {
 
-        DoubleSupplier angle = ()-> calculateShootParameters(
+        DoubleSupplier angle = () -> calculateShootParameters(
                 targetPose.get(),
                 new Pose3d(
                         new Translation3d(currentPose.get()),
                         new Rotation3d())
         ).getAngle().getRadians();
 
-        DoubleSupplier flyWheelVelocity = ()-> calculateShootParameters(
+        DoubleSupplier flyWheelVelocity = () -> calculateShootParameters(
                 targetPose.get(),
                 new Pose3d(
                         new Translation3d(currentPose.get()),

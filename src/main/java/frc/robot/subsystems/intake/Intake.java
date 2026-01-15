@@ -31,7 +31,7 @@ public class Intake extends SubsystemBase {
     public final Trigger atPositionTrigger;
     public double targetPosition;
 
-    public Intake(){
+    public Intake() {
         angleEncoder = new CANcoder(ANGLE_ENCODER_ID);
         fourBarMotor = new TalonFXMotor(FOUR_BAR_MOTOR_ID);
         rollerMotor = new TalonFXMotor(ROLLER_MOTOR_ID);
@@ -43,9 +43,9 @@ public class Intake extends SubsystemBase {
         armGains = new Gains();
         angleSupplier = () -> (angleEncoder.getPosition().getValueAsDouble() * Math.PI * 2);
         armMass = new Mass(() -> Math.cos(angleSupplier.getAsDouble() + ARM_MASS_TO_AXIS),
-                           () -> Math.sin(angleSupplier.getAsDouble() + ARM_MASS_TO_AXIS),
-                                 ARM_MASS);
-        intakeAngleLimit = new SoftLimit(()-> INTAKE_MIN_ANGLE,()-> INTAKE_MAX_ANGLE);
+                () -> Math.sin(angleSupplier.getAsDouble() + ARM_MASS_TO_AXIS),
+                ARM_MASS);
+        intakeAngleLimit = new SoftLimit(() -> INTAKE_MIN_ANGLE, () -> INTAKE_MAX_ANGLE);
         targetPosition = CLOSE_INTAKE_ANGLE;
         atPositionTrigger = new Trigger(
                 () -> (Math.abs(targetPosition - angleSupplier.getAsDouble()) < INTAKE_ANGLE_TOLERANCE)
@@ -53,11 +53,11 @@ public class Intake extends SubsystemBase {
         fourBarMechanism = new Arm(fourBarMotor, angleSupplier, armVLimit, armGains, armMass);
 
         setDefaultCommand(
-            fourBarMechanism.anglePositionControlCommand(
-                    () -> intakeAngleLimit.limit(targetPosition),
-                    at -> at = false,
-                    MAX_OFFSET,
-                    this)
+                fourBarMechanism.anglePositionControlCommand(
+                        () -> intakeAngleLimit.limit(targetPosition),
+                        at -> at = false,
+                        MAX_OFFSET,
+                        this)
 
         );
     }
@@ -72,14 +72,15 @@ public class Intake extends SubsystemBase {
         return rollerMotorMechanism.manualCommand(() -> voltage, this);
     }
 
-    public Command openFloorIntakeCommand(){
+    public Command openFloorIntakeCommand() {
         return new ConditionalCommand(
                 new ParallelCommandGroup(
                         rollerManualCommand(INTAKE_ROLLER_VOLTAGE),
                         setAnglePosition(FLOOR_INTAKE_ANGLE)
                 ),
                 new InstantCommand(
-                        () -> {}
+                        () -> {
+                        }
                 ),
                 () -> (targetPosition != FLOOR_INTAKE_ANGLE)
         );
@@ -92,7 +93,8 @@ public class Intake extends SubsystemBase {
                         setAnglePosition(CLOSE_INTAKE_ANGLE)
                 ),
                 new InstantCommand(
-                        () -> {}
+                        () -> {
+                        }
                 ),
                 () -> (targetPosition != CLOSE_INTAKE_ANGLE)
         );

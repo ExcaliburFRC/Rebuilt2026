@@ -21,6 +21,7 @@ import frc.excalib.swerve.Swerve;
 import frc.excalib.swerve.SwerveModule;
 
 public final class Constants {
+    public static final Pose2d startingPose = new Pose2d();
     public static class SwerveConstants {
         public static final int FRONT_LEFT_DRIVE_ID = 20;
         public static final int FRONT_RIGHT_DRIVE_ID = 10;
@@ -149,6 +150,7 @@ public final class Constants {
                     initialPose
             );
         }
+
     }
 
     public static class FieldConstants {

@@ -1,5 +1,9 @@
 package frc.excalib.control.math;
 
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
+import frc.robot.Constants;
+
 public class MathUtils {
     /**
      * A function that checks the minimum value in abs
@@ -17,5 +21,10 @@ public class MathUtils {
             return limit;
         }
         return value;
+    }
+    public static double angleBetweenPoses(Translation2d place1, Translation2d place2){
+        double angle = Math.atan2(place2.getY() - place1.getY(), place1.getX() - place2.getX());
+        if (place1.getY() > place2.getY()) angle += Math.PI;
+        return angle;
     }
 }

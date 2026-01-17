@@ -37,11 +37,14 @@ public class Turret extends SubsystemBase {
                 ()-> turretEncoder.getPosition().getValueAsDouble() * 2 * Math.PI
         );
     }
-    public Command turnTurretCommand(){
-        return turretMechanism.setPositionCommand(this::getRelativeTargetAngle, this);
+    public Command turnTurretCommand(Supplier<ShootingTargets> shootingTargetSupplier){
+        return turretMechanism.setPositionCommand(()-> getRelativeTargetAngle(
+                shootingTargetSupplier.get().getTranslation()),
+                this
+        );
     }
 
-    private Rotation2d getRelativeTargetAngle(){
+    private Rotation2d getRelativeTargetAngle(Translation2d target){
         Pose2d robotPose = poseSupplier.get();
 
         double turretXPosition = robotPose.getY() +
@@ -53,7 +56,7 @@ public class Turret extends SubsystemBase {
 
         Rotation2d targetAngle = new Rotation2d(
                 MathUtils.angleBetweenPoses(turretPosition,
-                        Constants.FieldConstants.BLUE_HUB_CENTER_POSE.get().getTranslation()));
+                        target));
 
         return targetAngle.minus(robotPose.getRotation());
     }

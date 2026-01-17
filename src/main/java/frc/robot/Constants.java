@@ -157,9 +157,9 @@ public final class Constants {
         // all the units of length are in meters
         public static final AllianceUtils.AlliancePose BLUE_HUB_CENTER_POSE = new
                 AllianceUtils.AlliancePose(5.06, 4.03, 1.83, 0);
-        public static final AllianceUtils.AlliancePose BLUE_RIGHT_BLUE_SIDE_FOR_DELIVERY = new
+        public static final AllianceUtils.AlliancePose BLUE_RIGHT_DELIVERY_SIDE = new
                 AllianceUtils.AlliancePose(1.988, 6.523,0,0);
-        public static final AllianceUtils.AlliancePose BLUE_LEFT_BLUE_SIDE_FOR_DELIVERY = new
+        public static final AllianceUtils.AlliancePose BLUE_LEFT_DELIVERY_SIDE = new
                 AllianceUtils.AlliancePose(1.988, 2.172,0,0);
         public static final Translation3d BLUE_CLIMB_TOWER_POSE_L1 = new
                 Translation3d(1.148, 4.32, 0.6858);

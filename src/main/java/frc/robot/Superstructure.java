@@ -11,6 +11,8 @@ import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.transport.Transport;
 import frc.robot.Constants.FieldConstants;
+import frc.robot.subsystems.turret.ShootingTargets;
+import frc.robot.subsystems.turret.Turret;
 
 import static frc.robot.subsystems.transport.Constants.SHOOTING_VOLTAGE;
 
@@ -20,12 +22,15 @@ public class Superstructure {
     public final Transport transport;
     public final Swerve swerve;
     public final PS5Controller controller;
+    public final Turret turret;
 
     public Superstructure(PS5Controller controller) {
         intake = new Intake();
         shooter = new Shooter();
         transport = new Transport();
         swerve = Constants.SwerveConstants.configureSwerve(Constants.startingPose);
+        turret = new Turret(swerve::getPose2D);
+
 
         this.controller = controller;
     }
@@ -37,13 +42,7 @@ public class Superstructure {
         );
 
         Command shootToHubCommand = new ParallelCommandGroup(
-                swerve.turnToAngleCommand(
-//                        () -> new Vector2D(
-//                                -controller.getLeftY() * MAX_VEL,
-//                                -controller.getLeftX() * MAX_VEL // todo: for shooting while in vel
-//                        ),
-                        () -> new Vector2D(0, 0),
-                        () -> targetAngle.minus(Rotation2d.kPi)),
+                turret.turnTurretCommand(()-> ShootingTargets.HUB),
 
                 shooter.adjustShooterForShootingCommand(
                         () -> swerve.getPose2D().getTranslation(),
@@ -63,28 +62,19 @@ public class Superstructure {
     public Command shootForDeliveryCommand(Translation2d current_position) {
         Rotation2d targetAngle;
         double distenceToDeliveryForRight =
-                FieldConstants.BLUE_RIGHT_BLUE_SIDE_FOR_DELIVERY.get().getTranslation().getDistance(current_position);
+                FieldConstants.BLUE_RIGHT_DELIVERY_SIDE.get().getTranslation().getDistance(current_position);
         double distenceToDeliveryForLeft =
-                FieldConstants.BLUE_LEFT_BLUE_SIDE_FOR_DELIVERY.get().getTranslation().getDistance(current_position);
+                FieldConstants.BLUE_LEFT_DELIVERY_SIDE.get().getTranslation().getDistance(current_position);
         if (distenceToDeliveryForLeft > distenceToDeliveryForRight) {
-            targetAngle = new Rotation2d(
-                MathUtils.angleBetweenPoses(swerve.getPose2D().getTranslation(),
-                        FieldConstants.BLUE_RIGHT_BLUE_SIDE_FOR_DELIVERY.get().getTranslation()));
+            turret.turnTurretCommand(()-> ShootingTargets.LEFT_DELIVERY);
         } else {
-            targetAngle = new Rotation2d(
-                    MathUtils.angleBetweenPoses(swerve.getPose2D().getTranslation(),
-                        FieldConstants.BLUE_LEFT_BLUE_SIDE_FOR_DELIVERY.get().getTranslation()));
+            turret.turnTurretCommand(()-> ShootingTargets.RIGHT_DELIVERY);
         }
-
         Command shootForDeliveryCommand = new ParallelCommandGroup(
-                swerve.turnToAngleCommand(
-                        () -> new Vector2D(0, 0),
-                        () -> targetAngle.minus(Rotation2d.kPi)),
-
                 shooter.adjustShooterForShootingCommand(
                         () -> swerve.getPose2D().getTranslation(),
                         () -> new Pose3d(
-                                new Translation3d(FieldConstants.BLUE_LEFT_BLUE_SIDE_FOR_DELIVERY.get().getTranslation()),
+                                new Translation3d(FieldConstants.BLUE_LEFT_DELIVERY_SIDE.get().getTranslation()),
                                 new Rotation3d()
                         )),
 

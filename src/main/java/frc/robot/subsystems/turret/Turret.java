@@ -1,6 +1,7 @@
 package frc.robot.subsystems.turret;
 
 import com.ctre.phoenix6.hardware.CANcoder;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
@@ -14,6 +15,7 @@ import frc.robot.Constants;
 import frc.robot.Superstructure;
 
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
 import static frc.robot.subsystems.turret.TurretConstans.*;
 
@@ -21,38 +23,39 @@ public class Turret extends SubsystemBase {
     public final TalonFXMotor turretMotor;
     public final frc.excalib.mechanisms.turret.Turret turretMechanism;
     public final CANcoder turretEncoder;
-    public final DoubleSupplier angleSupplier;
-    public final Swerve swerve;
+    public final Supplier<Pose2d> poseSupplier;
 
-    public Turret(){
+    public Turret(Supplier<Pose2d> poseSupplier){
         turretMotor = new TalonFXMotor(TURRET_MOTOR_ID);
         turretEncoder = new CANcoder(TURRET_ENCODER_ID);
-        swerve = Constants.SwerveConstants.configureSwerve(Constants.startingPose);
-        angleSupplier = ()-> turretEncoder.getPosition().getValueAsDouble() * 2 * Math.PI;
+        this.poseSupplier = poseSupplier;
         turretMechanism = new frc.excalib.mechanisms.turret.Turret(
                 turretMotor,
                 TURRET_CONTINOUS_SOFTLIMIT,
                 TURRET_GAINS,
                 PID_TOLLERANCE,
-                angleSupplier
+                ()-> turretEncoder.getPosition().getValueAsDouble() * 2 * Math.PI
         );
     }
     public Command turnTurretCommand(){
+        return turretMechanism.setPositionCommand(this::getRelativeTargetAngle, this);
+    }
 
-        double turretXPosition = swerve.getPose2D().getY() +
-                (TURRET_DISTENCE_FROM_ROBOT / Math.cos(swerve.getRotation2D().getRadians()));
-        double turretYPosition = swerve.getPose2D().getX() +
-                (TURRET_DISTENCE_FROM_ROBOT / Math.sin(swerve.getRotation2D().getRadians()));
+    private Rotation2d getRelativeTargetAngle(){
+        Pose2d robotPose = poseSupplier.get();
+
+        double turretXPosition = robotPose.getY() +
+                (TURRET_DISTENCE_FROM_ROBOT / robotPose.getRotation().getCos());
+        double turretYPosition = robotPose.getX() +
+                (TURRET_DISTENCE_FROM_ROBOT / robotPose.getRotation().getSin());
 
         Translation2d turretPosition = new Translation2d(turretXPosition, turretYPosition);
 
         Rotation2d targetAngle = new Rotation2d(
                 MathUtils.angleBetweenPoses(turretPosition,
                         Constants.FieldConstants.BLUE_HUB_CENTER_POSE.get().getTranslation()));
-        Rotation2d relativeTargetAngle = targetAngle.minus(swerve.getRotation2D());
 
-
-        return turretMechanism.setPositionCommand(()-> relativeTargetAngle, this);
+        return targetAngle.minus(robotPose.getRotation());
     }
 
 }

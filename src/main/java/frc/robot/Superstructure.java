@@ -4,6 +4,7 @@ import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import frc.excalib.additional_utilities.PS5Controller;
+import frc.excalib.control.math.MathUtils;
 import frc.excalib.control.math.Vector2D;
 import frc.excalib.swerve.Swerve;
 import frc.robot.subsystems.intake.Intake;
@@ -24,15 +25,15 @@ public class Superstructure {
         intake = new Intake();
         shooter = new Shooter();
         transport = new Transport();
-        swerve = Constants.SwerveConstants.configureSwerve(new Pose2d());
+        swerve = Constants.SwerveConstants.configureSwerve(Constants.startingPose);
 
         this.controller = controller;
     }
 
     public Command shootToHubCommand() {
         Rotation2d targetAngle = new Rotation2d(
-                Math.atan2(FieldConstants.BLUE_HUB_CENTER_POSE.get().getY() - swerve.getPose2D().getY(),
-                        swerve.getPose2D().getX() - FieldConstants.BLUE_HUB_CENTER_POSE.get().getX())
+                MathUtils.angleBetweenPoses(swerve.getPose2D().getTranslation(),
+                        FieldConstants.BLUE_HUB_CENTER_POSE.get().getTranslation())
         );
 
         Command shootToHubCommand = new ParallelCommandGroup(
@@ -59,41 +60,39 @@ public class Superstructure {
         return shootToHubCommand;
     }
 
-    public Command deliveryShootCommand(Translation2d current_position){
+    public Command shootForDeliveryCommand(Translation2d current_position) {
         Rotation2d targetAngle;
-        double distanceToDeliveryForRight =
+        double distenceToDeliveryForRight =
                 FieldConstants.BLUE_RIGHT_BLUE_SIDE_FOR_DELIVERY.get().getTranslation().getDistance(current_position);
-        double distanceToDeliveryForLeft =
+        double distenceToDeliveryForLeft =
                 FieldConstants.BLUE_LEFT_BLUE_SIDE_FOR_DELIVERY.get().getTranslation().getDistance(current_position);
-        if (distanceToDeliveryForLeft > distanceToDeliveryForRight) {
+        if (distenceToDeliveryForLeft > distenceToDeliveryForRight) {
             targetAngle = new Rotation2d(
-                    Math.atan2(FieldConstants.BLUE_LEFT_BLUE_SIDE_FOR_DELIVERY.get().getY() - swerve.getPose2D().getY(),
-                            swerve.getPose2D().getX() - FieldConstants.BLUE_LEFT_BLUE_SIDE_FOR_DELIVERY.get().getX())
-            );
-        }else {
+                MathUtils.angleBetweenPoses(swerve.getPose2D().getTranslation(),
+                        FieldConstants.BLUE_RIGHT_BLUE_SIDE_FOR_DELIVERY.get().getTranslation()));
+        } else {
             targetAngle = new Rotation2d(
-                Math.atan2(FieldConstants.BLUE_RIGHT_BLUE_SIDE_FOR_DELIVERY.get().getY() - swerve.getPose2D().getY(),
-                        swerve.getPose2D().getX() - FieldConstants.BLUE_RIGHT_BLUE_SIDE_FOR_DELIVERY.get().getX())
-            );
+                    MathUtils.angleBetweenPoses(swerve.getPose2D().getTranslation(),
+                        FieldConstants.BLUE_LEFT_BLUE_SIDE_FOR_DELIVERY.get().getTranslation()));
         }
 
-            Command shootForDeliveryCommand = new ParallelCommandGroup(
+        Command shootForDeliveryCommand = new ParallelCommandGroup(
                 swerve.turnToAngleCommand(
-                            () -> new Vector2D(0, 0),
-                            () -> targetAngle.minus(Rotation2d.kPi)),
+                        () -> new Vector2D(0, 0),
+                        () -> targetAngle.minus(Rotation2d.kPi)),
 
-                    shooter.adjustShooterForShootingCommand(
-                            () -> swerve.getPose2D().getTranslation(),
-                            () -> new Pose3d(
-                                    new Translation3d(FieldConstants.BLUE_LEFT_BLUE_SIDE_FOR_DELIVERY.get().getTranslation()),
-                                    new Rotation3d()
-                            )),
+                shooter.adjustShooterForShootingCommand(
+                        () -> swerve.getPose2D().getTranslation(),
+                        () -> new Pose3d(
+                                new Translation3d(FieldConstants.BLUE_LEFT_BLUE_SIDE_FOR_DELIVERY.get().getTranslation()),
+                                new Rotation3d()
+                        )),
 
-                    shooter.getFuelCommand(),
-                    transport.manualCommand(() -> SHOOTING_VOLTAGE));
+                shooter.getFuelCommand(),
+                transport.manualCommand(() -> SHOOTING_VOLTAGE));
 
-            deliveryShootCommand(swerve.getTranslationSetpoint()).addRequirements(shooter);
-            return deliveryShootCommand(swerve.getTranslationSetpoint());
-        }
+        shootForDeliveryCommand(swerve.getTranslationSetpoint()).addRequirements(shooter);
+        return shootForDeliveryCommand;
+    }
 
 }

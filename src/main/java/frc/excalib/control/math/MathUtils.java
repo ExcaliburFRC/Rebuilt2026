@@ -22,7 +22,7 @@ public class MathUtils {
         }
         return value;
     }
-    public static double angleBetweenPoses(Translation2d place1, Translation2d place2){
+    public static double getPosesTangentAngle(Translation2d place1, Translation2d place2){
         double angle = Math.atan2(place2.getY() - place1.getY(), place1.getX() - place2.getX());
         if (place1.getY() > place2.getY()) angle += Math.PI;
         return angle;

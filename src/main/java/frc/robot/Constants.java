@@ -80,9 +80,9 @@ public final class Constants {
         private static final CANcoder BACK_LEFT_ABS_ENCODER = new CANcoder(31, SWERVE_CANBUS);
         private static final CANcoder BACK_RIGHT_ABS_ENCODER = new CANcoder(41, SWERVE_CANBUS);
 
-        private static final double VELOCITY_CONVERSION_FACTOR = Units.inchesToMeters(4) * Math.PI / 6.12;
-        private static final double POSITION_CONVERSION_FACTOR = Units.inchesToMeters(4) * Math.PI / 6.12;
-        private static final double ROTATION_VELOCITY_CONVERSION_FACTOR = (2 * Math.PI) / (21.4285714);
+        private static final double VELOCITY_CONVERSION_FACTOR = Units.inchesToMeters(4) * Math.PI / 5.27;
+        private static final double POSITION_CONVERSION_FACTOR = Units.inchesToMeters(4) * Math.PI / 5.27;
+        private static final double ROTATION_VELOCITY_CONVERSION_FACTOR = (2 * Math.PI) / (26.09090909090909);
 
 //        public static final PIDConstants TRANSLATION_PID_PP_CONSTANTS = new PIDConstants(10.0, 0.0, 0.0); //TODO
 //        public static final PIDConstants ANGLE_PID_PP_CONSTANTS = new PIDConstants(5.0, 0.0, 0.0);

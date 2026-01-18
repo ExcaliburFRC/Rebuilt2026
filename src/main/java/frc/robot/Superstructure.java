@@ -34,55 +34,38 @@ public class Superstructure {
 
         this.controller = controller;
     }
-
-    public Command shootToHubCommand() {
-        Rotation2d targetAngle = new Rotation2d(
-                MathUtils.angleBetweenPoses(swerve.getPose2D().getTranslation(),
-                        FieldConstants.BLUE_HUB_CENTER_POSE.get().getTranslation())
-        );
-
-        Command shootToHubCommand = new ParallelCommandGroup(
-                turret.turnTurretCommand(()-> ShootingTargets.HUB),
-
+    private Command shootingCommand(Translation2d target){
+        return new ParallelCommandGroup(
                 shooter.adjustShooterForShootingCommand(
                         () -> swerve.getPose2D().getTranslation(),
                         () -> new Pose3d(
-                                new Translation3d(Constants.FieldConstants.BLUE_HUB_CENTER_POSE.get().getTranslation()),
+                                new Translation3d(target),
                                 new Rotation3d()
                         )),
 
                 shooter.getFuelCommand(),
                 transport.manualCommand(() -> SHOOTING_VOLTAGE)
         );
+    }
 
-        shootToHubCommand.addRequirements(shooter);
-        return shootToHubCommand;
+    public Command shootToHubCommand() {
+        turret.turnTurretCommand(()-> ShootingTargets.HUB);
+        return shootingCommand(FieldConstants.BLUE_HUB_CENTER_POSE.get().getTranslation());
     }
 
     public Command shootForDeliveryCommand(Translation2d current_position) {
-        Rotation2d targetAngle;
+        Translation2d target;
         double distenceToDeliveryForRight =
                 FieldConstants.BLUE_RIGHT_DELIVERY_SIDE.get().getTranslation().getDistance(current_position);
+        target = FieldConstants.BLUE_RIGHT_DELIVERY_SIDE.get().getTranslation();
         double distenceToDeliveryForLeft =
                 FieldConstants.BLUE_LEFT_DELIVERY_SIDE.get().getTranslation().getDistance(current_position);
+        target = FieldConstants.BLUE_RIGHT_DELIVERY_SIDE.get().getTranslation();
         if (distenceToDeliveryForLeft > distenceToDeliveryForRight) {
             turret.turnTurretCommand(()-> ShootingTargets.LEFT_DELIVERY);
         } else {
             turret.turnTurretCommand(()-> ShootingTargets.RIGHT_DELIVERY);
         }
-        Command shootForDeliveryCommand = new ParallelCommandGroup(
-                shooter.adjustShooterForShootingCommand(
-                        turret::getTurretPosition,
-                        () -> new Pose3d(
-                                new Translation3d(FieldConstants.BLUE_LEFT_DELIVERY_SIDE.get().getTranslation()),
-                                new Rotation3d()
-                        )),
-
-                shooter.getFuelCommand(),
-                transport.manualCommand(() -> SHOOTING_VOLTAGE));
-
-        shootForDeliveryCommand(swerve.getTranslationSetpoint()).addRequirements(shooter);
-        return shootForDeliveryCommand;
+        return shootingCommand(target);
     }
-
 }

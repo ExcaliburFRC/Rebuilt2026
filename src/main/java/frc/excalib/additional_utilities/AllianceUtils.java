@@ -106,7 +106,7 @@ public class AllianceUtils {
             pose = new Pose3d(x, y, z, new Rotation3d(0, 0, yaw));
         }
 
-        public Pose2d get() {
+        public Pose2d getAsCurrentAlliance() {
             return toAlliancePose(pose.toPose2d());
         }
     }

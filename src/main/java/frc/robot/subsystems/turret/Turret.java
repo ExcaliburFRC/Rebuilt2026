@@ -12,7 +12,7 @@ import frc.excalib.control.motor.controllers.TalonFXMotor;
 
 import java.util.function.Supplier;
 
-import static frc.robot.subsystems.turret.TurretConstans.*;
+import static frc.robot.subsystems.turret.TurretConstants.*;
 
 public class Turret extends SubsystemBase {
     public final TalonFXMotor turretMotor;
@@ -51,9 +51,9 @@ public class Turret extends SubsystemBase {
         Pose2d robotPose = poseSupplier.get();
 
         double turretXPosition = robotPose.getY() +
-                (TURRET_OFFSET_RELATIVE_ROBOT / robotPose.getRotation().getCos());
+                (TURRET_OFFSET_RELATIVE_ROBOT.getX() + robotPose.getRotation().getCos());
         double turretYPosition = robotPose.getX() +
-                (TURRET_OFFSET_RELATIVE_ROBOT / robotPose.getRotation().getSin());
+                (TURRET_OFFSET_RELATIVE_ROBOT.getY() + robotPose.getRotation().getSin());
 
         return new Translation2d(turretXPosition, turretYPosition);
     }
@@ -63,7 +63,7 @@ public class Turret extends SubsystemBase {
         Translation2d turretPosition = getTurretFieldRelativePosition();
 
         Rotation2d targetAngle = new Rotation2d(
-                MathUtils.angleBetweenPoses(turretPosition,
+                MathUtils.getPosesTangentAngle(turretPosition,
                         target));
 
         return targetAngle.minus(robotPose.getRotation());

@@ -4,12 +4,11 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import frc.excalib.additional_utilities.AllianceUtils;
 import frc.robot.Constants;
-import frc.robot.Constants.FieldConstants.*;
 
 public enum ShootingTargets {
-    HUB(Constants.FieldConstants.BLUE_HUB_CENTER_POSE.get().getTranslation()),
-    LEFT_DELIVERY(Constants.FieldConstants.BLUE_LEFT_DELIVERY_SIDE.get().getTranslation()),
-    RIGHT_DELIVERY(Constants.FieldConstants.BLUE_RIGHT_DELIVERY_SIDE.get().getTranslation());
+    HUB(Constants.FieldConstants.BLUE_HUB_CENTER_POSE.getAsCurrentAlliance().getTranslation()),
+    LEFT_DELIVERY(Constants.FieldConstants.DELIVERY_LEFT_POSE_DISTANCE.getAsCurrentAlliance().getTranslation()),
+    RIGHT_DELIVERY(Constants.FieldConstants.DELIVERY_RIGHT_POSE_DIATANCE.getAsCurrentAlliance().getTranslation());
 
     Translation2d blue;
 

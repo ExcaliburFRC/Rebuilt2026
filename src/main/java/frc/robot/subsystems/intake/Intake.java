@@ -34,10 +34,10 @@ public class Intake extends SubsystemBase {
         fourBarMotor = new TalonFXMotor(FOUR_BAR_MOTOR_ID);
         rollerMotor = new TalonFXMotor(ROLLER_MOTOR_ID);
         rollerMotorMechanism = new Mechanism(rollerMotor);
-        armVLimit = new SoftLimit(() -> ARM_MIN_V_LIMIT,
+        armVLimit = new SoftLimit(() -> ARM_MIN_VELOCITY_LIMIT,
                 () -> ARM_MAX_V_LIMIT);
-        armGains = new Gains();
-        angleSupplier = () -> (angleEncoder.getPosition().getValueAsDouble() * Math.PI * 2);
+        armGains = INTAKE_GAINS;
+        angleSupplier = () -> (angleEncoder.getPosition().getValueAsDouble() * ROTATION_TO_RAD);
         armMass = new Mass(() -> Math.cos(angleSupplier.getAsDouble() + ARM_MASS_TO_AXIS),
                 () -> Math.sin(angleSupplier.getAsDouble() + ARM_MASS_TO_AXIS),
                 ARM_MASS);

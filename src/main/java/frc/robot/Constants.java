@@ -21,7 +21,7 @@ import frc.excalib.swerve.Swerve;
 import frc.excalib.swerve.SwerveModule;
 
 public final class Constants {
-    public static final Pose2d startingPose = new Pose2d();
+    public static final Pose2d initialPose = new Pose2d();
     public static class SwerveConstants {
         public static final int FRONT_LEFT_DRIVE_ID = 20;
         public static final int FRONT_RIGHT_DRIVE_ID = 10;
@@ -38,7 +38,7 @@ public final class Constants {
 
         private static final double PID_TOLERANCE = 0.01;
 
-        public static final double TRACK_WIDTH = 1; // m
+        public static final double TRACK_WIDTH = 0.69;
 
         public static final Translation2d FRONT_LEFT_TRANSLATION =
                 new Translation2d(
@@ -157,9 +157,9 @@ public final class Constants {
         // all the units of length are in meters
         public static final AllianceUtils.AlliancePose BLUE_HUB_CENTER_POSE = new
                 AllianceUtils.AlliancePose(5.06, 4.03, 1.83, 0);
-        public static final AllianceUtils.AlliancePose BLUE_RIGHT_DELIVERY_SIDE = new
+        public static final AllianceUtils.AlliancePose DELIVERY_RIGHT_POSE_DIATANCE = new
                 AllianceUtils.AlliancePose(1.988, 6.523,0,0);
-        public static final AllianceUtils.AlliancePose BLUE_LEFT_DELIVERY_SIDE = new
+        public static final AllianceUtils.AlliancePose DELIVERY_LEFT_POSE_DISTANCE = new
                 AllianceUtils.AlliancePose(1.988, 2.172,0,0);
         public static final Translation3d BLUE_CLIMB_TOWER_POSE_L1 = new
                 Translation3d(1.148, 4.32, 0.6858);
@@ -178,7 +178,7 @@ public final class Constants {
         public static final Translation2d BLUE_DOWN_FIELD_PICKUP_FUEL_PLACEMENT = new
                 Translation2d(0.34, 4.829);
 
-        public static final double FUEL_DIAMETER = 1; //todo
+        public static final double FUEL_DIAMETER = 0.15;
 
     }
 

@@ -18,8 +18,6 @@ public class Intake extends SubsystemBase {
 
     public final TalonFXMotor fourBarMotor;
     public final TalonFXMotor rollerMotor;
-    public final TalonFXMotor transportMotor;
-    public final Mechanism transportMotorMechanism;
     public final Mechanism rollerMotorMechanism;
     public final Arm fourBarMechanism;
     public final SoftLimit armVLimit;
@@ -35,8 +33,6 @@ public class Intake extends SubsystemBase {
         angleEncoder = new CANcoder(ANGLE_ENCODER_ID);
         fourBarMotor = new TalonFXMotor(FOUR_BAR_MOTOR_ID);
         rollerMotor = new TalonFXMotor(ROLLER_MOTOR_ID);
-        transportMotor = new TalonFXMotor(TRANSPORT_MOTOR_ID);
-        transportMotorMechanism = new Mechanism(transportMotor);
         rollerMotorMechanism = new Mechanism(rollerMotor);
         armVLimit = new SoftLimit(() -> ARM_MIN_V_LIMIT,
                 () -> ARM_MAX_V_LIMIT);

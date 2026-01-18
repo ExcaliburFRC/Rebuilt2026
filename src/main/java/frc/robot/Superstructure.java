@@ -72,7 +72,7 @@ public class Superstructure {
         }
         Command shootForDeliveryCommand = new ParallelCommandGroup(
                 shooter.adjustShooterForShootingCommand(
-                        () -> swerve.getPose2D().getTranslation(),
+                        turret::getTurretPosition,
                         () -> new Pose3d(
                                 new Translation3d(FieldConstants.BLUE_LEFT_DELIVERY_SIDE.get().getTranslation()),
                                 new Rotation3d()

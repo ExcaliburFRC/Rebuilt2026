@@ -70,10 +70,10 @@ public class Shooter extends SubsystemBase {
                                     new TrapezoidProfile.State(
                                             hoodAngleSupplier.getAsDouble(),
                                             hoodMotor.getMotorVelocity()),
-                                    new TrapezoidProfile.State(angleSetpoint.getAsDouble(), FINALE_VEL)
+                                    new TrapezoidProfile.State(angleSetpoint.getAsDouble(), FINAL_VEL)
                             );
 
-                    double pidValue = angleController.calculate(angleSetpoint.getAsDouble(), state.position);
+                    double pidValue = angleController.calculate( state.position,angleSetpoint.getAsDouble());
 
                     hoodMechanism.setVoltage(pidValue);
                 }, this
@@ -89,7 +89,7 @@ public class Shooter extends SubsystemBase {
     }
 
     public Command getFuelCommand() {
-        return new RunCommand(() -> transportMechanism.setVoltage(TRANSPORT_VOLTAGE));
+        return new RunCommand(() -> transportMechanism.setVoltage(TRANSPORT_VOLTAGE),this);
     }
 
     public Translation2d calculateShootParameters(Pose3d targetPose, Pose3d currentPose) {

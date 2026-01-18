@@ -6,7 +6,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import static edu.wpi.first.wpilibj.DriverStation.Alliance.Blue;
 
 /**
- * the purpose of this class is too supply different utility functions for functionality
+ * the purpose of this class is to supply different utility functions for functionality
  * that depends on the robot alliance.
  *
  * @author Shai Grossman

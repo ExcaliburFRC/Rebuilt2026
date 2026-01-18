@@ -43,20 +43,21 @@ public class Turret extends SubsystemBase {
                 this
         );
     }
-    public Translation2d getTurretPosition(){
+
+    public Translation2d getTurretFieldRelativePosition(){
         Pose2d robotPose = poseSupplier.get();
 
         double turretXPosition = robotPose.getY() +
-                (TURRET_DISTENCE_FROM_ROBOT / robotPose.getRotation().getCos());
+                (TURRET_OFFSET_RELATIVE_ROBOT / robotPose.getRotation().getCos());
         double turretYPosition = robotPose.getX() +
-                (TURRET_DISTENCE_FROM_ROBOT / robotPose.getRotation().getSin());
+                (TURRET_OFFSET_RELATIVE_ROBOT / robotPose.getRotation().getSin());
 
         return new Translation2d(turretXPosition, turretYPosition);
     }
 
     private Rotation2d getRelativeTargetAngle(Translation2d target){
         Pose2d robotPose = poseSupplier.get();
-        Translation2d turretPosition = getTurretPosition();
+        Translation2d turretPosition = getTurretFieldRelativePosition();
 
         Rotation2d targetAngle = new Rotation2d(
                 MathUtils.angleBetweenPoses(turretPosition,

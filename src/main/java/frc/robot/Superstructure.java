@@ -4,8 +4,6 @@ import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import frc.excalib.additional_utilities.PS5Controller;
-import frc.excalib.control.math.MathUtils;
-import frc.excalib.control.math.Vector2D;
 import frc.excalib.swerve.Swerve;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
@@ -13,6 +11,8 @@ import frc.robot.subsystems.transport.Transport;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.subsystems.turret.ShootingTargets;
 import frc.robot.subsystems.turret.Turret;
+
+import java.util.function.Supplier;
 
 import static frc.robot.subsystems.transport.Constants.SHOOTING_VOLTAGE;
 
@@ -49,23 +49,21 @@ public class Superstructure {
     }
 
     public Command shootToHubCommand() {
-        turret.turnTurretCommand(()-> ShootingTargets.HUB);
+        turret.setTargetCommand(ShootingTargets.HUB);
         return shootingCommand(FieldConstants.BLUE_HUB_CENTER_POSE.get().getTranslation());
     }
 
     public Command shootForDeliveryCommand(Translation2d current_position) {
-        Translation2d target;
-        double distenceToDeliveryForRight =
+        Supplier<ShootingTargets> target;
+        double distanceToDeliveryForRight =
                 FieldConstants.BLUE_RIGHT_DELIVERY_SIDE.get().getTranslation().getDistance(current_position);
-        target = FieldConstants.BLUE_RIGHT_DELIVERY_SIDE.get().getTranslation();
-        double distenceToDeliveryForLeft =
+        double distanceToDeliveryForLeft =
                 FieldConstants.BLUE_LEFT_DELIVERY_SIDE.get().getTranslation().getDistance(current_position);
-        target = FieldConstants.BLUE_RIGHT_DELIVERY_SIDE.get().getTranslation();
-        if (distenceToDeliveryForLeft > distenceToDeliveryForRight) {
-            turret.turnTurretCommand(()-> ShootingTargets.LEFT_DELIVERY);
+        if (distanceToDeliveryForLeft > distanceToDeliveryForRight) {
+            turret.setTargetCommand(ShootingTargets.LEFT_DELIVERY);
         } else {
-            turret.turnTurretCommand(()-> ShootingTargets.RIGHT_DELIVERY);
+            turret.setTargetCommand(ShootingTargets.RIGHT_DELIVERY);
         }
-        return shootingCommand(target);
+        return shootingCommand(FieldConstants.BLUE_HUB_CENTER_POSE.get().getTranslation());
     }
 }

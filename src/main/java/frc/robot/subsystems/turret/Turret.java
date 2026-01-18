@@ -4,17 +4,12 @@ import com.ctre.phoenix6.hardware.CANcoder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.excalib.control.math.MathUtils;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
-import frc.excalib.swerve.Swerve;
-import frc.robot.Constants;
-import frc.robot.Superstructure;
 
-import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 import static frc.robot.subsystems.turret.TurretConstans.*;
@@ -24,6 +19,7 @@ public class Turret extends SubsystemBase {
     public final frc.excalib.mechanisms.turret.Turret turretMechanism;
     public final CANcoder turretEncoder;
     public final Supplier<Pose2d> poseSupplier;
+    public ShootingTargets currentTarget = ShootingTargets.HUB;
 
     public Turret(Supplier<Pose2d> poseSupplier){
         turretMotor = new TalonFXMotor(TURRET_MOTOR_ID);
@@ -36,10 +32,17 @@ public class Turret extends SubsystemBase {
                 PID_TOLLERANCE,
                 ()-> turretEncoder.getPosition().getValueAsDouble() * 2 * Math.PI
         );
+
+        setDefaultCommand(defaultCommand());
     }
-    public Command turnTurretCommand(Supplier<ShootingTargets> shootingTargetSupplier){
+
+    public Command setTargetCommand(ShootingTargets targetToSet){
+        return new InstantCommand(()-> currentTarget = targetToSet);
+    }
+
+    public Command defaultCommand(){
         return turretMechanism.setPositionCommand(()-> getRelativeTargetAngle(
-                shootingTargetSupplier.get().getTranslation()),
+                currentTarget.getTranslation()),
                 this
         );
     }

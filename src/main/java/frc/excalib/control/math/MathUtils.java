@@ -1,11 +1,8 @@
 package frc.excalib.control.math;
 
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-
-import java.awt.geom.Line2D;
+import edu.wpi.first.math.geometry.Translation3d;
+import frc.robot.Constants;
 
 public class MathUtils {
     /**
@@ -25,32 +22,9 @@ public class MathUtils {
         }
         return value;
     }
-
-    public static Translation2d getTargetPose(Translation2d robot, Translation2d target, Translation2d reefCenter) {
-        double radius = reefCenter.getDistance(target);
-        Circle c = new Circle(reefCenter.getX(), reefCenter.getY(), radius);
-        Line[] tangents = c.getTangents(robot);
-        Rotation2d alpha = target.minus(reefCenter).getAngle();
-        Rotation2d theta = robot.minus(reefCenter).getAngle();
-        if (Math.abs(alpha.minus(theta).getRadians()) < Math.PI / 3) {
-            return target;
-        }
-        if (tangents.length == 0) {
-            Translation2d onPerimeter = reefCenter.plus(new Translation2d(radius , robot.minus(reefCenter).getAngle()));
-            Line tangent = c.getTangent(onPerimeter);
-            return tangent.findIntersection(c.getTangent(target));
-        }
-
-        Line targetTangent = c.getTangent(target);
-        if (tangents.length == 1) {
-            return targetTangent.findIntersection(tangents[0]);
-        }
-        Translation2d translation1 = targetTangent.findIntersection(tangents[0]);
-        Translation2d translation2 = targetTangent.findIntersection(tangents[1]);
-
-
-
-        if (target.getDistance(translation1) < target.getDistance(translation2)) return translation1;
-        return translation2;
+    public static double getPosesTangentAngle(Translation2d place1, Translation2d place2){
+        double angle = Math.atan2(place2.getY() - place1.getY(), place1.getX() - place2.getX());
+        if (place1.getY() > place2.getY()) angle += Math.PI;
+        return angle;
     }
 }

@@ -21,6 +21,7 @@ import frc.excalib.swerve.Swerve;
 import frc.excalib.swerve.SwerveModule;
 
 public final class Constants {
+    public static final Pose2d initialPose = new Pose2d();
     public static class SwerveConstants {
         public static final int FRONT_LEFT_DRIVE_ID = 20;
         public static final int FRONT_RIGHT_DRIVE_ID = 10;
@@ -37,7 +38,7 @@ public final class Constants {
 
         private static final double PID_TOLERANCE = 0.01;
 
-        public static final double TRACK_WIDTH = 1; // m
+        public static final double TRACK_WIDTH = 0.69;
 
         public static final Translation2d FRONT_LEFT_TRANSLATION =
                 new Translation2d(
@@ -79,9 +80,9 @@ public final class Constants {
         private static final CANcoder BACK_LEFT_ABS_ENCODER = new CANcoder(31, SWERVE_CANBUS);
         private static final CANcoder BACK_RIGHT_ABS_ENCODER = new CANcoder(41, SWERVE_CANBUS);
 
-        private static final double VELOCITY_CONVERSION_FACTOR = Units.inchesToMeters(4) * Math.PI / 6.12;
-        private static final double POSITION_CONVERSION_FACTOR = Units.inchesToMeters(4) * Math.PI / 6.12;
-        private static final double ROTATION_VELOCITY_CONVERSION_FACTOR = (2 * Math.PI) / (21.4285714);
+        private static final double VELOCITY_CONVERSION_FACTOR = Units.inchesToMeters(4) * Math.PI / 5.27;
+        private static final double POSITION_CONVERSION_FACTOR = Units.inchesToMeters(4) * Math.PI / 5.27;
+        private static final double ROTATION_VELOCITY_CONVERSION_FACTOR = (2 * Math.PI) / (26.09090909090909);
 
 //        public static final PIDConstants TRANSLATION_PID_PP_CONSTANTS = new PIDConstants(10.0, 0.0, 0.0); //TODO
 //        public static final PIDConstants ANGLE_PID_PP_CONSTANTS = new PIDConstants(5.0, 0.0, 0.0);
@@ -149,18 +150,35 @@ public final class Constants {
                     initialPose
             );
         }
+
     }
 
     public static class FieldConstants {
         // all the units of length are in meters
-        public static final Translation3d BLUE_HUB_CENTER_POSE= new Translation3d(5.06, 4.03, 1.83);
-        public static final Translation3d BLUE_TOWER_POSE_L1 = new Translation3d(1.148, 4.32, 0.6858);
-        public static final Translation3d BLUE_TOWER_POSE_L2 = new Translation3d(1.148, 4.32, 1.143);
-        public static final Translation3d BLUE_TOWER_POSE_L3 = new Translation3d(1.148, 4.32, 1.6002);
-        public static final Translation2d BLUE_OUTPOST_POSE = new Translation2d(0,0.63);
-        public static final Translation2d BLUE_DOWN_TRENCH_POSE = new Translation2d(5.06, 0.63);
-        public static final Translation2d BLUE_UP_TRENCH_PLACEMENT = new Translation2d(5.06, 7.43);
-        public static final Translation2d BLUE_PICKUP_FUEL_PLACEMENT = new Translation2d(0.685, 5.976);
+        public static final AllianceUtils.AlliancePose BLUE_HUB_CENTER_POSE = new
+                AllianceUtils.AlliancePose(5.06, 4.03, 1.83, 0);
+        public static final AllianceUtils.AlliancePose DELIVERY_RIGHT_POSE_DIATANCE = new
+                AllianceUtils.AlliancePose(1.988, 6.523,0,0);
+        public static final AllianceUtils.AlliancePose DELIVERY_LEFT_POSE_DISTANCE = new
+                AllianceUtils.AlliancePose(1.988, 2.172,0,0);
+        public static final Translation3d BLUE_CLIMB_TOWER_POSE_L1 = new
+                Translation3d(1.148, 4.32, 0.6858);
+        public static final Translation3d BLUE_CLIMB_TOWER_POSE_L2 = new
+                Translation3d(1.148, 4.32, 1.143);
+        public static final Translation3d BLUE_CLIMB_TOWER_POSE_L3 = new
+                Translation3d(1.148, 4.32, 1.6002);
+        public static final Translation2d BLUE_OUTPOST_POSE_CENTER = new
+                Translation2d(0,0.63);
+        public static final Translation2d BLUE_DOWN_FIELD_TRENCH_POSE = new
+                Translation2d(5.06, 0.63);
+        public static final Translation2d BLUE_UP_FIELD_TRENCH_PLACEMENT = new
+                Translation2d(5.06, 7.43);
+        public static final Translation2d BLUE_UP_FIELD_PICKUP_FUEL_PLACEMENT = new
+                Translation2d(0.34, 6.509);
+        public static final Translation2d BLUE_DOWN_FIELD_PICKUP_FUEL_PLACEMENT = new
+                Translation2d(0.34, 4.829);
+
+        public static final double FUEL_DIAMETER = 0.15;
 
     }
 

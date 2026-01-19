@@ -1,5 +1,6 @@
 package frc.excalib.additional_utilities;
 
+import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -9,13 +10,14 @@ import edu.wpi.first.wpilibj.DriverStation;
 import static edu.wpi.first.wpilibj.DriverStation.Alliance.Blue;
 
 /**
- * the purpose of this class is too supply different utility functions for functionality
+ * the purpose of this class is to supply different utility functions for functionality
  * that depends on the robot alliance.
+ *
  * @author Shai Grossman
  */
 public class AllianceUtils {
-    public static final double FIELD_LENGTH_METERS = 17.548;
-    public static final double FIELD_WIDTH_METERS = 8.052;
+    public static final double FIELD_LENGTH_METERS = 16.54;
+    public static final double FIELD_WIDTH_METERS = 8.07;
 
     /**
      * @return whether the robot is on the blue alliance
@@ -76,27 +78,39 @@ public class AllianceUtils {
     }
 
     public static class AlliancePose {
-        private Pose2d pose;
+        private Pose3d pose;
 
         public AlliancePose(double x, double y, double degrees) {
-            this.pose = new Pose2d(x, y, Rotation2d.fromDegrees(degrees));
+            this.pose = new Pose3d(new Translation3d(x, y, 0), new Rotation3d(0, 0, degrees));
         }
 
 
         public AlliancePose() {
-            this.pose = new Pose2d(new Translation2d(), new Rotation2d());
+            this.pose = new Pose3d(new Translation3d(), new Rotation3d());
         }
 
         public AlliancePose(Translation2d translation, Rotation2d rotation) {
-            this.pose = new Pose2d(translation, rotation);
+            pose = new Pose3d(new Translation3d(translation), new Rotation3d(rotation));
         }
 
         public AlliancePose(double degrees) {
-            this.pose = new Pose2d(0, 0, Rotation2d.fromDegrees(degrees));
+            this.pose = new Pose3d(new Translation3d(), new Rotation3d(Rotation2d.fromDegrees(degrees)));
         }
 
-        public Pose2d get() {
-            return toAlliancePose(pose);
+        public AlliancePose(Translation3d translation3d, Rotation3d rotation3d) {
+            pose = new Pose3d(translation3d, rotation3d);
+        }
+
+        public AlliancePose(double x, double y, double z, double yaw, double roll, double pitch) {
+            pose = new Pose3d(x, y, z, new Rotation3d(roll, pitch, yaw));
+        }
+
+        public AlliancePose(double x, double y, double z, double yaw) {
+            pose = new Pose3d(x, y, z, new Rotation3d(0, 0, yaw));
+        }
+
+        public Pose2d getAsCurrentAlliance() {
+            return toAlliancePose(pose.toPose2d());
         }
     }
 }

@@ -15,4 +15,5 @@ public class TurretConstants {
     public static final Gains TURRET_GAINS = new Gains();
     public static final double PID_TOLLERANCE = 0;
     public static final Translation2d TURRET_OFFSET_RELATIVE_ROBOT = new Translation2d();
+    public static final double ROTATIONS_TO_RAD = 2 * Math.PI;
 }

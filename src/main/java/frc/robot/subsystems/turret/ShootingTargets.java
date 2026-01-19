@@ -10,14 +10,15 @@ public enum ShootingTargets {
     LEFT_DELIVERY(Constants.FieldConstants.DELIVERY_LEFT_POSE_DISTANCE.getAsCurrentAlliance().getTranslation()),
     RIGHT_DELIVERY(Constants.FieldConstants.DELIVERY_RIGHT_POSE_DIATANCE.getAsCurrentAlliance().getTranslation());
 
-    Translation2d blue;
+    Translation2d bluePose;
 
     ShootingTargets(Translation2d blue){
-        this.blue = blue;
-
+        this.bluePose = blue;
     }
 
     public Translation2d getTranslation() {
-        return AllianceUtils.isBlueAlliance()? blue : AllianceUtils.switchAlliance(new Translation3d(blue)).toTranslation2d();
+        return AllianceUtils.isBlueAlliance()?
+                bluePose : AllianceUtils.switchAlliance(
+                        new Translation3d(bluePose)).toTranslation2d();
     }
 }

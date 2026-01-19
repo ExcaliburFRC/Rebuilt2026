@@ -69,14 +69,6 @@ public class AllianceUtils {
         );
     }
 
-    public static Translation3d switchAlliance(Translation3d pose) {
-        return new Translation3d(
-                FIELD_LENGTH_METERS - pose.getX(),
-                FIELD_WIDTH_METERS - pose.getY(),
-                pose.getZ()
-        );
-    }
-
     public static Pose2d mirrorAlliance(Pose2d pose) {
         return new Pose2d(
                 FIELD_LENGTH_METERS - pose.getX(),

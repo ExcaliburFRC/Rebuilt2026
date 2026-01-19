@@ -3,6 +3,7 @@ package frc.robot;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.excalib.additional_utilities.PS5Controller;
 import frc.excalib.swerve.Swerve;
 import frc.robot.subsystems.intake.Intake;
@@ -31,7 +32,7 @@ public class Superstructure {
         this.controller = controller;
     }
 
-    private Command shootingCommand(Translation2d target){
+    private Command shootingCommand(Translation2d target) {
         return new ParallelCommandGroup(
                 shooter.adjustShooterForShootingCommand(
                         () -> swerve.getPose2D().getTranslation(),
@@ -46,21 +47,22 @@ public class Superstructure {
     }
 
     public Command shootToHubCommand() {
-        turret.setTargetCommand(ShootingTargets.HUB);
-        return shootingCommand(FieldConstants.BLUE_HUB_CENTER_POSE.getAsCurrentAlliance().getTranslation());
+        return new SequentialCommandGroup(
+                turret.setTargetCommand(ShootingTargets.HUB),
+                shootingCommand(FieldConstants.BLUE_HUB_CENTER_POSE.getAsCurrentAlliance().getTranslation()));
     }
 
-    public Command  shootForDeliveryCommand(Translation2d current_position) {
+    public Command shootForDeliveryCommand(Translation2d current_position) {
         Translation2d deliveryPoseOption;
-        double distanceToDeliveryForRight =
-                FieldConstants.DELIVERY_RIGHT_POSE_DIATANCE.getAsCurrentAlliance().getTranslation().getDistance(current_position);
-        double distanceToDeliveryForLeft =
-                FieldConstants.DELIVERY_LEFT_POSE_DISTANCE.getAsCurrentAlliance().getTranslation().getDistance(current_position);
-        if (distanceToDeliveryForLeft > distanceToDeliveryForRight) {
-            deliveryPoseOption = FieldConstants.DELIVERY_LEFT_POSE_DISTANCE.getAsCurrentAlliance().getTranslation();
+        Translation2d distanceToDeliveryForRight =
+                FieldConstants.DELIVERY_RIGHT_POSE_DIATANCE.getAsCurrentAlliance().getTranslation();
+        Translation2d distanceToDeliveryForLeft =
+                FieldConstants.DELIVERY_LEFT_POSE_DISTANCE.getAsCurrentAlliance().getTranslation();
+        if (distanceToDeliveryForLeft.getDistance(current_position) > distanceToDeliveryForRight.getDistance(current_position)) {
+            deliveryPoseOption = distanceToDeliveryForLeft;
             turret.setTargetCommand(ShootingTargets.LEFT_DELIVERY);
         } else {
-            deliveryPoseOption = FieldConstants.DELIVERY_RIGHT_POSE_DIATANCE.getAsCurrentAlliance().getTranslation();
+            deliveryPoseOption = distanceToDeliveryForRight;
             turret.setTargetCommand(ShootingTargets.RIGHT_DELIVERY);
         }
 

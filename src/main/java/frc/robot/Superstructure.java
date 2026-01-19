@@ -59,10 +59,12 @@ public class Superstructure {
 
     public Command shootForDeliveryCommand() {
         Translation2d deliveryPoseOption;
+
         double distanceToDeliveryForRight =
                 DELIVERY_RIGHT_POSE_DIATANCE.getAsCurrentAlliance().getTranslation().getDistance(swerve.getPose2D().getTranslation());
         double distanceToDeliveryForLeft =
                 DELIVERY_LEFT_POSE_DISTANCE.getAsCurrentAlliance().getTranslation().getDistance(swerve.getPose2D().getTranslation());
+
 
         if (distanceToDeliveryForLeft > distanceToDeliveryForRight) {
             deliveryPoseOption = DELIVERY_LEFT_POSE_DISTANCE.getAsCurrentAlliance().getTranslation();

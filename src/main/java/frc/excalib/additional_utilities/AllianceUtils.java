@@ -1,6 +1,10 @@
 package frc.excalib.additional_utilities;
 
 import edu.wpi.first.math.geometry.*;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.wpilibj.DriverStation;
 
 import static edu.wpi.first.wpilibj.DriverStation.Alliance.Blue;
@@ -46,7 +50,6 @@ public class AllianceUtils {
         if (isBlueAlliance()) return bluePose;
         return switchAlliance(bluePose);
     }
-
     public static Translation3d toAlliancePose(Translation3d bluePose) {
         if (isBlueAlliance()) return bluePose;
         return switchAlliance(bluePose);
@@ -56,6 +59,13 @@ public class AllianceUtils {
         return new Pose2d(
                 FIELD_LENGTH_METERS - pose.getX(), FIELD_WIDTH_METERS - pose.getY(),
                 pose.getRotation().minus(Rotation2d.fromDegrees(180))
+        );
+    }
+    public static Translation3d switchAlliance(Translation3d pose) {
+        return new Translation3d(
+                FIELD_LENGTH_METERS - pose.getX(),
+                FIELD_WIDTH_METERS - pose.getY(),
+                pose.getZ()
         );
     }
 
@@ -81,6 +91,7 @@ public class AllianceUtils {
         public AlliancePose(double x, double y, double degrees) {
             this.pose = new Pose3d(new Translation3d(x, y, 0), new Rotation3d(0, 0, degrees));
         }
+
 
         public AlliancePose() {
             this.pose = new Pose3d(new Translation3d(), new Rotation3d());

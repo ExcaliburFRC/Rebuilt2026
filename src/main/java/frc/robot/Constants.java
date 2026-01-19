@@ -80,9 +80,9 @@ public final class Constants {
         private static final CANcoder BACK_LEFT_ABS_ENCODER = new CANcoder(31, SWERVE_CANBUS);
         private static final CANcoder BACK_RIGHT_ABS_ENCODER = new CANcoder(41, SWERVE_CANBUS);
 
-        private static final double VELOCITY_CONVERSION_FACTOR = Units.inchesToMeters(4) * Math.PI / 6.12;
-        private static final double POSITION_CONVERSION_FACTOR = Units.inchesToMeters(4) * Math.PI / 6.12;
-        private static final double ROTATION_VELOCITY_CONVERSION_FACTOR = (2 * Math.PI) / (21.4285714);
+        private static final double VELOCITY_CONVERSION_FACTOR = Units.inchesToMeters(4) * Math.PI / 5.27;
+        private static final double POSITION_CONVERSION_FACTOR = Units.inchesToMeters(4) * Math.PI / 5.27;
+        private static final double ROTATION_VELOCITY_CONVERSION_FACTOR = (2 * Math.PI) / (26.09090909090909);
 
 //        public static final PIDConstants TRANSLATION_PID_PP_CONSTANTS = new PIDConstants(10.0, 0.0, 0.0); //TODO
 //        public static final PIDConstants ANGLE_PID_PP_CONSTANTS = new PIDConstants(5.0, 0.0, 0.0);
@@ -167,7 +167,7 @@ public final class Constants {
                 Translation3d(1.148, 4.32, 1.143);
         public static final Translation3d BLUE_CLIMB_TOWER_POSE_L3 = new
                 Translation3d(1.148, 4.32, 1.6002);
-        public static final Translation2d BLUE_OUTPOST_POSE = new
+        public static final Translation2d BLUE_OUTPOST_POSE_CENTER = new
                 Translation2d(0,0.63);
         public static final Translation2d BLUE_DOWN_FIELD_TRENCH_POSE = new
                 Translation2d(5.06, 0.63);

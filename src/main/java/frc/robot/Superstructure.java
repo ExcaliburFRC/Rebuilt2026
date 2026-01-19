@@ -2,8 +2,11 @@ package frc.robot;
 
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import frc.excalib.additional_utilities.AllianceUtils;
 import frc.excalib.additional_utilities.PS5Controller;
 import frc.excalib.swerve.Swerve;
 import frc.robot.subsystems.intake.Intake;
@@ -13,7 +16,9 @@ import frc.robot.Constants.FieldConstants;
 import frc.robot.subsystems.turret.ShootingTargets;
 import frc.robot.subsystems.turret.Turret;
 
+import static frc.robot.Constants.FieldConstants.*;
 import static frc.robot.subsystems.transport.Constants.SHOOTING_VOLTAGE;
+import static frc.robot.subsystems.turret.ShootingTargets.*;
 
 public class Superstructure {
     public final Intake intake;
@@ -52,20 +57,32 @@ public class Superstructure {
                 shootingCommand(FieldConstants.BLUE_HUB_CENTER_POSE.getAsCurrentAlliance().getTranslation()));
     }
 
-    public Command shootForDeliveryCommand(Translation2d current_position) {
+    public Command shootForDeliveryCommand() {
         Translation2d deliveryPoseOption;
-        Translation2d distanceToDeliveryForRight =
-                FieldConstants.DELIVERY_RIGHT_POSE_DIATANCE.getAsCurrentAlliance().getTranslation();
-        Translation2d distanceToDeliveryForLeft =
-                FieldConstants.DELIVERY_LEFT_POSE_DISTANCE.getAsCurrentAlliance().getTranslation();
-        if (distanceToDeliveryForLeft.getDistance(current_position) > distanceToDeliveryForRight.getDistance(current_position)) {
-            deliveryPoseOption = distanceToDeliveryForLeft;
-            turret.setTargetCommand(ShootingTargets.LEFT_DELIVERY);
+        double distanceToDeliveryForRight =
+                DELIVERY_RIGHT_POSE_DIATANCE.getAsCurrentAlliance().getTranslation().getDistance(swerve.getPose2D().getTranslation());
+        double distanceToDeliveryForLeft =
+                DELIVERY_LEFT_POSE_DISTANCE.getAsCurrentAlliance().getTranslation().getDistance(swerve.getPose2D().getTranslation());
+
+        if (distanceToDeliveryForLeft > distanceToDeliveryForRight) {
+            deliveryPoseOption = DELIVERY_LEFT_POSE_DISTANCE.getAsCurrentAlliance().getTranslation();
+            CommandScheduler.getInstance().schedule(turret.setTargetCommand(LEFT_DELIVERY));
         } else {
-            deliveryPoseOption = distanceToDeliveryForRight;
-            turret.setTargetCommand(ShootingTargets.RIGHT_DELIVERY);
+            deliveryPoseOption = DELIVERY_RIGHT_POSE_DIATANCE.getAsCurrentAlliance().getTranslation();
+            CommandScheduler.getInstance().schedule(turret.setTargetCommand(RIGHT_DELIVERY));
         }
 
         return shootingCommand(deliveryPoseOption);
+    }
+
+    public Command ultimateShootingCommand() {
+        return new ConditionalCommand(
+                shootToHubCommand(),
+                shootForDeliveryCommand(),
+                () -> {
+                    boolean condition = swerve.getPose2D().getX() < BLUE_HUB_CENTER_POSE.getAsCurrentAlliance().getX();
+                    return AllianceUtils.isBlueAlliance()? condition: !condition;
+                }
+        );
     }
 }

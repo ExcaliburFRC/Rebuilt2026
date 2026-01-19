@@ -21,7 +21,7 @@ public class Turret extends SubsystemBase {
     public final Supplier<Pose2d> poseSupplier;
     public ShootingTargets currentTarget = ShootingTargets.HUB;
 
-    public Turret(Supplier<Pose2d> poseSupplier){
+    public Turret(Supplier<Pose2d> poseSupplier) {
         turretMotor = new TalonFXMotor(TURRET_MOTOR_ID);
         turretEncoder = new CANcoder(TURRET_ENCODER_ID);
         this.poseSupplier = poseSupplier;
@@ -30,24 +30,25 @@ public class Turret extends SubsystemBase {
                 TURRET_CONTINOUS_SOFTLIMIT,
                 TURRET_GAINS,
                 PID_TOLLERANCE,
-                ()-> turretEncoder.getPosition().getValueAsDouble() * 2 * Math.PI
+                () -> turretEncoder.getPosition().getValueAsDouble() * 2 * Math.PI
         );
 
-        setDefaultCommand(defaultCommand());
+        setDefaultCommand(followTargetCommand());
     }
 
-    public Command setTargetCommand(ShootingTargets targetToSet){
-        return new InstantCommand(()-> currentTarget = targetToSet);
+    public Command setTargetCommand(ShootingTargets targetToSet) {
+        return new InstantCommand(() -> currentTarget = targetToSet);
     }
 
-    public Command defaultCommand(){
-        return turretMechanism.setPositionCommand(()-> getRelativeTargetAngle(
-                currentTarget.getTranslation()),
+    public Command followTargetCommand() {
+        return turretMechanism.setPositionCommand(
+                () -> getRelativeTargetAngle(
+                        currentTarget.getTranslation()),
                 this
         );
     }
 
-    public Translation2d getTurretFieldRelativePosition(){
+    public Translation2d getTurretFieldRelativePosition() {
         Pose2d robotPose = poseSupplier.get();
 
         double turretXPosition = robotPose.getY() +
@@ -58,7 +59,7 @@ public class Turret extends SubsystemBase {
         return new Translation2d(turretXPosition, turretYPosition);
     }
 
-    private Rotation2d getRelativeTargetAngle(Translation2d target){
+    private Rotation2d getRelativeTargetAngle(Translation2d target) {
         Pose2d robotPose = poseSupplier.get();
         Translation2d turretPosition = getTurretFieldRelativePosition();
 

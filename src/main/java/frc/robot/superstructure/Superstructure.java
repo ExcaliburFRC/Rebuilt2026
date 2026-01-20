@@ -1,4 +1,4 @@
-package frc.robot;
+package frc.robot.superstructure;
 
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -9,12 +9,14 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.excalib.additional_utilities.AllianceUtils;
 import frc.excalib.additional_utilities.PS5Controller;
 import frc.excalib.swerve.Swerve;
+import frc.robot.Constants;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.transport.Transport;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.subsystems.turret.ShootingTargets;
 import frc.robot.subsystems.turret.Turret;
+import frc.robot.util.ShooterPhysics;
 
 import static frc.robot.Constants.FieldConstants.*;
 import static frc.robot.subsystems.transport.Constants.SHOOTING_VOLTAGE;
@@ -28,13 +30,27 @@ public class Superstructure {
     public final PS5Controller controller;
     public final Turret turret;
 
+    public final ShooterPhysics shooterPhysic;
+
+
     public Superstructure(PS5Controller controller) {
         intake = new Intake();
         shooter = new Shooter();
         transport = new Transport();
-        swerve = Constants.SwerveConstants.configureSwerve(Constants.initialPose);
+
+        swerve = Constants.SwerveConstants.configureSwerve(Constants.INITIAL_POSE);
+
         turret = new Turret(swerve::getPose2D);
+
         this.controller = controller;
+
+        shooterPhysic = new ShooterPhysics(
+                swerve::getPose2D,
+                () -> swerve.getVelocity().getX(),
+                () -> swerve.imu.getYRotation().getRadians()
+        );
+
+
     }
 
     private Command shootingCommand(Translation2d target) {
@@ -83,7 +99,7 @@ public class Superstructure {
                 shootForDeliveryCommand(),
                 () -> {
                     boolean condition = swerve.getPose2D().getX() < BLUE_HUB_CENTER_POSE.getAsCurrentAlliance().getX();
-                    return AllianceUtils.isBlueAlliance()? condition: !condition;
+                    return AllianceUtils.isBlueAlliance() ? condition : !condition;
                 }
         );
     }

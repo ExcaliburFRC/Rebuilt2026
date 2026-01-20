@@ -7,19 +7,22 @@ package frc.robot;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.util.ShooterPhysics;
 import monologue.Monologue;
 
+import static frc.robot.Constants.PHYSICS_PERIODIC_TIME;
+
 public class Robot extends TimedRobot {
-    private Command m_autonomousCommand;
+    private Command autonomousCommand;
 
     private final RobotContainer robotContainer;
 
     public Robot() {
         robotContainer = new RobotContainer();
 
-        boolean fileOnly = false;
-        boolean lazyLogging = false;
-        Monologue.setupMonologue(robotContainer, "Robot", fileOnly, lazyLogging);
+        Monologue.setupMonologue(robotContainer, "Robot", false, false);
+
+        addPeriodic(ShooterPhysics::solve, PHYSICS_PERIODIC_TIME);
     }
 
     @Override
@@ -42,10 +45,10 @@ public class Robot extends TimedRobot {
 
     @Override
     public void autonomousInit() {
-        m_autonomousCommand = robotContainer.getAutonomousCommand();
+        autonomousCommand = robotContainer.getAutonomousCommand();
 
-        if (m_autonomousCommand != null) {
-            CommandScheduler.getInstance().schedule(m_autonomousCommand);
+        if (autonomousCommand != null) {
+            CommandScheduler.getInstance().schedule(autonomousCommand);
         }
     }
 
@@ -59,8 +62,8 @@ public class Robot extends TimedRobot {
 
     @Override
     public void teleopInit() {
-        if (m_autonomousCommand != null) {
-            m_autonomousCommand.cancel();
+        if (autonomousCommand != null) {
+            autonomousCommand.cancel();
         }
     }
 

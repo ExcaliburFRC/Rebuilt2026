@@ -294,6 +294,17 @@ public class Swerve extends SubsystemBase implements Logged {
         return odometry.getRobotPose();
     }
 
+    @Log.NT(key = "Robot Approximated Future Pose")
+    public Pose2d getApproximatedFuturePose2D() {
+        return new Pose2d(
+                new Translation2d(
+                odometry.getRobotPose().getX() + (getVelocity().getX() * 0.02),
+                odometry.getRobotPose().getY() + (getVelocity().getY() * 0.02)
+                ),
+                new Rotation2d(getRotation2D().getRadians() + (getRobotRelativeSpeeds().omegaRadiansPerSecond))
+        );
+    }
+
     /**
      * Gets the current velocity of the robot.
      *

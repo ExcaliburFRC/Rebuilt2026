@@ -40,14 +40,14 @@ public class Superstructure {
 
         swerve = Constants.SwerveConstants.configureSwerve(Constants.INITIAL_POSE);
 
-        turret = new Turret(swerve::getPose2D);
+        turret = new Turret(swerve::getApproximatedFuturePose2D);
 
         this.controller = controller;
 
         shooterPhysic = new ShooterPhysics(
-                swerve::getPose2D,
+                swerve::getApproximatedFuturePose2D,
                 () -> swerve.getVelocity().getX(),
-                () -> swerve.imu.getYRotation().getRadians()
+                () -> swerve.getRobotRelativeSpeeds().omegaRadiansPerSecond
         );
 
 

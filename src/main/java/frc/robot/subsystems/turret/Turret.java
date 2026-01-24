@@ -9,7 +9,9 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.excalib.control.math.MathUtils;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
+import frc.excalib.control.motor.motor_specs.IdleState;
 
+import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 import static frc.robot.subsystems.turret.TurretConstants.*;
@@ -17,6 +19,7 @@ import static frc.robot.subsystems.turret.TurretConstants.*;
 public class Turret extends SubsystemBase {
     public final TalonFXMotor turretMotor;
     public final frc.excalib.mechanisms.turret.Turret turretMechanism;
+    public final DoubleSupplier turretAngleSuppier;
     public final CANcoder turretEncoder;
     public final Supplier<Pose2d> robotPoseSupplier;
     public ShootingTargets currentTarget = ShootingTargets.HUB;
@@ -25,14 +28,22 @@ public class Turret extends SubsystemBase {
         turretMotor = new TalonFXMotor(TURRET_MOTOR_ID);
         turretEncoder = new CANcoder(TURRET_ENCODER_ID);
 
+        turretAngleSuppier = () -> turretEncoder.getPosition().getValueAsDouble() * ROTATIONS_TO_RAD;
+
+        turretMotor.setMotorPosition(turretAngleSuppier.getAsDouble());
+
+        turretMotor.setIdleState(IdleState.BRAKE);
+        turretMotor.setPositionConversionFactor(POSITION_CONVERSION_FACTOR);
+        turretMotor.setVelocityConversionFactor(VELOCITY_CONVERSION_FACTOR);
+
         this.robotPoseSupplier = poseSupplier;
 
         turretMechanism = new frc.excalib.mechanisms.turret.Turret(
                 turretMotor,
                 TURRET_CONTINOUS_SOFTLIMIT,
                 TURRET_GAINS,
-                PID_TOLLERANCE,
-                () -> turretEncoder.getPosition().getValueAsDouble() * ROTATIONS_TO_RAD
+                PID_TOLERANCE,
+                turretAngleSuppier
         );
 
         setDefaultCommand(followTargetCommand());
@@ -45,7 +56,8 @@ public class Turret extends SubsystemBase {
     public Command followTargetCommand() {
         return turretMechanism.setPositionCommand(
                 () -> getRelativeTargetAngle(
-                        currentTarget.getTranslation()),
+                        currentTarget.getTranslation()
+                ),
                 this
         );
     }
@@ -65,9 +77,7 @@ public class Turret extends SubsystemBase {
         Pose2d robotPose = robotPoseSupplier.get();
         Translation2d turretPosition = getTurretFieldRelativePosition();
 
-        Rotation2d targetAngle = new Rotation2d(
-                MathUtils.getPosesTangentAngle(turretPosition,
-                        target));
+        Rotation2d targetAngle = new Rotation2d(MathUtils.getPosesTangentAngle(turretPosition, target));
 
         return targetAngle.minus(robotPose.getRotation());
     }

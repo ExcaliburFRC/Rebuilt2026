@@ -22,7 +22,7 @@ import frc.excalib.swerve.SwerveModule;
 
 public final class Constants {
     public static final Pose2d INITIAL_POSE = new Pose2d();
-    public static final double PHYSICS_PERIODIC_TIME = 0.01;
+    public static final double PHYSICS_PERIODIC_TIME = 0.02;
 
     public static class SwerveConstants {
         public static final int FRONT_LEFT_DRIVE_ID = 20;

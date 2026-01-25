@@ -19,7 +19,7 @@ import static frc.robot.subsystems.turret.TurretConstants.*;
 public class Turret extends SubsystemBase {
     public final TalonFXMotor turretMotor;
     public final frc.excalib.mechanisms.turret.Turret turretMechanism;
-    public final DoubleSupplier turretAngleSuppier;
+    public final DoubleSupplier turretAngleSupplier;
     public final CANcoder turretEncoder;
     public final Supplier<Pose2d> robotPoseSupplier;
     public ShootingTargets currentTarget = ShootingTargets.HUB;
@@ -28,9 +28,9 @@ public class Turret extends SubsystemBase {
         turretMotor = new TalonFXMotor(TURRET_MOTOR_ID);
         turretEncoder = new CANcoder(TURRET_ENCODER_ID);
 
-        turretAngleSuppier = () -> turretEncoder.getPosition().getValueAsDouble() * ROTATIONS_TO_RAD;
+        turretAngleSupplier = () -> turretEncoder.getPosition().getValueAsDouble() * ROTATIONS_TO_RAD;
 
-        turretMotor.setMotorPosition(turretAngleSuppier.getAsDouble());
+        turretMotor.setMotorPosition(turretAngleSupplier.getAsDouble());
 
         turretMotor.setIdleState(IdleState.BRAKE);
         turretMotor.setPositionConversionFactor(POSITION_CONVERSION_FACTOR);
@@ -43,7 +43,7 @@ public class Turret extends SubsystemBase {
                 TURRET_CONTINOUS_SOFTLIMIT,
                 TURRET_GAINS,
                 PID_TOLERANCE,
-                turretAngleSuppier
+                turretAngleSupplier
         );
 
         setDefaultCommand(followTargetCommand());

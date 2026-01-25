@@ -3,9 +3,7 @@ package frc.robot.subsystems.shooter;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.*;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.excalib.control.limits.SoftLimit;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
 import frc.excalib.mechanisms.Mechanism;
@@ -28,32 +26,29 @@ public class Shooter extends SubsystemBase {
     public final DoubleSupplier hoodAngleSupplier;
     public final SoftLimit hoodSoftLimit;
 
-    public final DigitalInput beamBreak;
-    public final Trigger hasFuel;
-    public final Supplier<Translation2d> robotPosition;
+    public final Supplier<Translation2d> robotPositionSupplier;
 
 
     public Shooter(Supplier<Translation2d> translationSupplier) {
         hoodMotor = new TalonFXMotor(HOOD_MOTOR_ID);
         flyWheelMotor = new TalonFXMotor(FLYWHEEL_MOTOR_ID);
         supportWheelMotor = new TalonFXMotor(SUPPORT_WHEEL_MOTOR_ID);
-        beamBreak = new DigitalInput(BEAM_BREAK_CHANNEL);
         transportMotor = new TalonFXMotor(TRANSPORT_MOTOR_ID);
-        robotPosition = translationSupplier;
 
+        robotPositionSupplier = translationSupplier;
         hoodAngleSupplier = () -> (hoodMotor.getPosition().getValueAsDouble() * POSITION_CONVERSION_FACTOR);
+
         transportMechanism = new Mechanism(transportMotor);
         hoodMechanism = new Mechanism(hoodMotor);
-        flyWheelMechanism = new FlyWheel(flyWheelMotor, FLY_WHEEL_MAX_ACCELERATION,
-                FLY_WHEEL_MAX_JERK, FLYWHEEL_GAINS);
         supportWheelMechanism = new Mechanism(supportWheelMotor);
+
+        flyWheelMechanism = new FlyWheel(flyWheelMotor, FLY_WHEEL_MAX_ACCELERATION, FLY_WHEEL_MAX_JERK, FLYWHEEL_GAINS);
 
         hoodSoftLimit = new SoftLimit(
                 () -> HOOD_MIN_ANGLE_LIMIT,
                 () -> HOOD_MAX_ANGLE_LIMIT
         );
 
-        hasFuel = new Trigger(beamBreak::get);
 
     }
 

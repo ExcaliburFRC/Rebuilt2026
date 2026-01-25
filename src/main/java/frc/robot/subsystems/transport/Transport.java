@@ -10,7 +10,7 @@ import java.util.function.DoubleSupplier;
 import static frc.robot.subsystems.transport.Constants.*;
 
 public class Transport extends SubsystemBase {
-    private TalonFXMotor drumMotor;
+    private final TalonFXMotor drumMotor;
     public Mechanism drumMechanism;
 
     public Transport() {

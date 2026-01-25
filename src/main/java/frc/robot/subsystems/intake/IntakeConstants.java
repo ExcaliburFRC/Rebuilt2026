@@ -1,6 +1,7 @@
 package frc.robot.subsystems.intake;
 
 import frc.excalib.control.gains.Gains;
+import frc.excalib.control.limits.SoftLimit;
 
 public class IntakeConstants {
 
@@ -15,8 +16,7 @@ public class IntakeConstants {
 
     // ==== Arm Initialization Constants ==== //
     public static final int ARM_MIN_VELOCITY_LIMIT = 0;
-    public static final int ARM_MAX_V_LIMIT = 0;
-    public static final int ARM_MASS_TO_AXIS = 0;
+    public static final int ARM_MAX_VELOCITY_LIMIT = 0;
     public static final int ARM_MASS = 0;
     public static final double MAX_OFFSET = 0;
     public static final double INTAKE_MAX_ANGLE = 0;
@@ -30,4 +30,10 @@ public class IntakeConstants {
     // ==== Other ====//
     public static final Gains INTAKE_GAINS = new Gains();
     public static final double ROTATION_TO_RAD = 2 * Math.PI;
+    public static final SoftLimit ARM_VELOCITY_LIMIT = new SoftLimit(
+            () -> ARM_MIN_VELOCITY_LIMIT,
+            () -> ARM_MAX_VELOCITY_LIMIT
+    );
+    public static final Gains ARM_POSITION_GAINS = new Gains();
+    public static final double ARM_MASS_KG = 0;
 }

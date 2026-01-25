@@ -85,7 +85,7 @@ public class Superstructure {
     }
 
     public Command openIntakeCommand(){
-        return intake.openFloorIntakeCommand();
+        return intake.openIntakeCommand();
     }
 
     public Command driveToClosesTrenchCommand(){

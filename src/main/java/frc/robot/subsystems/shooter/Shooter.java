@@ -8,6 +8,9 @@ import frc.excalib.control.limits.SoftLimit;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
 import frc.excalib.mechanisms.Mechanism;
 import frc.excalib.mechanisms.fly_wheel.FlyWheel;
+import jdk.jfr.Frequency;
+import jdk.jfr.Name;
+import jdk.jfr.Registered;
 
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
@@ -27,7 +30,6 @@ public class Shooter extends SubsystemBase {
     public final SoftLimit hoodSoftLimit;
 
     public final Supplier<Translation2d> robotPositionSupplier;
-
 
     public Shooter(Supplier<Translation2d> translationSupplier) {
         hoodMotor = new TalonFXMotor(HOOD_MOTOR_ID);
@@ -70,12 +72,8 @@ public class Shooter extends SubsystemBase {
                     double pidValue = angleController.calculate( state.position,angleSetpoint.getAsDouble());
 
                     hoodMechanism.setVoltage(pidValue);
-                }, this
+                }
         );
-    }
-
-    public Command flyWheelWarmupCommand(double velocity) {
-        return flyWheelMechanism.smartVelocityCommand(() -> velocity, this);
     }
 
     public Command setFlyWheelVelocityCommand(DoubleSupplier velocity) {
@@ -83,7 +81,7 @@ public class Shooter extends SubsystemBase {
     }
 
     public Command getFuelCommand() {
-        return new RunCommand(() -> transportMechanism.setVoltage(TRANSPORT_VOLTAGE),this);
+        return new RunCommand(() -> transportMechanism.setVoltage(TRANSPORT_VOLTAGE));
     }
 
     public Translation2d calculateShootParameters(Pose3d targetPose, Pose3d currentPose) {

@@ -23,8 +23,6 @@ public class IntakeConstants {
     public static final double INTAKE_MIN_ANGLE = 0;
 
     // ==== Intake Angles and Tolerances ==== //
-    public static final double FLOOR_INTAKE_ANGLE = 0;
-    public static final int CLOSE_INTAKE_ANGLE = 0;
     public static final int INTAKE_ANGLE_TOLERANCE = 0;
 
     // ==== Other ====//

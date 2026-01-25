@@ -11,6 +11,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.networktables.GenericEntry;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -56,7 +57,6 @@ public class Swerve extends SubsystemBase {
 
     public final Field2d field = new Field2d();
 
-    private ChassisSpeeds desiredChassisSpeeds = new ChassisSpeeds();
     private Supplier<Rotation2d> angleSetpoint = Rotation2d::new;
     private Supplier<Translation2d> translationSetpoint = Translation2d::new;
 

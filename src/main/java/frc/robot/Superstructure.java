@@ -26,9 +26,9 @@ public class Superstructure {
 
     public Superstructure(PS5Controller controller) {
         intake = new Intake();
-        shooter = new Shooter();
         transport = new Transport();
         swerve = Constants.SwerveConstants.configureSwerve(Constants.initialPose);
+        shooter = new Shooter(()-> swerve.getPose2D().getTranslation());
         turret = new Turret(swerve::getPose2D);
         this.controller = controller;
     }
@@ -86,5 +86,16 @@ public class Superstructure {
 
     public Command openIntakeCommand(){
         return intake.openFloorIntakeCommand();
+    }
+
+    public Command driveToClosesTrenchCommand(){
+        double robotYPosition = swerve.getPose2D().getY();
+
+        if (swerve.getPose2D().getTranslation().getDistance(BLUE_DOWN_FIELD_TRENCH_POSE) >
+                swerve.getPose2D().getTranslation().getDistance(BLUE_UP_FIELD_TRENCH_PLACEMENT)){
+            return swerve.driveToPoseCommand(new Pose2d(BLUE_DOWN_FIELD_TRENCH_POSE, new Rotation2d()));
+        } else {
+            return swerve.driveToPoseCommand(new Pose2d(BLUE_UP_FIELD_TRENCH_PLACEMENT, new Rotation2d()));
+        }
     }
 }

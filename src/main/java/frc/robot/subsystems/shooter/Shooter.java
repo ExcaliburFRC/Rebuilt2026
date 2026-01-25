@@ -1,10 +1,7 @@
 package frc.robot.subsystems.shooter;
 
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.*;
@@ -33,14 +30,16 @@ public class Shooter extends SubsystemBase {
 
     public final DigitalInput beamBreak;
     public final Trigger hasFuel;
+    public final Supplier<Translation2d> robotPosition;
 
 
-    public Shooter() {
+    public Shooter(Supplier<Translation2d> translationSupplier) {
         hoodMotor = new TalonFXMotor(HOOD_MOTOR_ID);
         flyWheelMotor = new TalonFXMotor(FLYWHEEL_MOTOR_ID);
         supportWheelMotor = new TalonFXMotor(SUPPORT_WHEEL_MOTOR_ID);
         beamBreak = new DigitalInput(BEAM_BREAK_CHANNEL);
         transportMotor = new TalonFXMotor(TRANSPORT_MOTOR_ID);
+        robotPosition = translationSupplier;
 
         hoodAngleSupplier = () -> (hoodMotor.getPosition().getValueAsDouble() * POSITION_CONVERSION_FACTOR);
         transportMechanism = new Mechanism(transportMotor);

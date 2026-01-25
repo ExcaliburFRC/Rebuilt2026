@@ -8,19 +8,33 @@ import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import frc.excalib.swerve.Swerve;
+import frc.robot.util.ShooterPhysics;
 import monologue.Logged;
 
+
 public class RobotContainer implements Logged {
-  public RobotContainer() {
-    configureBindings();
-    registerCommands();
-  }
+    public final ShooterPhysics shooterPhysics;
 
-  private void configureBindings() {}
+    public final Swerve swerve = Constants.SwerveConstants.configureSwerve(Constants.INITIAL_POSE);
 
-  public Command getAutonomousCommand() {
-    return Commands.print("No autonomous command configured");
-  }
+    public RobotContainer() {
+        shooterPhysics = new ShooterPhysics(
+                swerve::getApproximatedFuturePose2D,
+                () -> swerve.getRobotRelativeSpeeds().vxMetersPerSecond,
+                () -> swerve.getRobotRelativeSpeeds().vyMetersPerSecond
+        );
+
+        configureBindings();
+        registerCommands();
+    }
+
+    private void configureBindings() {
+    }
+
+    public Command getAutonomousCommand() {
+        return Commands.print("No autonomous command configured");
+    }
 
     public void registerCommands() {
         NamedCommands.registerCommand("floorIntake", new InstantCommand());

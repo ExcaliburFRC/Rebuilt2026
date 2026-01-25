@@ -23,7 +23,7 @@ public class Robot extends TimedRobot {
 
         Monologue.setupMonologue(robotContainer, "Robot", false, false);
 
-        addPeriodic(ShooterPhysics::solve, PHYSICS_PERIODIC_TIME);
+        addPeriodic(robotContainer.shooterPhysics::solve, PHYSICS_PERIODIC_TIME);
     }
 
     @Override

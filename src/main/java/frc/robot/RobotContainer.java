@@ -5,22 +5,36 @@
 package frc.robot;
 
 import com.pathplanner.lib.auto.NamedCommands;
+import edu.wpi.first.wpilibj.PS5Controller;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
+import frc.robot.subsystems.intake.Intake;
 import monologue.Logged;
 
 public class RobotContainer implements Logged {
-  public RobotContainer() {
-    configureBindings();
-    registerCommands();
-  }
 
-  private void configureBindings() {}
+    Superstructure superstructure;
 
-  public Command getAutonomousCommand() {
-    return Commands.print("No autonomous command configured");
-  }
+    CommandPS5Controller controller = new CommandPS5Controller(0);
+
+
+    public RobotContainer() {
+        configureBindings();
+        registerCommands();
+    }
+
+    private void configureBindings() {
+        controller.R2().onTrue(superstructure.ultimateShootingCommand());
+        controller.L2().onTrue(superstructure.openIntakeCommand());
+        controller.triangle().onTrue(superstructure.shootForDeliveryCommand());
+        //controller.R2().onTrue(superstructure.shootForDeliveryCommand());
+    }
+
+    public Command getAutonomousCommand() {
+        return Commands.print("No autonomous command configured");
+    }
 
     public void registerCommands() {
         NamedCommands.registerCommand("floorIntake", new InstantCommand());

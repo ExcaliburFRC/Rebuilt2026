@@ -1,11 +1,7 @@
 package frc.robot;
 
 import edu.wpi.first.math.geometry.*;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.ConditionalCommand;
-import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import edu.wpi.first.wpilibj2.command.*;
 import frc.excalib.additional_utilities.AllianceUtils;
 import frc.excalib.additional_utilities.PS5Controller;
 import frc.excalib.swerve.Swerve;
@@ -86,5 +82,9 @@ public class Superstructure {
                     return AllianceUtils.isBlueAlliance()? condition: !condition;
                 }
         );
+    }
+
+    public Command openIntakeCommand(){
+        return intake.openFloorIntakeCommand();
     }
 }

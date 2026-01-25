@@ -56,6 +56,7 @@ public class Intake extends SubsystemBase {
                         this)
 
         );
+        setDefaultCommand(closeIntakeCommand());
     }
 
     public Command setAnglePosition(double targetPosition) {

@@ -1,7 +1,13 @@
 package frc.excalib.swerve;
 
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.pathplanner.lib.path.PathPlannerPath;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.geometry.*;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.networktables.GenericEntry;
@@ -14,45 +20,45 @@ import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.excalib.additional_utilities.AllianceUtils;
+import frc.excalib.additional_utilities.Elastic;
 import frc.excalib.control.gains.SysidConfig;
 import frc.excalib.control.imu.IMU;
 import frc.excalib.control.math.Vector2D;
 import frc.excalib.slam.mapper.Odometry;
-import monologue.Logged;
 
+import java.io.IOException;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 import static edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets.kTextView;
+import static frc.excalib.additional_utilities.Elastic.Notification.NotificationLevel.WARNING;
+import static frc.excalib.swerve.SwerveAccUtils.getSmartTranslationalVelocitySetpoint;
 import static frc.robot.Constants.SwerveConstants.*;
 import static monologue.Annotations.Log;
 
 /**
  * A class representing a swerve subsystem.
  */
-public class Swerve extends SubsystemBase implements Logged {
+@edu.wpi.first.epilogue.Logged
+public class Swerve extends SubsystemBase {
     public final ModulesHolder modules;
-    private final IMU m_imu;
-    public final Odometry m_odometry;
-    private ChassisSpeeds m_desiredChassisSpeeds = new ChassisSpeeds();
-    private Trigger finishTrigger;
-    private Rotation2d pi = new Rotation2d(Math.PI);
+    private final IMU imu;
+    public final Odometry odometry;
 
-    private final SwerveDriveKinematics m_swerveDriveKinematics;
+    private final Trigger finishTrigger;
+
+    private ChassisSpeeds desiredChassisSpeeds = new ChassisSpeeds();
+    private final SwerveDriveKinematics swerveDriveKinematics;
 
     private final PIDController angleController = new PIDController(ANGLE_PID_GAINS.kp, ANGLE_PID_GAINS.ki, ANGLE_PID_GAINS.kd);
-    private final PIDController xController = new PIDController(
-            TRANSLATION_PID_GAINS.kp, TRANSLATION_PID_GAINS.ki, TRANSLATION_PID_GAINS.kd
-    );
-    private final PIDController yController = new PIDController(
-            TRANSLATION_PID_GAINS.kp, TRANSLATION_PID_GAINS.ki, TRANSLATION_PID_GAINS.kd
-    );
+    private final PIDController xController = new PIDController(TRANSLATION_PID_GAINS.kp, TRANSLATION_PID_GAINS.ki, TRANSLATION_PID_GAINS.kd);
+    private final PIDController yController = new PIDController(TRANSLATION_PID_GAINS.kp, TRANSLATION_PID_GAINS.ki, TRANSLATION_PID_GAINS.kd);
+
     public final Field2d field = new Field2d();
 
     private Supplier<Rotation2d> angleSetpoint = Rotation2d::new;
-    private Supplier<Translation2d> m_translationSetpoint = Translation2d::new;
-
+    private Supplier<Translation2d> translationSetpoint = Translation2d::new;
 
     /**
      * A constructor that initialize the Swerve Subsystem
@@ -61,12 +67,10 @@ public class Swerve extends SubsystemBase implements Logged {
      * @param imu             IMU sensor.
      * @param initialPosition The initial position of the robot.
      */
-    public Swerve(ModulesHolder modules,
-                  IMU imu,
-                  Pose2d initialPosition) {
+    public Swerve(ModulesHolder modules, IMU imu, Pose2d initialPosition) {
         this.modules = modules;
-        this.m_imu = imu;
-        m_imu.setRotation(new Rotation2d(Math.PI / 2));
+        this.imu = imu;
+        this.imu.setRotation(new Rotation2d());
 
 
         angleController.enableContinuousInput(-Math.PI, Math.PI);
@@ -77,16 +81,16 @@ public class Swerve extends SubsystemBase implements Logged {
 
         finishTrigger = new Trigger(xController::atSetpoint).and(yController::atSetpoint).and(angleController::atSetpoint).debounce(0.1);
         // Initialize odometry with the current yaw angle
-        this.m_odometry = new Odometry(
+        this.odometry = new Odometry(
                 modules.getSwerveDriveKinematics(),
                 modules.getModulesPositions(),
-                m_imu::getZRotation,
+                this.imu::getZRotation,
                 initialPosition
         );
 
-        m_swerveDriveKinematics = this.modules.getSwerveDriveKinematics();
+        swerveDriveKinematics = this.modules.getSwerveDriveKinematics();
 
-//        initAutoBuilder();
+        initAutoBuilder();
         initElastic();
     }
 
@@ -103,13 +107,17 @@ public class Swerve extends SubsystemBase implements Logged {
 
         // Precompute values to avoid redundant calculations
         Supplier<Vector2D> adjustedVelocitySupplier = () -> {
-            Vector2D velocity = velocityMPS.get();
-//            Vector2D velocity = getSmartTranslationalVelocitySetPoint(getVelocity(), velocityMPS.get());
-            if (fieldOriented.getAsBoolean()) {
-                Rotation2d yaw = getRotation2D().unaryMinus();
-                if (!AllianceUtils.isBlueAlliance()) yaw = yaw.plus(pi);
-                return velocity.rotate(yaw);
-            }
+            Vector2D targetVelocity = velocityMPS.get();
+            Vector2D currentVelocity = getVelocity();
+
+//            Vector2D velocity = limitAcceleration(currentVelocity, targetVelocity, Constants.SwerveConstants.MAX_FORWARD_ACC);
+
+            Vector2D velocity = getSmartTranslationalVelocitySetpoint(getVelocity(), velocityMPS.get());
+//            if (fieldOriented.getAsBoolean()) {
+//                Rotation2d yaw = getRotation2D().unaryMinus();
+//                if (!AllianceUtils.isBlueAlliance()) yaw = yaw.plus(Rotation2d.kPi);
+//                return velocity.rotate(yaw);
+//            }
             return velocity;
         };
 
@@ -119,7 +127,7 @@ public class Swerve extends SubsystemBase implements Logged {
                         omegaRadPerSec
                 ),
                 new RunCommand(
-                        () -> m_desiredChassisSpeeds = new ChassisSpeeds(
+                        () -> desiredChassisSpeeds = new ChassisSpeeds(
                                 adjustedVelocitySupplier.get().getX(),
                                 adjustedVelocitySupplier.get().getY(),
                                 omegaRadPerSec.getAsDouble()
@@ -138,7 +146,28 @@ public class Swerve extends SubsystemBase implements Logged {
      * @param speeds A ChassisSpeeds object represents ROBOT RELATIVE speeds desired speeds.
      */
     public void driveRobotRelativeChassisSpeeds(ChassisSpeeds speeds) {
-        modules.setModulesStates(m_swerveDriveKinematics.toSwerveModuleStates(speeds));
+        modules.setModulesStates(swerveDriveKinematics.toSwerveModuleStates(speeds));
+    }
+
+    private Vector2D limitAcceleration(Vector2D currentVel, Vector2D targetVel, double maxAccel) {
+        double deltaX = targetVel.getX() - currentVel.getX();
+        double deltaY = targetVel.getY() - currentVel.getY();
+
+        Vector2D deltaV = new Vector2D(deltaX, deltaY);
+
+        double maxDeltaV = maxAccel;
+        double deltaMag = deltaV.getDistance();
+
+        if (deltaMag <= maxDeltaV || deltaMag < 1e-6) {
+            return targetVel;
+        }
+
+        double scale = maxDeltaV / deltaMag;
+
+        return new Vector2D(
+                currentVel.getX() + deltaX * scale,
+                currentVel.getY() + deltaY * scale
+        );
     }
 
     /**
@@ -165,7 +194,7 @@ public class Swerve extends SubsystemBase implements Logged {
                             xController.calculate(getPose2D().getX(), poseSetpoint.get().getX());
                             yController.calculate(getPose2D().getY(), poseSetpoint.get().getY());
                             angleController.calculate(getRotation2D().getRadians(), poseSetpoint.get().getRotation().getRadians());
-                            m_translationSetpoint = () -> poseSetpoint.get().getTranslation();
+                            translationSetpoint = () -> poseSetpoint.get().getTranslation();
                             angleSetpoint = () -> poseSetpoint.get().getRotation();
                         }
                 ),
@@ -173,12 +202,8 @@ public class Swerve extends SubsystemBase implements Logged {
                         () -> {
                             Vector2D vel = new Vector2D(
                                     xController.calculate(getPose2D().getX(), poseSetpoint.get().getX()),
-                                    yController.calculate(getPose2D().getY(), poseSetpoint.get().getY())
-                            );
-//                            System.out.println("current:  " + getRotation2D().getRadians());
-//                            System.out.println("output:  " + angleController.calculate(getRotation2D().getRadians(), poseSetpoint.get().getRotation().getRadians()));
-//                            System.out.println("error:  " + angleController.getError());
-                            if (!AllianceUtils.isBlueAlliance()) return vel.rotate(pi);
+                                    yController.calculate(getPose2D().getY(), poseSetpoint.get().getY()));
+                            if (!AllianceUtils.isBlueAlliance()) return vel.rotate(Rotation2d.kPi);
                             return vel;
                         },
                         () -> angleController.calculate(getRotation2D().getRadians(), poseSetpoint.get().getRotation().getRadians()),
@@ -187,62 +212,70 @@ public class Swerve extends SubsystemBase implements Logged {
         ).until(finishTrigger).withName("PID To Pose");
     }
 
-//    /**
-//     * A method that drives the robot to a desired pose.
-//     *
-//     * @param setPoint The desired pose.
-//     * @return A command that drives the robot to the wanted pose.
-//     */
-//    public Command driveToPoseCommand(Pose2d setPoint) {
-//        return AutoBuilder.pathfindToPose(
-//                setPoint,
-//                MAX_PATH_CONSTRAINTS
-//        ).withName("Pathfinding Command");
-//    }
+    /**
+     * A method that drives the robot to a desired pose.
+     *
+     * @param setpoint The desired pose.
+     * @return A command that drives the robot to the wanted pose.
+     */
+    public Command driveToPoseCommand(Pose2d setpoint) {
+        return AutoBuilder.pathfindToPose(
+                setpoint,
+                MAX_PATH_CONSTRAINTS
+        ).withName("Pathfinding Command");
+    }
 
-//    public Command driveToPoseWithOverrideCommand(
-//            Pose2d setPoint,
-//            BooleanSupplier override,
-//            Supplier<Vector2D> velocityMPS,
-//            DoubleSupplier omegaRadPerSec) {
-//        Command driveToPoseCommand = driveToPoseCommand(setPoint);
-//        return new SequentialCommandGroup(
-//                driveToPoseCommand.until(() -> velocityMPS.get().getDistance() != 0 && override.getAsBoolean()),
-//                driveCommand(
-//                        velocityMPS,
-//                        omegaRadPerSec,
-//                        () -> true
-//                ).until(() -> velocityMPS.get().getDistance() == 0)
-//        ).repeatedly().until(driveToPoseCommand::isFinished).withName("Pathfinding With Override Command");
-//    }
+    public Command driveToPoseWithOverrideCommand(
+            Pose2d setPoint,
+            BooleanSupplier override,
+            Supplier<Vector2D> velocityMPS,
+            DoubleSupplier omegaRadPerSec) {
+        Command driveToPoseCommand = driveToPoseCommand(setPoint);
+        return new SequentialCommandGroup(
+                driveToPoseCommand.until(() -> velocityMPS.get().getDistance() != 0 && override.getAsBoolean()),
+                driveCommand(
+                        velocityMPS,
+                        omegaRadPerSec,
+                        () -> true
+                ).until(() -> velocityMPS.get().getDistance() == 0)
+        ).repeatedly().until(driveToPoseCommand::isFinished).withName("Pathfinding With Override Command");
+    }
 
-//    /**
-//     * A method that drives the robot to the starting pose of a path, then follows the path.
-//     *
-//     * @param pathName The path which the robot needs to follow.
-//     * @return A command that turns the robot to the wanted angle.
-//     */
-//    public Command pathfindThenFollowPathCommand(String pathName) {
-//        PathPlannerPath path;
-//        try {
-//            path = PathPlannerPath.fromPathFile(pathName);
-//        } catch (IOException | ParseException e) {
-//            Elastic.sendNotification(new Elastic.Notification(
-//                    WARNING,
-//                    "Path Creating Error",
-//                    "the path file " + pathName + " doesn't exist")
-//            );
-//            return new PrintCommand("this path file doesn't exist");
-//        }
-//
+    /**
+     * A method that drives the robot to the starting pose of a path, then follows the path.
+     *
+     * @param pathName The path which the robot needs to follow.
+     * @return A command that turns the robot to the wanted angle.
+     */
+//     public Command pathFindThenFollowPath(String pathName) {
 //        return AutoBuilder.pathfindThenFollowPath(
-//                path,
-//                MAX_PATH_CONSTRAINTS
-//        );
+//                PathPlannerPath.fromPathFile(pathName),
+//                new PathConstraints(0, 0, 0, 0));
 //    }
+    public Command pathfindThenFollowPathCommand(String pathName) {
+        PathPlannerPath path;
+        try {
+            path = PathPlannerPath.fromPathFile(pathName);
+        } catch (IOException e) {
+            Elastic.sendNotification(
+                    new Elastic.Notification(
+                            WARNING,
+                            "Path Creating Error",
+                            "the path file " + pathName + " doesn't exist")
+            );
+            return new PrintCommand("this path file doesn't exist");
+        } catch (org.json.simple.parser.ParseException e) {
+            throw new RuntimeException(e);
+        }
+
+        return AutoBuilder.pathfindThenFollowPath(
+                path,
+                MAX_PATH_CONSTRAINTS
+        );
+    }
 
     public Command resetAngleCommand() {
-        return new InstantCommand(m_imu::resetIMU).ignoringDisable(true);
+        return new InstantCommand(imu::resetIMU).ignoringDisable(true);
     }
 
     public Command coastCommand() {
@@ -255,7 +288,7 @@ public class Swerve extends SubsystemBase implements Logged {
      * Updates the robot's odometry.
      */
     public void updateOdometry() {
-        m_odometry.updateOdometry(modules.getModulesPositions());
+        odometry.updateOdometry(modules.getModulesPositions());
     }
 
     /**
@@ -264,7 +297,7 @@ public class Swerve extends SubsystemBase implements Logged {
      * @param newPose the wanted new Pose2d of the robot.
      */
     public void resetOdometry(Pose2d newPose) {
-        m_odometry.resetOdometry(modules.getModulesPositions(), newPose);
+        odometry.resetOdometry(modules.getModulesPositions(), newPose);
     }
 
     /**
@@ -284,7 +317,7 @@ public class Swerve extends SubsystemBase implements Logged {
 
     @Log.NT(key = "Translation Setpoint")
     public Translation2d getTranslationSetpoint() {
-        return m_translationSetpoint.get();
+        return translationSetpoint.get();
     }
 
     /**
@@ -294,7 +327,7 @@ public class Swerve extends SubsystemBase implements Logged {
      */
     @Log.NT(key = "Robot Pose")
     public Pose2d getPose2D() {
-        return m_odometry.getRobotPose();
+        return odometry.getRobotPose();
     }
 
     /**
@@ -313,7 +346,7 @@ public class Swerve extends SubsystemBase implements Logged {
      */
     @Log.NT(key = "Acceleration")
     public double getAccelerationDistance() {
-        return new Vector2D(m_imu.getAccX(), m_imu.getAccY()).getDistance();
+        return new Vector2D(imu.getAccX(), imu.getAccY()).getDistance();
     }
 
     /**
@@ -323,12 +356,12 @@ public class Swerve extends SubsystemBase implements Logged {
      */
     @Log.NT(key = "Measured Chassis Speeds")
     public ChassisSpeeds getRobotRelativeSpeeds() {
-        return m_swerveDriveKinematics.toChassisSpeeds(modules.logStates());
+        return swerveDriveKinematics.toChassisSpeeds(modules.logStates());
     }
 
     @Log.NT
     public ChassisSpeeds getDesiredChassisSpeeds() {
-        return m_desiredChassisSpeeds;
+        return desiredChassisSpeeds;
     }
 
     /// /    public double distanceFromReefCenter() {
@@ -344,35 +377,35 @@ public class Swerve extends SubsystemBase implements Logged {
     /**
      * A function that initialize the AutoBuilder for pathplanner.
      */
-//    private void initAutoBuilder() {
-//        // Load the RobotConfig from the GUI settings. You should probably
-//        // store this in your Constants file
-//        RobotConfig config = null;
-//        try {
-//            config = RobotConfig.fromGUISettings();
-//        } catch (Exception e) {
-//            // Handle exception as needed
-//            System.out.println("the config is null");
-//        }
-//
-//        // Configure AutoBuilder last
-//        AutoBuilder.configure(
-//                this::getPose2D, // Robot pose supplier
-//                this::resetOdometry, // Method to reset odometry (will be called if your auto has a starting pose)
-//                this::getRobotRelativeSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-//                (speeds, feedforwards) -> driveRobotRelativeChassisSpeeds(speeds), // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds. Also optionally outputs individual module feedforwards
-//                new PPHolonomicDriveController( // PPHolonomicController is the built in path following controller for holonomic drive trains
-//                        TRANSLATION_PID_PP_CONSTANTS, // Translation PID constants
-//                        ANGLE_PID_PP_CONSTANTS // Rotation PID constants
-//                ),
-//                config,
-//                () -> {
-//                    var alliance = DriverStation.getAlliance();
-//                    return alliance.filter(value -> value == DriverStation.Alliance.Red).isPresent();
-//                },
-//                this // Reference to this subsystem to set requirements
-//        );
-//    }
+    private void initAutoBuilder() {
+        // Load the RobotConfig from the GUI settings. You should probably
+        // store this in your Constants file
+        RobotConfig config = null;
+        try {
+            config = RobotConfig.fromGUISettings();
+        } catch (Exception e) {
+            // Handle exception as needed
+            System.out.println("the config is null");
+        }
+
+        // Configure AutoBuilder last
+        AutoBuilder.configure(
+                this::getPose2D, // Robot pose supplier
+                this::resetOdometry, // Method to reset odometry (will be called if your auto has a starting pose)
+                this::getRobotRelativeSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
+                (speeds, feedforwards) -> driveRobotRelativeChassisSpeeds(speeds), // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds. Also optionally outputs individual module feedforwards
+                new PPHolonomicDriveController( // PPHolonomicController is the built in path following controller for holonomic drive trains
+                        TRANSLATION_PID_PP_CONSTANTS, // Translation PID constants
+                        ANGLE_PID_PP_CONSTANTS // Rotation PID constants
+                ),
+                config,
+                () -> {
+                    var alliance = DriverStation.getAlliance();
+                    return alliance.filter(value -> value == DriverStation.Alliance.Red).isPresent();
+                },
+                this // Reference to this subsystem to set requirements
+        );
+    }
 
     /**
      * A function that initialize the Swerve tab for Elastic.

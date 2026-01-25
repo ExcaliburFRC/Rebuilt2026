@@ -80,7 +80,9 @@ public final class ShooterPhysics {
         double spinRPS = estimateSpinRPS(vExit);
         double effectiveGravity =
                 GRAVITY * (1.0 - MAGNUS_COEFFICIENT * spinRPS);
-        vExit *= Math.sqrt(GRAVITY / effectiveGravity);
+        if (effectiveGravity > 0.0) {
+            vExit *= Math.sqrt(GRAVITY / effectiveGravity);
+        }
 
         double rpm = velocityToRPM(vExit);
 

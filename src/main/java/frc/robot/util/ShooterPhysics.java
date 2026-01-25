@@ -18,33 +18,33 @@ public final class ShooterPhysics {
     private static final double TWO_PI = 2.0 * Math.PI;
     private static final double SEC_PER_MIN = 60.0;
 
-    private static Supplier<Pose2d> robotPose = Pose2d::new;
-    private static Pose2d hub = new Pose2d();
-    private static DoubleSupplier robotForwardVelocity = () -> 0;
-    private static DoubleSupplier robotYawRateRadPerSec = () -> 0;
+    private final Supplier<Pose2d> robotPose;
+    private final Pose2d hub;
+    private final DoubleSupplier robotForwardVelocity;
+    private final DoubleSupplier robotYawRateRadPerSec;
 
-    public static ShooterSolution currentSolution = new ShooterSolution(0, 0, 0, 0);
+    public ShooterSolution currentSolution = new ShooterSolution(0, 0, 0, 0);
 
-    private static final InterpolatingDoubleTreeMap entryAngleMap =
-            new InterpolatingDoubleTreeMap();
+    private final InterpolatingDoubleTreeMap entryAngleMap;
 
     public ShooterPhysics(
             Supplier<Pose2d> robotPose,
             DoubleSupplier robotForwardVelocity,
             DoubleSupplier robotYawRateRadPerSec
     ) {
-        ShooterPhysics.robotPose = robotPose;
-        hub = Constants.FieldConstants.BLUE_HUB_CENTER_POSE.getAsCurrentAlliance();
-        ShooterPhysics.robotForwardVelocity = robotForwardVelocity;
-        ShooterPhysics.robotYawRateRadPerSec = robotYawRateRadPerSec;
+        this.robotPose = robotPose;
+        this.hub = Constants.FieldConstants.BLUE_HUB_CENTER_POSE.getAsCurrentAlliance();
+        this.robotForwardVelocity = robotForwardVelocity;
+        this.robotYawRateRadPerSec = robotYawRateRadPerSec;
 
-        entryAngleMap.put(MIN_DISTANCE, ENTRY_ANGLE_CLOSE_RAD);
-        entryAngleMap.put(MAX_DISTANCE, ENTRY_ANGLE_FAR_RAD);
+        this.entryAngleMap = new InterpolatingDoubleTreeMap();
+        this.entryAngleMap.put(MIN_DISTANCE, ENTRY_ANGLE_CLOSE_RAD);
+        this.entryAngleMap.put(MAX_DISTANCE, ENTRY_ANGLE_FAR_RAD);
     }
 
     /* ---------------- Public API ---------------- */
 
-    public static void solve() {
+    public void solve() {
         Pose2d robot = robotPose.get();
 
         // Field-relative delta

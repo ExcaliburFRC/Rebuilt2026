@@ -23,7 +23,9 @@ import frc.excalib.swerve.Swerve;
 import frc.excalib.swerve.SwerveModule;
 
 public final class Constants {
-    public static final Pose2d initialPose = new Pose2d();
+    public static final Pose2d INITIAL_POSE = new Pose2d();
+    public static final double PHYSICS_PERIODIC_TIME = 0.02;
+
     public static class SwerveConstants {
         public static final int FRONT_LEFT_DRIVE_ID = 20;
         public static final int FRONT_RIGHT_DRIVE_ID = 10;
@@ -159,6 +161,7 @@ public final class Constants {
 
     public static class FieldConstants {
         // all the units of length are in meters
+
         public static final AllianceUtils.AlliancePose BLUE_HUB_CENTER_POSE = new
                 AllianceUtils.AlliancePose(5.06, 4.03, 1.83, 0);
         public static final AllianceUtils.AlliancePose DELIVERY_RIGHT_POSE_DIATANCE = new

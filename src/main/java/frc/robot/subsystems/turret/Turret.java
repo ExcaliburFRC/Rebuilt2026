@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.excalib.control.math.MathUtils;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
 import frc.excalib.control.motor.motor_specs.IdleState;
+import frc.robot.util.ShootingTarget;
 
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
@@ -22,7 +23,7 @@ public class Turret extends SubsystemBase {
     public final DoubleSupplier turretAngleSupplier;
     public final CANcoder turretEncoder;
     public final Supplier<Pose2d> robotPoseSupplier;
-    public ShootingTargets currentTarget = ShootingTargets.HUB;
+    public ShootingTarget currentTarget = ShootingTarget.HUB;
 
     public Turret(Supplier<Pose2d> poseSupplier) {
         turretMotor = new TalonFXMotor(TURRET_MOTOR_ID);
@@ -51,7 +52,7 @@ public class Turret extends SubsystemBase {
         setDefaultCommand(followTargetCommand());
     }
 
-    public Command setTargetCommand(ShootingTargets targetToSet) {
+    public Command setTargetCommand(ShootingTarget targetToSet) {
         return new InstantCommand(() -> currentTarget = targetToSet);
     }
 

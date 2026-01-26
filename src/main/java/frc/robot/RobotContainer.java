@@ -9,27 +9,37 @@ import edu.wpi.first.wpilibj.PS5Controller;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import frc.excalib.swerve.Swerve;
+import frc.robot.superstructure.Superstructure;
+import frc.robot.util.ShooterPhysics;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import frc.robot.subsystems.intake.Intake;
 import monologue.Logged;
 
+
 public class RobotContainer implements Logged {
+    public final ShooterPhysics shooterPhysics;
+
+    public final Swerve swerve = Constants.SwerveConstants.configureSwerve(Constants.INITIAL_POSE);
+
+    public RobotContainer() {
+        shooterPhysics = new ShooterPhysics(
+                swerve::getApproximatedFuturePose2D,
+                () -> swerve.getRobotRelativeSpeeds().vxMetersPerSecond,
+                () -> swerve.getRobotRelativeSpeeds().vyMetersPerSecond
+        );
+
+        configureBindings();
+        registerCommands();
+    }
 
     Superstructure superstructure;
 
     CommandPS5Controller controller = new CommandPS5Controller(0);
 
 
-    public RobotContainer() {
-        configureBindings();
-        registerCommands();
-    }
 
     private void configureBindings() {
-        controller.R2().onTrue(superstructure.ultimateShootingCommand());
-        controller.L2().onTrue(superstructure.openIntakeCommand());
-        controller.triangle().onTrue(superstructure.shootForDeliveryCommand());
-        //controller.R2().onTrue(superstructure.shootForDeliveryCommand());
     }
 
     public Command getAutonomousCommand() {

@@ -23,12 +23,13 @@ public class Superstructure {
     public final Intake intake;
     public final Shooter shooter;
     public final Transport transport;
-    public final Swerve swerve;
-    public final CommandPS5Controller controller;
     public final Turret turret;
+    public final Swerve swerve;
+
+    public final CommandPS5Controller controller;
 
     public final ShooterPhysics shooterPhysic;
-
+    public Translation3d targetShootingPose = BLUE_HUB_CENTER_POSE.getAsCurrentAlliance().getTranslation();
 
     public Superstructure(CommandPS5Controller controller, Swerve swerve) {
         intake = new Intake();
@@ -38,7 +39,7 @@ public class Superstructure {
 
         turret = new Turret(swerve::getApproximatedFuturePose2D);
 
-        shooter = new Shooter(()-> swerve.getPose2D().getTranslation());
+        shooter = new Shooter(() -> swerve.getPose2D().getTranslation());
         this.controller = controller;
 
         shooterPhysic = new ShooterPhysics(
@@ -47,18 +48,14 @@ public class Superstructure {
                 () -> swerve.getRobotRelativeSpeeds().omegaRadiansPerSecond
         );
 
-
     }
 
-    private Command shootingCommand(Translation2d target) {
+    private Command shootingCommand() {
         return new ParallelCommandGroup(
                 shooter.adjustShooterForShootingCommand(
-                        () -> swerve.getPose2D().getTranslation(),
-                        () -> new Pose3d(
-                                new Translation3d(target),
-                                new Rotation3d()
-                        )),
-
+                        shooterPhysic::getHoodAngleRadSolution,
+                        shooterPhysic::getRollerRadPerSecSolution
+                ),
                 shooter.getFuelCommand(),
                 transport.manualCommand(() -> SHOOTING_VOLTAGE)
         );
@@ -67,27 +64,27 @@ public class Superstructure {
     public Command shootToHubCommand() {
         return new SequentialCommandGroup(
                 turret.setTargetCommand(ShootingTargets.HUB),
-                shootingCommand(FieldConstants.BLUE_HUB_CENTER_POSE.getAsCurrentAlliance().getTranslation()));
+                shootingCommand());
     }
 
     public Command shootForDeliveryCommand() {
         Translation2d deliveryPoseOption;
 
         double distanceToDeliveryForRight =
-                DELIVERY_RIGHT_POSE_DIATANCE.getAsCurrentAlliance().getTranslation().getDistance(swerve.getPose2D().getTranslation());
+                DELIVERY_RIGHT_POSE_DIATANCE.getAsCurrentAlliance().getTranslation().toTranslation2d().getDistance(swerve.getPose2D().getTranslation());
         double distanceToDeliveryForLeft =
-                DELIVERY_LEFT_POSE_DISTANCE.getAsCurrentAlliance().getTranslation().getDistance(swerve.getPose2D().getTranslation());
+                DELIVERY_LEFT_POSE_DISTANCE.getAsCurrentAlliance().getTranslation().toTranslation2d().getDistance(swerve.getPose2D().getTranslation());
 
 
         if (distanceToDeliveryForLeft > distanceToDeliveryForRight) {
-            deliveryPoseOption = DELIVERY_LEFT_POSE_DISTANCE.getAsCurrentAlliance().getTranslation();
+            deliveryPoseOption = DELIVERY_LEFT_POSE_DISTANCE.getAsCurrentAlliance().getTranslation().toTranslation2d();
             CommandScheduler.getInstance().schedule(turret.setTargetCommand(LEFT_DELIVERY));
         } else {
-            deliveryPoseOption = DELIVERY_RIGHT_POSE_DIATANCE.getAsCurrentAlliance().getTranslation();
+            deliveryPoseOption = DELIVERY_RIGHT_POSE_DIATANCE.getAsCurrentAlliance().getTranslation().toTranslation2d();
             CommandScheduler.getInstance().schedule(turret.setTargetCommand(RIGHT_DELIVERY));
         }
 
-        return shootingCommand(deliveryPoseOption);
+        return new InstantCommand(()->{}); //todo
     }
 
     public Command ultimateShootingCommand() {
@@ -101,15 +98,15 @@ public class Superstructure {
         );
     }
 
-    public Command openIntakeCommand(){
+    public Command openIntakeCommand() {
         return intake.openIntakeCommand();
     }
 
-    public Command driveToClosesTrenchCommand(){
+    public Command driveToClosesTrenchCommand() {
         double robotYPosition = swerve.getPose2D().getY();
 
         if (swerve.getPose2D().getTranslation().getDistance(BLUE_DOWN_FIELD_TRENCH_POSE) >
-                swerve.getPose2D().getTranslation().getDistance(BLUE_UP_FIELD_TRENCH_POSE)){
+                swerve.getPose2D().getTranslation().getDistance(BLUE_UP_FIELD_TRENCH_POSE)) {
             return swerve.driveToPoseCommand(new Pose2d(BLUE_DOWN_FIELD_TRENCH_POSE, new Rotation2d()));
         } else {
             return swerve.driveToPoseCommand(new Pose2d(BLUE_UP_FIELD_TRENCH_POSE, new Rotation2d()));

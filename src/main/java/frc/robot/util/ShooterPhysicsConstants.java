@@ -24,6 +24,15 @@ public final class ShooterPhysicsConstants {
     /* Drag */
     public static final double DRAG_COEFFICIENT = 0.06;
 
+    // The radius of your main big flywheel
+
+    // The radius of the small helper rollers on the hood
+    public static final double HELPER_ROLLER_RADIUS_METERS = Units.inchesToMeters(0.5);
+
+    // How much faster/slower the helper roller spins compared to the main one
+// (e.g., 0.5 means it spins at half the RPM of the main flywheel)
+    public static final double HELPER_RATIO = 0.5;
+
     /* Magnus */
     public static final double MAGNUS_COEFFICIENT = 0.15; // ballistic movement
     public static final double FUEL_RADIUS_METERS = Units.inchesToMeters(5.91 / 2.0);

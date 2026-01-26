@@ -23,7 +23,7 @@ public class Robot extends TimedRobot {
 
         Monologue.setupMonologue(robotContainer, "Robot", false, false);
 
-        addPeriodic(robotContainer.shooterPhysics::solve, PHYSICS_PERIODIC_TIME);
+        addPeriodic(() -> robotContainer.shooterPhysics.solve(RobotContainer.targetShootingTarget), PHYSICS_PERIODIC_TIME);
     }
 
     @Override
@@ -31,7 +31,6 @@ public class Robot extends TimedRobot {
         CommandScheduler.getInstance().run();
         Monologue.updateAll();
         GameDataClient.updateGameData();
-
     }
 
     @Override

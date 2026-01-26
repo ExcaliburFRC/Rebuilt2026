@@ -5,6 +5,7 @@
 package frc.robot;
 
 import com.pathplanner.lib.auto.NamedCommands;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -25,6 +26,9 @@ public class RobotContainer implements Logged {
     public final Superstructure superstructure;
 
     public final CommandPS5Controller primary = new CommandPS5Controller(PRIMARY_CONTROLLER_PORT);
+
+    public static Translation3d targetShootingTarget = Constants.FieldConstants.BLUE_HUB_CENTER_POSE.getAsCurrentAlliance().getTranslation();
+
 
     public RobotContainer() {
         shooterPhysics = new ShooterPhysics(
@@ -55,4 +59,5 @@ public class RobotContainer implements Logged {
         NamedCommands.registerCommand("retractClimber", new InstantCommand());
         NamedCommands.registerCommand("retractIntake", new InstantCommand());
     }
+
 }

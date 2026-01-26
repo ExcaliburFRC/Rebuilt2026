@@ -58,7 +58,7 @@ public class Turret extends SubsystemBase {
     public Command followTargetCommand() {
         return turretMechanism.setPositionCommand(
                 () -> getRelativeTargetAngle(
-                        currentTarget.getTranslation()
+                        currentTarget.getTranslation().toTranslation2d()
                 ),
                 this
         );

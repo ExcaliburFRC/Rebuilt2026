@@ -5,7 +5,6 @@
 package frc.robot;
 
 import com.pathplanner.lib.auto.NamedCommands;
-import edu.wpi.first.wpilibj.PS5Controller;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -13,14 +12,19 @@ import frc.excalib.swerve.Swerve;
 import frc.robot.superstructure.Superstructure;
 import frc.robot.util.ShooterPhysics;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
-import frc.robot.subsystems.intake.Intake;
 import monologue.Logged;
+
+import static frc.robot.Constants.PRIMARY_CONTROLLER_PORT;
 
 
 public class RobotContainer implements Logged {
     public final ShooterPhysics shooterPhysics;
 
     public final Swerve swerve = Constants.SwerveConstants.configureSwerve(Constants.INITIAL_POSE);
+
+    public final Superstructure superstructure;
+
+    public final CommandPS5Controller primary = new CommandPS5Controller(PRIMARY_CONTROLLER_PORT);
 
     public RobotContainer() {
         shooterPhysics = new ShooterPhysics(
@@ -29,14 +33,11 @@ public class RobotContainer implements Logged {
                 () -> swerve.getRobotRelativeSpeeds().vyMetersPerSecond
         );
 
+        superstructure = new Superstructure(primary, swerve);
+
         configureBindings();
         registerCommands();
     }
-
-    Superstructure superstructure;
-
-    CommandPS5Controller controller = new CommandPS5Controller(0);
-
 
 
     private void configureBindings() {

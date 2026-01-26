@@ -2,6 +2,7 @@ package frc.robot.superstructure;
 
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.wpilibj2.command.*;
+import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import frc.excalib.additional_utilities.AllianceUtils;
 import frc.excalib.additional_utilities.PS5Controller;
 import frc.excalib.swerve.Swerve;
@@ -23,17 +24,17 @@ public class Superstructure {
     public final Shooter shooter;
     public final Transport transport;
     public final Swerve swerve;
-    public final PS5Controller controller;
+    public final CommandPS5Controller controller;
     public final Turret turret;
 
     public final ShooterPhysics shooterPhysic;
 
 
-    public Superstructure(PS5Controller controller) {
+    public Superstructure(CommandPS5Controller controller, Swerve swerve) {
         intake = new Intake();
         transport = new Transport();
 
-        swerve = Constants.SwerveConstants.configureSwerve(Constants.INITIAL_POSE);
+        this.swerve = swerve;
 
         turret = new Turret(swerve::getApproximatedFuturePose2D);
 

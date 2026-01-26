@@ -7,6 +7,7 @@ import frc.excalib.additional_utilities.AllianceUtils;
 import frc.excalib.additional_utilities.PS5Controller;
 import frc.excalib.swerve.Swerve;
 import frc.robot.Constants;
+import frc.robot.RobotContainer;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.transport.Transport;
@@ -84,7 +85,7 @@ public class Superstructure {
             CommandScheduler.getInstance().schedule(turret.setTargetCommand(RIGHT_DELIVERY));
         }
 
-        return new InstantCommand(()->{}); //todo
+        return new InstantCommand(() -> RobotContainer.targetShootingTarget = new Translation3d(deliveryPoseOption));
     }
 
     public Command ultimateShootingCommand() {

@@ -8,6 +8,7 @@ import frc.excalib.control.limits.SoftLimit;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
 import frc.excalib.mechanisms.Mechanism;
 import frc.excalib.mechanisms.fly_wheel.FlyWheel;
+import frc.robot.Constants;
 import jdk.jfr.Frequency;
 import jdk.jfr.Name;
 import jdk.jfr.Registered;
@@ -48,7 +49,13 @@ public class Shooter extends SubsystemBase {
 
         hoodSoftLimit = new SoftLimit(
                 () -> HOOD_MIN_ANGLE_LIMIT,
-                () -> HOOD_MAX_ANGLE_LIMIT
+                () -> {
+                    if ((robotPositionSupplier.get().getDistance(Constants.FieldConstants.BLUE_DOWN_FIELD_TRENCH_POSE) <= 100) || (robotPositionSupplier.get().getDistance(Constants.FieldConstants.BLUE_UP_FIELD_TRENCH_PLACEMENT) < 100)) {
+                        return HOOD_MAX_ANGLE_LIMIT_IN_TRENCH;
+                    } else {
+                        return HOOD_MAX_ANGLE_LIMIT;
+                    }
+                }
         );
 
 
@@ -69,7 +76,7 @@ public class Shooter extends SubsystemBase {
                                     new TrapezoidProfile.State(angleSetpoint.getAsDouble(), FINAL_VEL)
                             );
 
-                    double pidValue = angleController.calculate( state.position,angleSetpoint.getAsDouble());
+                    double pidValue = angleController.calculate(state.position, angleSetpoint.getAsDouble());
 
                     hoodMechanism.setVoltage(pidValue);
                 }

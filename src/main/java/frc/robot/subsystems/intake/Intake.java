@@ -102,7 +102,7 @@ public class Intake extends SubsystemBase {
         CLOSE(0), // todo
         OPEN(0); // todo
 
-        private double radPosition;
+        private final double radPosition;
 
         TargetAngle(double radPosition) {
             this.radPosition = radPosition;

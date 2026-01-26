@@ -25,6 +25,8 @@ public class Turret extends SubsystemBase {
         turretMotor = new TalonFXMotor(TURRET_MOTOR_ID);
         turretEncoder = new CANcoder(TURRET_ENCODER_ID);
 
+        turretEncoder.getPosition().getValueAsDouble();
+
         this.robotPoseSupplier = poseSupplier;
 
         turretMechanism = new frc.excalib.mechanisms.turret.Turret(

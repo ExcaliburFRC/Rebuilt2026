@@ -94,14 +94,50 @@ public class Superstructure {
         return intake.openIntakeCommand();
     }
 
-    public Command driveToClosesTrenchCommand() {
-        double robotYPosition = swerve.getPose2D().getY();
-
-        if (swerve.getPose2D().getTranslation().getDistance(BLUE_DOWN_FIELD_TRENCH_POSE) >
-                swerve.getPose2D().getTranslation().getDistance(BLUE_UP_FIELD_TRENCH_POSE)) {
-            return swerve.driveToPoseCommand(new Pose2d(BLUE_DOWN_FIELD_TRENCH_POSE, new Rotation2d()));
-        } else {
-            return swerve.driveToPoseCommand(new Pose2d(BLUE_UP_FIELD_TRENCH_POSE, new Rotation2d()));
+    public Command driveUnderTrenchCommand() {
+        //closest to right side or left side check
+        Translation2d[] TrenchPoses;
+        if(swerve.getPose2D().getTranslation().getDistance(RIGHT_TRENCH_POSES[0])
+                > swerve.getPose2D().getTranslation().getDistance(LEFT_TRENCH_POSES[0])){
+            TrenchPoses = RIGHT_TRENCH_POSES; //todo is it aliasing? and if it is, is it OK?
+        }else{
+            TrenchPoses = LEFT_TRENCH_POSES; //todo is it aliasing? and if it is, is it OK?
         }
+
+        //finds closest target pose
+        Translation2d TargetPose = TrenchPoses[0]; // closest pose to robot by x-value
+        int targetInd = 0; //index of target pose in TrenchPoses array
+        for(int i = 0; i < TrenchPoses.length; i++){
+            if(swerve.getPose2D().getTranslation().getX() < TargetPose.getX()){
+                TargetPose = swerve.getPose2D().getTranslation();
+            }
+            targetInd = i;
+        }
+
+        //creates path array that includes only the poses we want and fills in the empty slots in the array.
+        Pose2d[] path = new Pose2d[TrenchPoses.length]; //path's type is Pose2d for driveToPoseCommand
+        for(int i = 0; i < path.length; i++){
+            if(i <= targetInd){
+                path[i] = new Pose2d(TargetPose, new Rotation2d()); //TargetPose here is just a default value to fill in the empty spaces of the array.
+            }else{
+                path[i] = new Pose2d(TrenchPoses[i], new Rotation2d());
+            }
+        }
+
+
+        return new SequentialCommandGroup(swerve.driveToPoseCommand(path[0]),
+                swerve.driveToPoseCommand(path[1]),
+                swerve.driveToPoseCommand(path[2]),
+                swerve.driveToPoseCommand(path[3])); //number of drive commands should be equal to length of TrenchPoses
+
+
+//        double robotYPosition = swerve.getPose2D().getY();
+//
+//        if (swerve.getPose2D().getTranslation().getDistance(BLUE_DOWN_FIELD_TRENCH_POSE) >
+//                swerve.getPose2D().getTranslation().getDistance(BLUE_UP_FIELD_TRENCH_POSE)) {
+//            return swerve.driveToPoseCommand(new Pose2d(BLUE_DOWN_FIELD_TRENCH_POSE, new Rotation2d()));
+//        } else {
+//            return swerve.driveToPoseCommand(new Pose2d(BLUE_UP_FIELD_TRENCH_POSE, new Rotation2d()));
+//        }
     }
 }

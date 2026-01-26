@@ -92,29 +92,13 @@ public class Shooter extends SubsystemBase {
         return new RunCommand(() -> transportMechanism.setVoltage(TRANSPORT_VOLTAGE));
     }
 
-    public Translation2d calculateShootParameters(Pose3d targetPose, Pose3d currentPose) {
-        return null;
-    }
 
-    public Command adjustShooterForShootingCommand(Supplier<Translation2d> currentPose, Supplier<Pose3d> targetPose) {
-
-        DoubleSupplier angle = () -> calculateShootParameters(
-                targetPose.get(),
-                new Pose3d(
-                        new Translation3d(currentPose.get()),
-                        new Rotation3d())
-        ).getAngle().getRadians();
-
-        DoubleSupplier flyWheelVelocity = () -> calculateShootParameters(
-                targetPose.get(),
-                new Pose3d(
-                        new Translation3d(currentPose.get()),
-                        new Rotation3d())
-        ).getNorm();
-
-        return new ParallelCommandGroup(
-                setFlyWheelVelocityCommand(flyWheelVelocity),
-                setHoodAngleCommand(angle)
+    public Command adjustShooterForShootingCommand(DoubleSupplier hoodAngleSupplier, DoubleSupplier rollerRadPerSec) {
+        Command command =  new ParallelCommandGroup(
+                setHoodAngleCommand(hoodAngleSupplier),
+                flyWheelMechanism.smartVelocityCommand(rollerRadPerSec)
         );
+        command.addRequirements(this);
+        return command;
     }
 }

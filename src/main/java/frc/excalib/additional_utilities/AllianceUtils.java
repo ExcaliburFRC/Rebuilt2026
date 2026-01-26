@@ -46,21 +46,25 @@ public class AllianceUtils {
      * @param bluePose the current blue alliance pose
      * @return the converted pose
      */
-    public static Pose2d toAlliancePose(Pose2d bluePose) {
+    public static Pose3d toAlliancePose(Pose3d bluePose) {
         if (isBlueAlliance()) return bluePose;
         return switchAlliance(bluePose);
     }
+
     public static Translation3d toAlliancePose(Translation3d bluePose) {
         if (isBlueAlliance()) return bluePose;
         return switchAlliance(bluePose);
     }
 
-    public static Pose2d switchAlliance(Pose2d pose) {
-        return new Pose2d(
-                FIELD_LENGTH_METERS - pose.getX(), FIELD_WIDTH_METERS - pose.getY(),
-                pose.getRotation().minus(Rotation2d.fromDegrees(180))
+    public static Pose3d switchAlliance(Pose3d pose) {
+        return new Pose3d(
+                FIELD_LENGTH_METERS - pose.getX(),
+                FIELD_WIDTH_METERS - pose.getY(),
+                pose.getZ(),
+                pose.getRotation().minus(new Rotation3d(0, 0, Math.PI))
         );
     }
+
     public static Translation3d switchAlliance(Translation3d pose) {
         return new Translation3d(
                 FIELD_LENGTH_METERS - pose.getX(),
@@ -109,8 +113,8 @@ public class AllianceUtils {
             pose = new Pose3d(x, y, z, new Rotation3d(0, 0, yaw));
         }
 
-        public Pose2d getAsCurrentAlliance() {
-            return toAlliancePose(pose.toPose2d());
+        public Pose3d getAsCurrentAlliance() {
+            return toAlliancePose(pose);
         }
     }
 }

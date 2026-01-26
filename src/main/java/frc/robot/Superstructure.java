@@ -92,10 +92,10 @@ public class Superstructure {
         double robotYPosition = swerve.getPose2D().getY();
 
         if (swerve.getPose2D().getTranslation().getDistance(BLUE_DOWN_FIELD_TRENCH_POSE) >
-                swerve.getPose2D().getTranslation().getDistance(BLUE_UP_FIELD_TRENCH_PLACEMENT)){
+                swerve.getPose2D().getTranslation().getDistance(BLUE_UP_FIELD_TRENCH_POSE)){
             return swerve.driveToPoseCommand(new Pose2d(BLUE_DOWN_FIELD_TRENCH_POSE, new Rotation2d()));
         } else {
-            return swerve.driveToPoseCommand(new Pose2d(BLUE_UP_FIELD_TRENCH_PLACEMENT, new Rotation2d()));
+            return swerve.driveToPoseCommand(new Pose2d(BLUE_UP_FIELD_TRENCH_POSE, new Rotation2d()));
         }
     }
 }

@@ -176,9 +176,10 @@ public final class Constants {
                 Translation3d(1.148, 4.32, 1.6002);
         public static final Translation2d BLUE_OUTPOST_POSE_CENTER = new
                 Translation2d(0,0.63);
+        public static final int SHOOTER_TO_TRENCH_LIMET = 100;
         public static final Translation2d BLUE_DOWN_FIELD_TRENCH_POSE = new
                 Translation2d(5.06, 0.63);
-        public static final Translation2d BLUE_UP_FIELD_TRENCH_PLACEMENT = new
+        public static final Translation2d BLUE_UP_FIELD_TRENCH_POSE = new
                 Translation2d(5.06, 7.43);
         public static final Translation2d BLUE_UP_FIELD_PICKUP_FUEL_PLACEMENT = new
                 Translation2d(0.34, 6.509);
@@ -186,6 +187,14 @@ public final class Constants {
                 Translation2d(0.34, 4.829);
 
         public static final double FUEL_DIAMETER = 0.15;
+        public static final Translation2d BLUE_SOTER_LIMET_OTASE = new
+                Translation2d(3,0);
+        public static final Translation2d BLUE_SOTER_LIMET_INER = new
+                Translation2d(5,0);
+        public static final Translation2d REED_SOTER_LIMET_OTASE = new
+                Translation2d(10,0);
+        public static final Translation2d REED_SOTER_LIMET_INER = new
+                Translation2d(13,0);
 
     }
 

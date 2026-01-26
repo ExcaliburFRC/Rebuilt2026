@@ -1,11 +1,7 @@
 package frc.robot.superstructure;
 
 import edu.wpi.first.math.geometry.*;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.ConditionalCommand;
-import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import edu.wpi.first.wpilibj2.command.*;
 import frc.excalib.additional_utilities.AllianceUtils;
 import frc.excalib.additional_utilities.PS5Controller;
 import frc.excalib.swerve.Swerve;
@@ -35,13 +31,13 @@ public class Superstructure {
 
     public Superstructure(PS5Controller controller) {
         intake = new Intake();
-        shooter = new Shooter();
         transport = new Transport();
 
         swerve = Constants.SwerveConstants.configureSwerve(Constants.INITIAL_POSE);
 
         turret = new Turret(swerve::getApproximatedFuturePose2D);
 
+        shooter = new Shooter(()-> swerve.getPose2D().getTranslation());
         this.controller = controller;
 
         shooterPhysic = new ShooterPhysics(
@@ -102,5 +98,20 @@ public class Superstructure {
                     return AllianceUtils.isBlueAlliance() ? condition : !condition;
                 }
         );
+    }
+
+    public Command openIntakeCommand(){
+        return intake.openIntakeCommand();
+    }
+
+    public Command driveToClosesTrenchCommand(){
+        double robotYPosition = swerve.getPose2D().getY();
+
+        if (swerve.getPose2D().getTranslation().getDistance(BLUE_DOWN_FIELD_TRENCH_POSE) >
+                swerve.getPose2D().getTranslation().getDistance(BLUE_UP_FIELD_TRENCH_POSE)){
+            return swerve.driveToPoseCommand(new Pose2d(BLUE_DOWN_FIELD_TRENCH_POSE, new Rotation2d()));
+        } else {
+            return swerve.driveToPoseCommand(new Pose2d(BLUE_UP_FIELD_TRENCH_POSE, new Rotation2d()));
+        }
     }
 }

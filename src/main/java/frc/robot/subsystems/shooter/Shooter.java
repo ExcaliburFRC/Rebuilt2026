@@ -1,18 +1,17 @@
 package frc.robot.subsystems.shooter;
 
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.*;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.excalib.control.limits.SoftLimit;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
 import frc.excalib.mechanisms.Mechanism;
 import frc.excalib.mechanisms.fly_wheel.FlyWheel;
+import frc.robot.Constants;
+import jdk.jfr.Frequency;
+import jdk.jfr.Name;
+import jdk.jfr.Registered;
 
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
@@ -31,30 +30,35 @@ public class Shooter extends SubsystemBase {
     public final DoubleSupplier hoodAngleSupplier;
     public final SoftLimit hoodSoftLimit;
 
-    public final DigitalInput beamBreak;
-    public final Trigger hasFuel;
+    public final Supplier<Translation2d> robotPositionSupplier;
 
-
-    public Shooter() {
+    public Shooter(Supplier<Translation2d> translationSupplier) {
         hoodMotor = new TalonFXMotor(HOOD_MOTOR_ID);
         flyWheelMotor = new TalonFXMotor(FLYWHEEL_MOTOR_ID);
         supportWheelMotor = new TalonFXMotor(SUPPORT_WHEEL_MOTOR_ID);
-        beamBreak = new DigitalInput(BEAM_BREAK_CHANNEL);
         transportMotor = new TalonFXMotor(TRANSPORT_MOTOR_ID);
 
+        robotPositionSupplier = translationSupplier;
         hoodAngleSupplier = () -> (hoodMotor.getPosition().getValueAsDouble() * POSITION_CONVERSION_FACTOR);
+
         transportMechanism = new Mechanism(transportMotor);
         hoodMechanism = new Mechanism(hoodMotor);
-        flyWheelMechanism = new FlyWheel(flyWheelMotor, FLY_WHEEL_MAX_ACCELERATION,
-                FLY_WHEEL_MAX_JERK, FLYWHEEL_GAINS);
         supportWheelMechanism = new Mechanism(supportWheelMotor);
+
+        flyWheelMechanism = new FlyWheel(flyWheelMotor, FLY_WHEEL_MAX_ACCELERATION, FLY_WHEEL_MAX_JERK, FLYWHEEL_GAINS);
 
         hoodSoftLimit = new SoftLimit(
                 () -> HOOD_MIN_ANGLE_LIMIT,
-                () -> HOOD_MAX_ANGLE_LIMIT
+                () -> {
+                    if ((robotPositionSupplier.get().getDistance(Constants.FieldConstants.BLUE_DOWN_FIELD_TRENCH_POSE) <= Constants.FieldConstants.SHOOTER_TO_TRENCH_LIMET)
+                            || (robotPositionSupplier.get().getDistance(Constants.FieldConstants.BLUE_UP_FIELD_TRENCH_POSE) <= Constants.FieldConstants.SHOOTER_TO_TRENCH_LIMET)) {
+                        return HOOD_MAX_ANGLE_LIMIT_IN_TRENCH;
+                    } else {
+                        return HOOD_MAX_ANGLE_LIMIT;
+                    }
+                }
         );
 
-        hasFuel = new Trigger(beamBreak::get);
 
     }
 
@@ -73,15 +77,11 @@ public class Shooter extends SubsystemBase {
                                     new TrapezoidProfile.State(angleSetpoint.getAsDouble(), FINAL_VEL)
                             );
 
-                    double pidValue = angleController.calculate( state.position,angleSetpoint.getAsDouble());
+                    double pidValue = angleController.calculate(state.position, angleSetpoint.getAsDouble());
 
                     hoodMechanism.setVoltage(pidValue);
-                }, this
+                }
         );
-    }
-
-    public Command flyWheelWarmupCommand(double velocity) {
-        return flyWheelMechanism.smartVelocityCommand(() -> velocity, this);
     }
 
     public Command setFlyWheelVelocityCommand(DoubleSupplier velocity) {
@@ -89,7 +89,7 @@ public class Shooter extends SubsystemBase {
     }
 
     public Command getFuelCommand() {
-        return new RunCommand(() -> transportMechanism.setVoltage(TRANSPORT_VOLTAGE),this);
+        return new RunCommand(() -> transportMechanism.setVoltage(TRANSPORT_VOLTAGE));
     }
 
     public Translation2d calculateShootParameters(Pose3d targetPose, Pose3d currentPose) {

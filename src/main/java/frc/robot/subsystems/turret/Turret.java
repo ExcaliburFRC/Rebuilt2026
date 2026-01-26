@@ -36,6 +36,8 @@ public class Turret extends SubsystemBase {
         turretMotor.setPositionConversionFactor(POSITION_CONVERSION_FACTOR);
         turretMotor.setVelocityConversionFactor(VELOCITY_CONVERSION_FACTOR);
 
+        turretEncoder.getPosition().getValueAsDouble();
+
         this.robotPoseSupplier = poseSupplier;
 
         turretMechanism = new frc.excalib.mechanisms.turret.Turret(

@@ -79,7 +79,7 @@ public class Intake extends SubsystemBase {
     }
 
     public Command rollerManualCommand(double voltage) {
-        return rollerMotorMechanism.manualCommand(() -> voltage, this);
+        return rollerMotorMechanism.manualCommand(() -> voltage);
     }
 
     public Command openIntakeCommand() {

@@ -50,7 +50,8 @@ public class Shooter extends SubsystemBase {
         hoodSoftLimit = new SoftLimit(
                 () -> HOOD_MIN_ANGLE_LIMIT,
                 () -> {
-                    if ((robotPositionSupplier.get().getDistance(Constants.FieldConstants.BLUE_DOWN_FIELD_TRENCH_POSE) <= 100) || (robotPositionSupplier.get().getDistance(Constants.FieldConstants.BLUE_UP_FIELD_TRENCH_PLACEMENT) < 100)) {
+                    if ((robotPositionSupplier.get().getDistance(Constants.FieldConstants.BLUE_DOWN_FIELD_TRENCH_POSE) <= Constants.FieldConstants.SHOOTER_TO_TRENCH_LIMET)
+                            || (robotPositionSupplier.get().getDistance(Constants.FieldConstants.BLUE_UP_FIELD_TRENCH_POSE) <= Constants.FieldConstants.SHOOTER_TO_TRENCH_LIMET)) {
                         return HOOD_MAX_ANGLE_LIMIT_IN_TRENCH;
                     } else {
                         return HOOD_MAX_ANGLE_LIMIT;

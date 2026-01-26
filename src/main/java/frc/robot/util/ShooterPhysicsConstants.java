@@ -25,7 +25,7 @@ public final class ShooterPhysicsConstants {
     public static final double DRAG_COEFFICIENT = 0.06;
 
     /* Magnus */
-    public static final double MAGNUS_COEFFICIENT = 0.15;
+    public static final double MAGNUS_COEFFICIENT = 0.15; // ballistic movement
     public static final double FUEL_RADIUS_METERS = Units.inchesToMeters(5.91 / 2.0);
 
     /* Entry angle interpolation */

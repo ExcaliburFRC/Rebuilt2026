@@ -174,29 +174,20 @@ public final class Constants {
                 Translation3d(1.148, 4.32, 1.6002);
         public static final Translation2d BLUE_OUTPOST_POSE_CENTER = new
                 Translation2d(0,0.63);
-        public static final int SHOOTER_TO_TRENCH_LIMET = 100;
         public static final Translation2d BLUE_DOWN_FIELD_TRENCH_POSE = new
-                Translation2d(5.06, 0.63);
+                Translation2d(4.62, 0.63);
         public static final Translation2d BLUE_UP_FIELD_TRENCH_POSE = new
-                Translation2d(5.06, 7.43);
+                Translation2d(4.62, 7.43);
         public static final Translation2d BLUE_UP_FIELD_PICKUP_FUEL_PLACEMENT = new
                 Translation2d(0.34, 6.509);
         public static final Translation2d BLUE_DOWN_FIELD_PICKUP_FUEL_PLACEMENT = new
                 Translation2d(0.34, 4.829);
 
         public static final double FUEL_DIAMETER = 0.15;
-        public static final Translation2d BLUE_SOTER_LIMET_OTASE = new
-                Translation2d(3,0);
-        public static final Translation2d BLUE_SOTER_LIMET_INER = new
-                Translation2d(5,0);
-        public static final Translation2d REED_SOTER_LIMET_OTASE = new
-                Translation2d(10,0);
-        public static final Translation2d REED_SOTER_LIMET_INER = new
-                Translation2d(13,0);
-        public static final Translation2d[] RIGHT_TRENCH_POSES = {new Translation2d(0,0), new Translation2d(0,0),
-                new Translation2d(0,0),new Translation2d(0,0)}; //four poses that the robot might need to go through on his way under the trench
-        public static final Translation2d[] LEFT_TRENCH_POSES = {new Translation2d(0,0), new Translation2d(0,0),
-                new Translation2d(0,0),new Translation2d(0,0)}; //four poses that the robot might need to go through on his way under the trench
+        public static final Translation2d[] RIGHT_TRENCH_POSES = {new Translation2d(1,3.07), new Translation2d(2.34,2.16),
+                new Translation2d(3.7,1.26),BLUE_DOWN_FIELD_TRENCH_POSE}; //four poses that the robot might need to go through on his way under the trench
+        public static final Translation2d[] LEFT_TRENCH_POSES = {new Translation2d(1,4.99), new Translation2d(2.34,5.89),
+                new Translation2d(3.7,6.80),BLUE_UP_FIELD_TRENCH_POSE}; //four poses that the robot might need to go through on his way under the trench
     }
 
     public static final double DEADBAND_X = 0.07;

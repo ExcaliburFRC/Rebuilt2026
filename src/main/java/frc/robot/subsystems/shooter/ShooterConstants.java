@@ -21,6 +21,6 @@ public class ShooterConstants {
     public static final Gains HOOD_PID_GAINS = new Gains(1, 1, 1);
     public static final int BEAM_BREAK_CHANNEL = 0;
     public static final int FINAL_VEL = 0;
-    public static final int SHOOTER_TO_TRENCH_LIMIT = 1;
+    public static final double SHOOTER_TO_TRENCH_LIMIT = 0.75;
     public static final TrapezoidProfile.Constraints HOOD_CONSTRAINTS = new TrapezoidProfile.Constraints(HOOD_MAX_VELOCITY_LIMIT, HOOD_MAX_ACCELERATION_LIMIT);
 }

@@ -1,5 +1,6 @@
 package frc.robot.subsystems.turret;
 
+import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.hardware.CANcoder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -16,6 +17,7 @@ import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 import static frc.robot.subsystems.turret.TurretConstants.*;
+import static frc.robot.superstructure.Superstructure.CANivoreBus;
 
 public class Turret extends SubsystemBase {
     public final TalonFXMotor turretMotor;
@@ -26,8 +28,8 @@ public class Turret extends SubsystemBase {
     public ShootingTarget currentTarget = ShootingTarget.HUB;
 
     public Turret(Supplier<Pose2d> poseSupplier) {
-        turretMotor = new TalonFXMotor(TURRET_MOTOR_ID);
-        turretEncoder = new CANcoder(TURRET_ENCODER_ID);
+        turretMotor = new TalonFXMotor(TURRET_MOTOR_ID, CANivoreBus);
+        turretEncoder = new CANcoder(TURRET_ENCODER_ID, CANivoreBus);
 
         turretAngleSupplier = () -> turretEncoder.getPosition().getValueAsDouble() * ROTATIONS_TO_RAD;
 

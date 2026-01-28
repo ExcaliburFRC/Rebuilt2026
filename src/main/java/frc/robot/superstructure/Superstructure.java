@@ -1,5 +1,6 @@
 package frc.robot.superstructure;
 
+import com.ctre.phoenix6.CANBus;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
@@ -14,7 +15,7 @@ import frc.robot.subsystems.turret.Turret;
 import frc.robot.util.ShooterPhysics;
 
 import static frc.robot.Constants.FieldConstants.*;
-import static frc.robot.subsystems.transport.Constants.SHOOTING_VOLTAGE;
+import static frc.robot.subsystems.transport.TransportConstants.SHOOTING_VOLTAGE;
 import static frc.robot.util.ShootingTarget.*;
 
 public class Superstructure {
@@ -23,7 +24,7 @@ public class Superstructure {
     public final Transport transport;
     public final Turret turret;
     public final Swerve swerve;
-
+    public static final CANBus CANivoreBus = new CANBus("CANivore");
     public final CommandPS5Controller controller;
 
     public final ShooterPhysics shooterPhysic;
@@ -32,9 +33,7 @@ public class Superstructure {
     public Superstructure(CommandPS5Controller controller, Swerve swerve) {
         intake = new Intake();
         transport = new Transport();
-
         this.swerve = swerve;
-
         turret = new Turret(swerve::getApproximatedFuturePose2D);
 
         shooter = new Shooter(() -> swerve.getPose2D().getTranslation());

@@ -17,6 +17,7 @@ import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 import static frc.robot.subsystems.shooter.ShooterConstants.*;
+import static frc.robot.superstructure.Superstructure.CANivoreBus;
 
 public class Shooter extends SubsystemBase {
 
@@ -33,10 +34,10 @@ public class Shooter extends SubsystemBase {
     public final Supplier<Translation2d> robotPositionSupplier;
 
     public Shooter(Supplier<Translation2d> translationSupplier) {
-        hoodMotor = new TalonFXMotor(HOOD_MOTOR_ID);
-        flyWheelMotor = new TalonFXMotor(FLYWHEEL_MOTOR_ID);
-        supportWheelMotor = new TalonFXMotor(SUPPORT_WHEEL_MOTOR_ID);
-        transportMotor = new TalonFXMotor(TRANSPORT_MOTOR_ID);
+        hoodMotor = new TalonFXMotor(HOOD_MOTOR_ID, CANivoreBus);
+        flyWheelMotor = new TalonFXMotor(FLYWHEEL_MOTOR_ID, CANivoreBus);
+        supportWheelMotor = new TalonFXMotor(SUPPORT_WHEEL_MOTOR_ID, CANivoreBus);
+        transportMotor = new TalonFXMotor(TRANSPORT_MOTOR_ID, CANivoreBus);
 
         robotPositionSupplier = translationSupplier;
         hoodAngleSupplier = () -> (hoodMotor.getPosition().getValueAsDouble() * POSITION_CONVERSION_FACTOR);

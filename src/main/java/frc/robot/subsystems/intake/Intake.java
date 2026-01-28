@@ -1,5 +1,6 @@
 package frc.robot.subsystems.intake;
 
+import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.hardware.CANcoder;
 import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -13,6 +14,7 @@ import java.util.function.DoubleSupplier;
 
 import static frc.robot.subsystems.intake.IntakeConstants.*;
 import static frc.robot.subsystems.intake.IntakeConstants.ARM_VELOCITY_LIMIT;
+import static frc.robot.superstructure.Superstructure.CANivoreBus;
 
 public class Intake extends SubsystemBase {
 
@@ -33,9 +35,9 @@ public class Intake extends SubsystemBase {
     public Intake() {
         targetPosition = TargetAngle.CLOSE;
 
-        angleEncoder = new CANcoder(ANGLE_ENCODER_ID);
-        fourBarMotor = new TalonFXMotor(FOUR_BAR_MOTOR_ID);
-        rollerMotor = new TalonFXMotor(ROLLER_MOTOR_ID);
+        angleEncoder = new CANcoder(ANGLE_ENCODER_ID, CANivoreBus);
+        fourBarMotor = new TalonFXMotor(FOUR_BAR_MOTOR_ID, CANivoreBus);
+        rollerMotor = new TalonFXMotor(ROLLER_MOTOR_ID, CANivoreBus);
 
         rollerMotorMechanism = new Mechanism(rollerMotor);
 

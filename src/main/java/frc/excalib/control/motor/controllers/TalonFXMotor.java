@@ -67,10 +67,12 @@ public class TalonFXMotor extends TalonFX implements Motor {
     public TalonFXMotor(int deviceId, CANBus canbus) {
         super(deviceId, canbus);
         this.canbus = canbus;
+        initMotor();
     }
 
     public TalonFXMotor(int canID) {
         this(canID, new CANBus());
+        initMotor();
     }
 
     public static void refreshAll() {

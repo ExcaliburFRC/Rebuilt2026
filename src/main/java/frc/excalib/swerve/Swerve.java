@@ -5,9 +5,7 @@ import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.path.PathPlannerPath;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.networktables.GenericEntry;
@@ -25,6 +23,8 @@ import frc.excalib.control.gains.SysidConfig;
 import frc.excalib.control.imu.IMU;
 import frc.excalib.control.math.Vector2D;
 import frc.excalib.slam.mapper.Odometry;
+import monologue.Logged;
+import org.json.simple.parser.ParseException;
 
 import java.io.IOException;
 import java.util.function.BooleanSupplier;
@@ -33,32 +33,34 @@ import java.util.function.Supplier;
 
 import static edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets.kTextView;
 import static frc.excalib.additional_utilities.Elastic.Notification.NotificationLevel.WARNING;
-import static frc.excalib.swerve.SwerveAccUtils.getSmartTranslationalVelocitySetpoint;
 import static frc.robot.Constants.SwerveConstants.*;
 import static monologue.Annotations.Log;
 
 /**
  * A class representing a swerve subsystem.
  */
-@edu.wpi.first.epilogue.Logged
-public class Swerve extends SubsystemBase {
+public class Swerve extends SubsystemBase implements Logged {
     public final ModulesHolder modules;
-    private final IMU imu;
-    public final Odometry odometry;
+    private final IMU m_imu;
+    public final Odometry m_odometry;
+    private ChassisSpeeds m_desiredChassisSpeeds = new ChassisSpeeds();
+    private Trigger finishTrigger;
+    private Rotation2d pi = new Rotation2d(Math.PI);
 
-    private final Trigger finishTrigger;
-
-    private ChassisSpeeds desiredChassisSpeeds = new ChassisSpeeds();
-    private final SwerveDriveKinematics swerveDriveKinematics;
+    private final SwerveDriveKinematics m_swerveDriveKinematics;
 
     private final PIDController angleController = new PIDController(ANGLE_PID_GAINS.kp, ANGLE_PID_GAINS.ki, ANGLE_PID_GAINS.kd);
-    private final PIDController xController = new PIDController(TRANSLATION_PID_GAINS.kp, TRANSLATION_PID_GAINS.ki, TRANSLATION_PID_GAINS.kd);
-    private final PIDController yController = new PIDController(TRANSLATION_PID_GAINS.kp, TRANSLATION_PID_GAINS.ki, TRANSLATION_PID_GAINS.kd);
-
+    private final PIDController xController = new PIDController(
+            TRANSLATION_PID_GAINS.kp, TRANSLATION_PID_GAINS.ki, TRANSLATION_PID_GAINS.kd
+    );
+    private final PIDController yController = new PIDController(
+            TRANSLATION_PID_GAINS.kp, TRANSLATION_PID_GAINS.ki, TRANSLATION_PID_GAINS.kd
+    );
     public final Field2d field = new Field2d();
 
     private Supplier<Rotation2d> angleSetpoint = Rotation2d::new;
-    private Supplier<Translation2d> translationSetpoint = Translation2d::new;
+    private Supplier<Translation2d> m_translationSetpoint = Translation2d::new;
+
 
     /**
      * A constructor that initialize the Swerve Subsystem
@@ -67,10 +69,12 @@ public class Swerve extends SubsystemBase {
      * @param imu             IMU sensor.
      * @param initialPosition The initial position of the robot.
      */
-    public Swerve(ModulesHolder modules, IMU imu, Pose2d initialPosition) {
+    public Swerve(ModulesHolder modules,
+                  IMU imu,
+                  Pose2d initialPosition) {
         this.modules = modules;
-        this.imu = imu;
-        this.imu.setRotation(new Rotation2d());
+        this.m_imu = imu;
+        m_imu.setRotation(new Rotation2d(Math.PI / 2));
 
 
         angleController.enableContinuousInput(-Math.PI, Math.PI);
@@ -81,14 +85,14 @@ public class Swerve extends SubsystemBase {
 
         finishTrigger = new Trigger(xController::atSetpoint).and(yController::atSetpoint).and(angleController::atSetpoint).debounce(0.1);
         // Initialize odometry with the current yaw angle
-        this.odometry = new Odometry(
+        this.m_odometry = new Odometry(
                 modules.getSwerveDriveKinematics(),
                 modules.getModulesPositions(),
-                this.imu::getZRotation,
+                m_imu::getZRotation,
                 initialPosition
         );
 
-        swerveDriveKinematics = this.modules.getSwerveDriveKinematics();
+        m_swerveDriveKinematics = this.modules.getSwerveDriveKinematics();
 
         initAutoBuilder();
         initElastic();
@@ -107,17 +111,13 @@ public class Swerve extends SubsystemBase {
 
         // Precompute values to avoid redundant calculations
         Supplier<Vector2D> adjustedVelocitySupplier = () -> {
-            Vector2D targetVelocity = velocityMPS.get();
-            Vector2D currentVelocity = getVelocity();
-
-//            Vector2D velocity = limitAcceleration(currentVelocity, targetVelocity, Constants.SwerveConstants.MAX_FORWARD_ACC);
-
-            Vector2D velocity = getSmartTranslationalVelocitySetpoint(getVelocity(), velocityMPS.get());
-//            if (fieldOriented.getAsBoolean()) {
-//                Rotation2d yaw = getRotation2D().unaryMinus();
-//                if (!AllianceUtils.isBlueAlliance()) yaw = yaw.plus(Rotation2d.kPi);
-//                return velocity.rotate(yaw);
-//            }
+            Vector2D velocity = velocityMPS.get();
+//            Vector2D velocity = getSmartTranslationalVelocitySetPoint(getVelocity(), velocityMPS.get());
+            if (fieldOriented.getAsBoolean()) {
+                Rotation2d yaw = getRotation2D().unaryMinus();
+                if (!AllianceUtils.isBlueAlliance()) yaw = yaw.plus(pi);
+                return velocity.rotate(yaw);
+            }
             return velocity;
         };
 
@@ -127,7 +127,7 @@ public class Swerve extends SubsystemBase {
                         omegaRadPerSec
                 ),
                 new RunCommand(
-                        () -> desiredChassisSpeeds = new ChassisSpeeds(
+                        () -> m_desiredChassisSpeeds = new ChassisSpeeds(
                                 adjustedVelocitySupplier.get().getX(),
                                 adjustedVelocitySupplier.get().getY(),
                                 omegaRadPerSec.getAsDouble()
@@ -146,28 +146,7 @@ public class Swerve extends SubsystemBase {
      * @param speeds A ChassisSpeeds object represents ROBOT RELATIVE speeds desired speeds.
      */
     public void driveRobotRelativeChassisSpeeds(ChassisSpeeds speeds) {
-        modules.setModulesStates(swerveDriveKinematics.toSwerveModuleStates(speeds));
-    }
-
-    private Vector2D limitAcceleration(Vector2D currentVel, Vector2D targetVel, double maxAccel) {
-        double deltaX = targetVel.getX() - currentVel.getX();
-        double deltaY = targetVel.getY() - currentVel.getY();
-
-        Vector2D deltaV = new Vector2D(deltaX, deltaY);
-
-        double maxDeltaV = maxAccel;
-        double deltaMag = deltaV.getDistance();
-
-        if (deltaMag <= maxDeltaV || deltaMag < 1e-6) {
-            return targetVel;
-        }
-
-        double scale = maxDeltaV / deltaMag;
-
-        return new Vector2D(
-                currentVel.getX() + deltaX * scale,
-                currentVel.getY() + deltaY * scale
-        );
+        modules.setModulesStates(m_swerveDriveKinematics.toSwerveModuleStates(speeds));
     }
 
     /**
@@ -194,7 +173,7 @@ public class Swerve extends SubsystemBase {
                             xController.calculate(getPose2D().getX(), poseSetpoint.get().getX());
                             yController.calculate(getPose2D().getY(), poseSetpoint.get().getY());
                             angleController.calculate(getRotation2D().getRadians(), poseSetpoint.get().getRotation().getRadians());
-                            translationSetpoint = () -> poseSetpoint.get().getTranslation();
+                            m_translationSetpoint = () -> poseSetpoint.get().getTranslation();
                             angleSetpoint = () -> poseSetpoint.get().getRotation();
                         }
                 ),
@@ -202,8 +181,12 @@ public class Swerve extends SubsystemBase {
                         () -> {
                             Vector2D vel = new Vector2D(
                                     xController.calculate(getPose2D().getX(), poseSetpoint.get().getX()),
-                                    yController.calculate(getPose2D().getY(), poseSetpoint.get().getY()));
-                            if (!AllianceUtils.isBlueAlliance()) return vel.rotate(Rotation2d.kPi);
+                                    yController.calculate(getPose2D().getY(), poseSetpoint.get().getY())
+                            );
+//                            System.out.println("current:  " + getRotation2D().getRadians());
+//                            System.out.println("output:  " + angleController.calculate(getRotation2D().getRadians(), poseSetpoint.get().getRotation().getRadians()));
+//                            System.out.println("error:  " + angleController.getError());
+                            if (!AllianceUtils.isBlueAlliance()) return vel.rotate(pi);
                             return vel;
                         },
                         () -> angleController.calculate(getRotation2D().getRadians(), poseSetpoint.get().getRotation().getRadians()),
@@ -215,12 +198,12 @@ public class Swerve extends SubsystemBase {
     /**
      * A method that drives the robot to a desired pose.
      *
-     * @param setpoint The desired pose.
+     * @param setPoint The desired pose.
      * @return A command that drives the robot to the wanted pose.
      */
-    public Command driveToPoseCommand(Pose2d setpoint) {
+    public Command driveToPoseCommand(Pose2d setPoint) {
         return AutoBuilder.pathfindToPose(
-                setpoint,
+                setPoint,
                 MAX_PATH_CONSTRAINTS
         ).withName("Pathfinding Command");
     }
@@ -247,25 +230,17 @@ public class Swerve extends SubsystemBase {
      * @param pathName The path which the robot needs to follow.
      * @return A command that turns the robot to the wanted angle.
      */
-//     public Command pathFindThenFollowPath(String pathName) {
-//        return AutoBuilder.pathfindThenFollowPath(
-//                PathPlannerPath.fromPathFile(pathName),
-//                new PathConstraints(0, 0, 0, 0));
-//    }
     public Command pathfindThenFollowPathCommand(String pathName) {
         PathPlannerPath path;
         try {
             path = PathPlannerPath.fromPathFile(pathName);
-        } catch (IOException e) {
-            Elastic.sendNotification(
-                    new Elastic.Notification(
-                            WARNING,
-                            "Path Creating Error",
-                            "the path file " + pathName + " doesn't exist")
+        } catch (IOException | ParseException e) {
+            Elastic.sendNotification(new Elastic.Notification(
+                    WARNING,
+                    "Path Creating Error",
+                    "the path file " + pathName + " doesn't exist")
             );
             return new PrintCommand("this path file doesn't exist");
-        } catch (org.json.simple.parser.ParseException e) {
-            throw new RuntimeException(e);
         }
 
         return AutoBuilder.pathfindThenFollowPath(
@@ -275,7 +250,7 @@ public class Swerve extends SubsystemBase {
     }
 
     public Command resetAngleCommand() {
-        return new InstantCommand(imu::resetIMU).ignoringDisable(true);
+        return new InstantCommand(m_imu::resetIMU).ignoringDisable(true);
     }
 
     public Command coastCommand() {
@@ -288,7 +263,7 @@ public class Swerve extends SubsystemBase {
      * Updates the robot's odometry.
      */
     public void updateOdometry() {
-        odometry.updateOdometry(modules.getModulesPositions());
+        m_odometry.updateOdometry(modules.getModulesPositions());
     }
 
     /**
@@ -297,7 +272,7 @@ public class Swerve extends SubsystemBase {
      * @param newPose the wanted new Pose2d of the robot.
      */
     public void resetOdometry(Pose2d newPose) {
-        odometry.resetOdometry(modules.getModulesPositions(), newPose);
+        m_odometry.resetOdometry(modules.getModulesPositions(), newPose);
     }
 
     /**
@@ -317,7 +292,7 @@ public class Swerve extends SubsystemBase {
 
     @Log.NT(key = "Translation Setpoint")
     public Translation2d getTranslationSetpoint() {
-        return translationSetpoint.get();
+        return m_translationSetpoint.get();
     }
 
     /**
@@ -327,18 +302,7 @@ public class Swerve extends SubsystemBase {
      */
     @Log.NT(key = "Robot Pose")
     public Pose2d getPose2D() {
-        return odometry.getRobotPose();
-    }
-
-    @Log.NT(key = "Robot Approximated Future Pose")
-    public Pose2d getApproximatedFuturePose2D() {
-        return new Pose2d(
-                new Translation2d(
-                odometry.getRobotPose().getX() + (getVelocity().getX() * 0.02),
-                odometry.getRobotPose().getY() + (getVelocity().getY() * 0.02)
-                ),
-                new Rotation2d(getRotation2D().getRadians() + (getRobotRelativeSpeeds().omegaRadiansPerSecond))
-        );
+        return m_odometry.getRobotPose();
     }
 
     /**
@@ -357,7 +321,7 @@ public class Swerve extends SubsystemBase {
      */
     @Log.NT(key = "Acceleration")
     public double getAccelerationDistance() {
-        return new Vector2D(imu.getAccX(), imu.getAccY()).getDistance();
+        return new Vector2D(m_imu.getAccX(), m_imu.getAccY()).getDistance();
     }
 
     /**
@@ -367,12 +331,12 @@ public class Swerve extends SubsystemBase {
      */
     @Log.NT(key = "Measured Chassis Speeds")
     public ChassisSpeeds getRobotRelativeSpeeds() {
-        return swerveDriveKinematics.toChassisSpeeds(modules.logStates());
+        return m_swerveDriveKinematics.toChassisSpeeds(modules.logStates());
     }
 
     @Log.NT
     public ChassisSpeeds getDesiredChassisSpeeds() {
-        return desiredChassisSpeeds;
+        return m_desiredChassisSpeeds;
     }
 
     /// /    public double distanceFromReefCenter() {
@@ -463,14 +427,14 @@ public class Swerve extends SubsystemBase {
         GenericEntry OTFGxEntry = swerveTab.add("OTFGx", 0).withWidget(kTextView).getEntry();
         GenericEntry OTFGyEntry = swerveTab.add("OTFGy", 0).withWidget(kTextView).getEntry();
         GenericEntry OTFGAngleEntry = swerveTab.add("OTFGAngle", 0).withWidget(kTextView).getEntry();
-//        swerveTab.add("Drive To Pose",
-//                driveToPoseCommand(
-//                        new Pose2d(
-//                                OTFGxEntry.getDouble(0),
-//                                OTFGyEntry.getDouble(0),
-//                                Rotation2d.fromDegrees(OTFGAngleEntry.getDouble(0)))
-//                )
-//        );
+        swerveTab.add("Drive To Pose",
+                driveToPoseCommand(
+                        new Pose2d(
+                                OTFGxEntry.getDouble(0),
+                                OTFGyEntry.getDouble(0),
+                                Rotation2d.fromDegrees(OTFGAngleEntry.getDouble(0)))
+                )
+        );
     }
 
     /**
@@ -551,5 +515,9 @@ public class Swerve extends SubsystemBase {
     @Log.NT
     public boolean isAtAnglePosition() {
         return angleController.atSetpoint();
+    }
+
+    public Pose2d getApproximatedFuturePose2D() {
+        return new Pose2d();
     }
 }

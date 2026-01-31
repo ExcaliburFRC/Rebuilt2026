@@ -8,6 +8,7 @@ import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import frc.excalib.control.math.Vector2D;
 import frc.excalib.swerve.Swerve;
 import frc.robot.superstructure.Superstructure;
 import frc.robot.util.ShooterPhysics;
@@ -16,6 +17,8 @@ import frc.robot.util.ShootingTarget;
 import monologue.Logged;
 
 import static frc.robot.Constants.PRIMARY_CONTROLLER_PORT;
+import static frc.robot.Constants.SwerveConstants.MAX_OMEGA_RAD_PER_SEC;
+import static frc.robot.Constants.SwerveConstants.MAX_VEL;
 
 
 public class RobotContainer implements Logged {
@@ -23,7 +26,7 @@ public class RobotContainer implements Logged {
 
     public final Swerve swerve = Constants.SwerveConstants.configureSwerve(Constants.INITIAL_POSE);
 
-    public final Superstructure superstructure;
+//    public final Superstructure superstructure;
 
     public final CommandPS5Controller primary = new CommandPS5Controller(PRIMARY_CONTROLLER_PORT);
 
@@ -37,7 +40,7 @@ public class RobotContainer implements Logged {
                 () -> swerve.getRobotRelativeSpeeds().vyMetersPerSecond
         );
 
-        superstructure = new Superstructure(primary, swerve);
+//        superstructure = new Superstructure(primary, swerve);
 
         configureBindings();
         registerCommands();
@@ -45,10 +48,24 @@ public class RobotContainer implements Logged {
 
 
     private void configureBindings() {
+
+        swerve.setDefaultCommand(
+                swerve.driveCommand(
+                        () -> new Vector2D(
+                                applyDeadband(-primary.getLeftY()) * MAX_VEL,
+                                applyDeadband(-primary.getLeftX()) * MAX_VEL),
+                        () -> applyDeadband(-primary.getRightX()) * MAX_OMEGA_RAD_PER_SEC,
+                        () -> true
+                )
+        );
     }
 
     public Command getAutonomousCommand() {
         return Commands.print("No autonomous command configured");
+    }
+
+    public double applyDeadband(double val) {
+        return Math.abs(val) < 0.09 ? 0 : val;
     }
 
     public void registerCommands() {

@@ -15,7 +15,7 @@ import java.util.function.Supplier;
 import static frc.robot.Constants.SwerveConstants.MAX_VEL;
 import static monologue.Annotations.*;
 
-public class ModulesHolder  {
+public class ModulesHolder implements Logged {
     public final SwerveModule m_frontLeft;
     public final SwerveModule m_frontRight;
     public final SwerveModule m_backLeft;
@@ -186,7 +186,7 @@ public class ModulesHolder  {
         };
     }
 
-    @Log.NT(key = "SetPoints")
+    @Log.NT(key = "Setpoints")
     public SwerveModuleState[] logSetPointStates() {
         return new SwerveModuleState[]{
                 m_frontLeft.logSetpointState(),

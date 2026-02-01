@@ -55,13 +55,19 @@ public class SwerveModule implements Logged {
         driveMotor.setCurrentLimit(0, 30);
 
         rotationMotor.setIdleState(BRAKE);
+        rotationMotor.setMotorPosition(angleSupplier.getAsDouble());
         rotationMotor.setVelocityConversionFactor(rotationVelocityConversionFactor);
-        rotationMotor.setInverted(REVERSE);
+        rotationMotor.setInverted(FORWARD);
 
         m_driveWheel = new FlyWheel(driveMotor, 10, 10, velocityGains);
 
-        m_turret = new Turret(rotationMotor, new ContinuousSoftLimit(() -> Double.NEGATIVE_INFINITY, () -> Double.POSITIVE_INFINITY),
-                angleGains, PIDTolerance, angleSupplier);
+        m_turret = new Turret(
+                rotationMotor,
+                new ContinuousSoftLimit(() -> Double.NEGATIVE_INFINITY, () -> Double.POSITIVE_INFINITY),
+                angleGains,
+                PIDTolerance,
+                angleSupplier
+        );
 
         m_MODULE_LOCATION = moduleLocation;
         m_MAX_VEL = maxVel;
@@ -108,13 +114,14 @@ public class SwerveModule implements Logged {
 
     public Command setVelocityCommand(Supplier<Vector2D> moduleVelocity) {
         return new ParallelCommandGroup(
-                m_driveWheel.setDynamicVelocityCommand(() -> {
-                    Vector2D velocity = moduleVelocity.get();
-                    double speed = velocity.getDistance();
+                m_driveWheel.setDynamicVelocityCommand(
+                        () -> {
+                            Vector2D velocity = moduleVelocity.get();
+                            double speed = velocity.getDistance();
 
-                    if (speed < 0.1) {
-                        speed = 0;
-                    }
+                            if (speed < 0.1) {
+                                speed = 0;
+                            }
 
                     boolean optimize = isOptimizable(velocity);
                     return optimize ? -speed : speed;
@@ -123,9 +130,9 @@ public class SwerveModule implements Logged {
                     Vector2D velocity = moduleVelocity.get();
                     double speed = velocity.getDistance();
 
-                    if (speed < 0.1) {
-                        return m_turret.getPosition();
-                    }
+                            if (speed < 0.1) {
+                                return m_turret.getPosition();
+                            }
 
                     boolean optimize = isOptimizable(velocity);
                     Rotation2d direction = velocity.getDirection();
@@ -232,8 +239,8 @@ public class SwerveModule implements Logged {
         m_swerveModulePosition.angle = m_turret.getPosition();
     }
 
-    @NT
-    public double getKv(){
-        return m_driveWheel.logVoltage() / m_driveWheel.getVelocity();
-    }
+//    @NT
+//    public double getKv() {
+//        return  m_driveWheel.logVoltage() / m_driveWheel.getVelocity();
+//    }
 }

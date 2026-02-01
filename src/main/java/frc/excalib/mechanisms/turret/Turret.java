@@ -11,6 +11,8 @@ import frc.excalib.control.gains.Gains;
 import frc.excalib.control.limits.ContinuousSoftLimit;
 import frc.excalib.control.motor.controllers.Motor;
 import frc.excalib.mechanisms.Mechanism;
+import monologue.Annotations;
+import monologue.Logged;
 
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
@@ -18,11 +20,13 @@ import java.util.function.Supplier;
 /**
  * A class representing a Turret Mechanism
  */
-public final class Turret extends Mechanism {
+public final class Turret extends Mechanism implements Logged {
     private final ContinuousSoftLimit m_rotationLimit;
-    private final PIDController m_anglePIDcontroller;
+    public final PIDController m_anglePIDcontroller;
     private final SimpleMotorFeedforward m_angleFFcontroller;
     private final DoubleSupplier m_POSITION_SUPPLIER;
+    private double smartSetpoint = 0;
+    private double wantedSetpoint = 0;
 
     /**
      * @param motor            the turrets motor
@@ -58,7 +62,9 @@ public final class Turret extends Mechanism {
      * @param wantedPosition the wanted position of the turret.
      */
     public void setPosition(Rotation2d wantedPosition) {
-        double smartSetpoint = m_rotationLimit.getSetpoint(getPosition().getRadians(), wantedPosition.getRadians());
+//        double smartSetpoint = m_rotationLimit.getSetpoint(getPosition().getRadians(), wantedPosition.getRadians());
+        this.wantedSetpoint = wantedPosition.getRadians();
+        smartSetpoint = m_rotationLimit.getSetpoint(getPosition().getRadians(), wantedPosition.getRadians());
         double pid = m_anglePIDcontroller.calculate(m_POSITION_SUPPLIER.getAsDouble(), smartSetpoint);
         double ff = m_angleFFcontroller.getKs() * Math.signum(pid);
         super.setVoltage(pid);
@@ -67,6 +73,7 @@ public final class Turret extends Mechanism {
     /**
      * @return get the position if the turret
      */
+
     public Rotation2d getPosition() {
         return new Rotation2d(m_POSITION_SUPPLIER.getAsDouble());
     }
@@ -77,4 +84,20 @@ public final class Turret extends Mechanism {
     public Command stopTurret(SubsystemBase... requirements) {
         return new InstantCommand(super.m_motor::stopMotor, requirements);
     }
+
+    @Annotations.Log.NT
+    public boolean isInTolerance(){
+        return m_anglePIDcontroller.atSetpoint();
+    }
+
+    @Annotations.Log.NT
+    public double getError(){
+        return m_anglePIDcontroller.getError();
+    }
+
+    @Annotations.Log.NT
+    public double getPositionRad() {
+        return (m_POSITION_SUPPLIER.getAsDouble());
+    }
+
 }

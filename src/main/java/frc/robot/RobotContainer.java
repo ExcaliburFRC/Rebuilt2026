@@ -53,7 +53,7 @@ public class RobotContainer implements Logged {
                 swerve.driveCommand(
                         () -> new Vector2D(
                                 applyDeadband(-primary.getLeftY()) * MAX_VEL,
-                                applyDeadband(-primary.getLeftX()) * MAX_VEL),
+                        applyDeadband(-primary.getLeftX()) * MAX_VEL),
                         () -> applyDeadband(-primary.getRightX()) * MAX_OMEGA_RAD_PER_SEC,
                         () -> true
                 )

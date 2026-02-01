@@ -233,7 +233,7 @@ public class SwerveModule implements Logged {
     }
 
     @NT
-    public double getKv(){
-        return m_driveWheel.logVoltage() / m_driveWheel.getVelocity();
+    public double getKv() {
+        return  m_driveWheel.logVoltage() / m_driveWheel.getVelocity();
     }
 }

@@ -186,7 +186,7 @@ public class ModulesHolder implements Logged {
         };
     }
 
-    @Log.NT(key = "SetPoints")
+    @Log.NT(key = "Setpoints")
     public SwerveModuleState[] logSetPointStates() {
         return new SwerveModuleState[]{
                 m_frontLeft.logSetpointState(),

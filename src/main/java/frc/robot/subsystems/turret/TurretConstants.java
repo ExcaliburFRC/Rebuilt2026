@@ -7,7 +7,7 @@ import frc.excalib.control.limits.ContinuousSoftLimit;
 public class TurretConstants {
     public static final double ROTATIONS_TO_RAD = 2 * Math.PI;
 
-    public static final int TURRET_MOTOR_ID = 0;
+    public static final int TURRET_MOTOR_ID = 32;
     public static final int TURRET_ENCODER_ID = 0;
     public static final double MIN_LIMIT = 0;
     public static final double MAX_LIMIT = 0;

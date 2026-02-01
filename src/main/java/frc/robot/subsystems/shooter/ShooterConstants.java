@@ -4,11 +4,10 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import frc.excalib.control.gains.Gains;
 
 public class ShooterConstants {
-    public static final int HOOD_MOTOR_ID = 0;
-    public static final int FLYWHEEL_MOTOR_ID = 1;
-    public static final int SUPPORT_WHEEL_MOTOR_ID = 2;
+    public static final int HOOD_MOTOR_ID = 30;
+    public static final int FLYWHEEL_MOTOR_ID = 31;
+    public static final int TRANSPORT_MOTOR_ID = 33;
     public static final int FLY_WHEEL_MAX_ACCELERATION = 3;
-    public static final int TRANSPORT_MOTOR_ID = 4;
     public static final int TRANSPORT_VOLTAGE = 0;
     public static final int FLY_WHEEL_MAX_JERK = 0;
     public static final int HOOD_MIN_ANGLE_LIMIT = 0;

@@ -6,9 +6,9 @@ import frc.excalib.control.limits.SoftLimit;
 public class IntakeConstants {
 
     // ==== ID's ==== //
-    public static final int FOUR_BAR_MOTOR_ID = 0;
-    public static final int ROLLER_MOTOR_ID = 0;
-    public static final int ANGLE_ENCODER_ID = 0;
+    public static final int FOUR_BAR_MOTOR_ID = 10;
+    public static final int ROLLER_MOTOR_ID = 11;
+    public static final int ANGLE_ENCODER_ID = 12;
 
     // ==== Voltages ==== //
     public static final int INTAKE_ROLLER_VOLTAGE = 0;

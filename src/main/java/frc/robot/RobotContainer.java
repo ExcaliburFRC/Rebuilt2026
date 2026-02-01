@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import frc.excalib.control.math.Vector2D;
 import frc.excalib.swerve.Swerve;
+import frc.robot.subsystems.intake.Intake;
 import frc.robot.superstructure.Superstructure;
 import frc.robot.util.ShooterPhysics;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
@@ -26,8 +27,6 @@ public class RobotContainer implements Logged {
 
     public final Swerve swerve = Constants.SwerveConstants.configureSwerve(Constants.INITIAL_POSE);
 
-//    public final Superstructure superstructure;
-
     public final CommandPS5Controller primary = new CommandPS5Controller(PRIMARY_CONTROLLER_PORT);
 
     public static ShootingTarget shootingTarget = ShootingTarget.HUB;
@@ -40,7 +39,6 @@ public class RobotContainer implements Logged {
                 () -> swerve.getRobotRelativeSpeeds().vyMetersPerSecond
         );
 
-//        superstructure = new Superstructure(primary, swerve);
 
         configureBindings();
         registerCommands();

@@ -20,10 +20,10 @@ import static frc.robot.subsystems.shooter.ShooterConstants.*;
 
 public class Shooter extends SubsystemBase {
 
-    public final TalonFXMotor hoodMotor, flyWheelMotor, supportWheelMotor;
+    public final TalonFXMotor hoodMotor, flyWheelMotor;
 
     public final FlyWheel flyWheelMechanism;
-    public final Mechanism supportWheelMechanism, hoodMechanism;
+    public final Mechanism hoodMechanism;
     public final Mechanism transportMechanism;
 
     public final TalonFXMotor transportMotor;
@@ -35,7 +35,6 @@ public class Shooter extends SubsystemBase {
     public Shooter(Supplier<Translation2d> translationSupplier) {
         hoodMotor = new TalonFXMotor(HOOD_MOTOR_ID);
         flyWheelMotor = new TalonFXMotor(FLYWHEEL_MOTOR_ID);
-        supportWheelMotor = new TalonFXMotor(SUPPORT_WHEEL_MOTOR_ID);
         transportMotor = new TalonFXMotor(TRANSPORT_MOTOR_ID);
 
         robotPositionSupplier = translationSupplier;
@@ -43,7 +42,6 @@ public class Shooter extends SubsystemBase {
 
         transportMechanism = new Mechanism(transportMotor);
         hoodMechanism = new Mechanism(hoodMotor);
-        supportWheelMechanism = new Mechanism(supportWheelMotor);
 
         flyWheelMechanism = new FlyWheel(flyWheelMotor, FLY_WHEEL_MAX_ACCELERATION, FLY_WHEEL_MAX_JERK, FLYWHEEL_GAINS);
 

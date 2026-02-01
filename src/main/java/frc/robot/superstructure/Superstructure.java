@@ -14,7 +14,7 @@ import frc.robot.subsystems.turret.Turret;
 import frc.robot.util.ShooterPhysics;
 
 import static frc.robot.Constants.FieldConstants.*;
-import static frc.robot.subsystems.transport.Constants.SHOOTING_VOLTAGE;
+import static frc.robot.subsystems.transport.transportConstans.SHOOTING_VOLTAGE;
 import static frc.robot.util.ShootingTarget.*;
 
 public class Superstructure {

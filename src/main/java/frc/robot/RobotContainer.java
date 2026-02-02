@@ -5,6 +5,7 @@
 package frc.robot;
 
 import com.pathplanner.lib.auto.NamedCommands;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -29,9 +30,9 @@ public class RobotContainer implements Logged {
 
     public static ShootingTarget shootingTarget = ShootingTarget.HUB;
 
-//    public static Turret turret;
+    public static Turret turret;
 
-    public static Intake intake;
+//    public static Intake intake;
 
 
     public RobotContainer() {
@@ -42,8 +43,8 @@ public class RobotContainer implements Logged {
         );
 
 
-//        turret = new Turret(swerve::getPose2D);
-        intake = new Intake();
+        turret = new Turret(swerve::getPose2D);
+//        intake = new Intake();
 
 
         configureBindings();
@@ -63,12 +64,9 @@ public class RobotContainer implements Logged {
 //                )
 //        );
 
-        //turret.setDefaultCommand(turret.setPositionCommand(() -> new Rotation2d(primary.getLeftX())));
-//        primary.triangle().toggleOnTrue(turret.setPositionCommand(new Rotation2d(primary.getLeftX()*0.5)));
-        // primary.circle().toggleOnTrue(turret.setPositionCommand(()->new Rotation2d(0)));
-//            primary.circle().whileTrue(intake.openIntakeCommand());
+        turret.setDefaultCommand(turret.setPositionCommand(() -> new Rotation2d(primary.getLeftX())));
 
-            primary.triangle().toggleOnTrue(intake.angleManualCommand(()-> 6));
+         primary.circle().toggleOnTrue(turret.setPositionCommand(()->new Rotation2d(0)));
     }
 
 
@@ -92,7 +90,7 @@ public class RobotContainer implements Logged {
 
     @Log.NT
     public double getLeftX(){
-        return primary.getLeftX()*1.5;
+        return primary.getLeftX();
     }
 
 }

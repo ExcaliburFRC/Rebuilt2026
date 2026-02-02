@@ -37,15 +37,15 @@ public class Turret extends SubsystemBase implements Logged {
         turretEncoder.setPosition(turretEncoder.getAbsolutePosition().getValueAsDouble());
 
         turretMotor.setInverted(DirectionState.REVERSE);
-        turretAngleSupplier = () -> turretEncoder.getPosition().getValueAsDouble() * ROTATIONS_TO_RAD * POSITION_CONVERSION_FACTOR;
+        turretAngleSupplier = () -> turretEncoder.getPosition().getValueAsDouble() * ROTATIONS_TO_RAD * ENCODER_POSITION_CONVERSION_FACTOR;
 
 //        turretMotor.setMotorPosition(turretAngleSupplier.getAsDouble());
-        turretMotor.setMotorPosition(turretAngleSupplier.getAsDouble());
-        turretMotor.setPositionConversionFactor(POSITION_CONVERSION_FACTOR);
-        turretMotor.setVelocityConversionFactor(POSITION_CONVERSION_FACTOR);
+        turretMotor.setPositionConversionFactor(MOTOR_POSITION_CONVERSION_FACTOR*7.09764*0.9036616);
+        turretMotor.setVelocityConversionFactor(MOTOR_POSITION_CONVERSION_FACTOR);
 
 
         turretMotor.setIdleState(IdleState.COAST);
+        turretMotor.setMotorPosition(turretAngleSupplier.getAsDouble());
 
 
         this.robotPoseSupplier = poseSupplier;
@@ -101,6 +101,7 @@ public class Turret extends SubsystemBase implements Logged {
 
     @Log.NT
     public double getTurretPosition() {
+
         return turretAngleSupplier.getAsDouble();
     }
 

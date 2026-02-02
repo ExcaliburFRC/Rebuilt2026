@@ -20,5 +20,6 @@ public class TurretConstants {
 
     public static final Gains TURRET_GAINS = new Gains(4.6,0.6,0);
     public static final Translation2d TURRET_OFFSET_RELATIVE_ROBOT = new Translation2d();
-    public static final double POSITION_CONVERSION_FACTOR = 0.04412283798;
+    public static final double ENCODER_POSITION_CONVERSION_FACTOR = 0.04412283798;
+    public static final double MOTOR_POSITION_CONVERSION_FACTOR =-0.02756947507;
 }

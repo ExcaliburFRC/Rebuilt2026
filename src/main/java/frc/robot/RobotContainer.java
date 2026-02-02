@@ -4,10 +4,11 @@
 
 package frc.robot;
 
+import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
+import com.pathplanner.lib.commands.PathPlannerAuto;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.wpilibj2.command.*;
 import frc.excalib.control.math.Vector2D;
 import frc.excalib.swerve.Swerve;
 import frc.robot.superstructure.Superstructure;
@@ -19,7 +20,6 @@ import monologue.Logged;
 import static frc.robot.Constants.PRIMARY_CONTROLLER_PORT;
 import static frc.robot.Constants.SwerveConstants.MAX_OMEGA_RAD_PER_SEC;
 import static frc.robot.Constants.SwerveConstants.MAX_VEL;
-
 
 public class RobotContainer implements Logged {
     public final ShooterPhysics shooterPhysics;
@@ -53,15 +53,18 @@ public class RobotContainer implements Logged {
                 swerve.driveCommand(
                         () -> new Vector2D(
                                 applyDeadband(-primary.getLeftY()) * MAX_VEL,
-                        applyDeadband(-primary.getLeftX()) * MAX_VEL),
-                        () -> applyDeadband(-primary.getRightX()) * MAX_OMEGA_RAD_PER_SEC,
-                        () -> false
+                                applyDeadband(-primary.getLeftX()) * MAX_VEL),
+                        () -> applyDeadband(primary.getRightX()) * MAX_OMEGA_RAD_PER_SEC,
+                        () -> true
                 )
         );
+
+        primary.PS().onTrue(new InstantCommand(() -> swerve.resetOdometry(new Pose2d())).ignoringDisable(true));
+
     }
 
     public Command getAutonomousCommand() {
-        return Commands.print("No autonomous command configured");
+        return AutoBuilder.buildAuto("New Auto");
     }
 
     public double applyDeadband(double val) {
@@ -69,9 +72,9 @@ public class RobotContainer implements Logged {
     }
 
     public void registerCommands() {
-        NamedCommands.registerCommand("floorIntake", new InstantCommand());
-        NamedCommands.registerCommand("prepareShooter", new InstantCommand());
-        NamedCommands.registerCommand("shoot", new InstantCommand());
+        NamedCommands.registerCommand("floorIntake", new PrintCommand("florIntake"));
+        NamedCommands.registerCommand("prepareShooter", new PrintCommand(""));
+        NamedCommands.registerCommand("shoot", new PrintCommand("Shoot"));
         NamedCommands.registerCommand("extendClimber", new InstantCommand());
         NamedCommands.registerCommand("retractClimber", new InstantCommand());
         NamedCommands.registerCommand("retractIntake", new InstantCommand());

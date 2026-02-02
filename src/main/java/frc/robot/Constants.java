@@ -62,14 +62,14 @@ public final class Constants {
                         -TRACK_WIDTH / 2, -TRACK_WIDTH / 2
                 );
 
-        public static final double MAX_MODULE_VEL = 1;
+        public static final double MAX_MODULE_VEL = 3;
         public static final double MAX_FRONT_ACC = 1;
         public static final double MAX_SIDE_ACC = 1;
         public static final double MAX_SKID_ACC = 1;
         public static final double MAX_FORWARD_ACC = 1;
-        public static final double MAX_VEL = 2.5;
-        public static final double MAX_OMEGA_RAD_PER_SEC = 1.5;
-        public static final double MAX_OMEGA_RAD_PER_SEC_SQUARE = 1;
+        public static final double MAX_VEL = 3;
+        public static final double MAX_OMEGA_RAD_PER_SEC = Math.PI;
+        public static final double MAX_OMEGA_RAD_PER_SEC_SQUARE = Math.PI;
 
         public static final PathConstraints MAX_PATH_CONSTRAINTS = new PathConstraints(
                 MAX_VEL,

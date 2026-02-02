@@ -1,8 +1,10 @@
 package frc.excalib.mechanisms.turret;
 
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
@@ -11,6 +13,7 @@ import frc.excalib.control.gains.Gains;
 import frc.excalib.control.limits.ContinuousSoftLimit;
 import frc.excalib.control.motor.controllers.Motor;
 import frc.excalib.mechanisms.Mechanism;
+import frc.robot.Constants;
 import monologue.Annotations;
 import monologue.Logged;
 
@@ -22,7 +25,7 @@ import java.util.function.Supplier;
  */
 public final class Turret extends Mechanism implements Logged {
     private final ContinuousSoftLimit m_rotationLimit;
-    public final PIDController m_anglePIDcontroller;
+    public final ProfiledPIDController m_anglePIDcontroller;
     private final SimpleMotorFeedforward m_angleFFcontroller;
     private final DoubleSupplier m_POSITION_SUPPLIER;
     private double smartSetpoint = 0;
@@ -39,7 +42,20 @@ public final class Turret extends Mechanism implements Logged {
         super(motor);
         m_rotationLimit = rotationLimit;
 
-        m_anglePIDcontroller = new PIDController(angleGains.kp, angleGains.ki, angleGains.kd);
+        m_anglePIDcontroller = new ProfiledPIDController(angleGains.kp, angleGains.ki, angleGains.kd, new TrapezoidProfile.Constraints(Double.MAX_VALUE, Double.MAX_VALUE));
+        m_angleFFcontroller = new SimpleMotorFeedforward(angleGains.ks, angleGains.kv, angleGains.ka);
+
+        m_anglePIDcontroller.setTolerance(PIDtolerance);
+        m_anglePIDcontroller.enableContinuousInput(-Math.PI, Math.PI);
+
+        m_POSITION_SUPPLIER = positionSupplier;
+    }
+
+    public Turret(Motor motor, ContinuousSoftLimit rotationLimit, Gains angleGains, double PIDtolerance, DoubleSupplier positionSupplier, TrapezoidProfile.Constraints constraints) {
+        super(motor);
+        m_rotationLimit = rotationLimit;
+
+        m_anglePIDcontroller = new ProfiledPIDController(angleGains.kp, angleGains.ki, angleGains.kd, constraints);
         m_angleFFcontroller = new SimpleMotorFeedforward(angleGains.ks, angleGains.kv, angleGains.ka);
 
         m_anglePIDcontroller.setTolerance(PIDtolerance);
@@ -83,21 +99,6 @@ public final class Turret extends Mechanism implements Logged {
      */
     public Command stopTurret(SubsystemBase... requirements) {
         return new InstantCommand(super.m_motor::stopMotor, requirements);
-    }
-
-    @Annotations.Log.NT
-    public boolean isInTolerance(){
-        return m_anglePIDcontroller.atSetpoint();
-    }
-
-    @Annotations.Log.NT
-    public double getError(){
-        return m_anglePIDcontroller.getError();
-    }
-
-    @Annotations.Log.NT
-    public double getPositionRad() {
-        return (m_POSITION_SUPPLIER.getAsDouble());
     }
 
 }

@@ -7,17 +7,14 @@ public class ShooterConstants {
     public static final int HOOD_MOTOR_ID = 30;
     public static final int FLYWHEEL_MOTOR_ID = 31;
     public static final int TRANSPORT_MOTOR_ID = 33;
-    public static final int FLY_WHEEL_MAX_ACCELERATION = 3;
-    public static final int TRANSPORT_VOLTAGE = 0;
-    public static final int FLY_WHEEL_MAX_JERK = 0;
-    public static final int HOOD_MIN_ANGLE_LIMIT = 0;
-    public static final int HOOD_MAX_ANGLE_LIMIT = 0;
-    public static final int HOOD_MAX_ANGLE_LIMIT_IN_TRENCH = 0;
+    public static final int HOOD_ENCODER_ID = 34;
+    public static final double FLY_WHEEL_MAX_ACCELERATION = 3;
+    public static final double TRANSPORT_VOLTAGE = 0;
+    public static final double FLY_WHEEL_MAX_JERK = 0;
+    public static final double HOOD_MIN_ANGLE_LIMIT = 0;
+    public static final double HOOD_MAX_ANGLE_LIMIT = 0.47;
     public static final Gains FLYWHEEL_GAINS = new Gains(0.1, 0.0, 0.01);
-    public static final double HOOD_MAX_VELOCITY_LIMIT = 0;
-    public static final double HOOD_MAX_ACCELERATION_LIMIT = 0;
-    public static final double POSITION_CONVERSION_FACTOR = 0;
-    public static final Gains HOOD_PID_GAINS = new Gains(1, 1, 1);
+    public static final double POSITION_CONVERSION_FACTOR = (((double) 28 / 360) / 10);
+    public static final Gains HOOD_PID_GAINS = new Gains(21, 0, 0);
     public static final int FINAL_VEL = 0;
-    public static final TrapezoidProfile.Constraints HOOD_CONSTRAINTS = new TrapezoidProfile.Constraints(HOOD_MAX_VELOCITY_LIMIT, HOOD_MAX_ACCELERATION_LIMIT);
 }

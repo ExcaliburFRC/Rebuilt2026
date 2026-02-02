@@ -8,18 +8,14 @@ import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import frc.excalib.control.math.Vector2D;
 import frc.excalib.swerve.Swerve;
-import frc.robot.subsystems.intake.Intake;
-import frc.robot.superstructure.Superstructure;
+import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.util.ShooterPhysics;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import frc.robot.util.ShootingTarget;
 import monologue.Logged;
 
 import static frc.robot.Constants.PRIMARY_CONTROLLER_PORT;
-import static frc.robot.Constants.SwerveConstants.MAX_OMEGA_RAD_PER_SEC;
-import static frc.robot.Constants.SwerveConstants.MAX_VEL;
 
 
 public class RobotContainer implements Logged {
@@ -27,6 +23,7 @@ public class RobotContainer implements Logged {
 
     public final Swerve swerve = Constants.SwerveConstants.configureSwerve(Constants.INITIAL_POSE);
 
+    public final Shooter shooter;
     public final CommandPS5Controller primary = new CommandPS5Controller(PRIMARY_CONTROLLER_PORT);
 
     public static ShootingTarget shootingTarget = ShootingTarget.HUB;
@@ -40,6 +37,8 @@ public class RobotContainer implements Logged {
         );
 
 
+        shooter = new Shooter(()-> swerve.getPose2D().getTranslation());
+
         configureBindings();
         registerCommands();
     }
@@ -47,15 +46,19 @@ public class RobotContainer implements Logged {
 
     private void configureBindings() {
 
-        swerve.setDefaultCommand(
-                swerve.driveCommand(
-                        () -> new Vector2D(
-                                applyDeadband(-primary.getLeftY()) * MAX_VEL,
-                        applyDeadband(-primary.getLeftX()) * MAX_VEL),
-                        () -> applyDeadband(-primary.getRightX()) * MAX_OMEGA_RAD_PER_SEC,
-                        () -> false
-                )
-        );
+//        swerve.setDefaultCommand(
+//                swerve.driveCommand(
+//                        () -> new Vector2D(
+//                                applyDeadband(-primary.getLeftY()) * MAX_VEL,
+//                        applyDeadband(-primary.getLeftX()) * MAX_VEL),
+//                        () -> applyDeadband(-primary.getRightX()) * MAX_OMEGA_RAD_PER_SEC,
+//                        () -> false
+//                )
+//        );
+
+        primary.triangle().toggleOnTrue(shooter.setHoodAngleCommand(()-> 0.2));
+        primary.circle().toggleOnTrue(shooter.setHoodAngleCommand(()-> 0.1));
+        primary.cross().toggleOnTrue(shooter.setHoodAngleCommand(()-> 0));
     }
 
     public Command getAutonomousCommand() {

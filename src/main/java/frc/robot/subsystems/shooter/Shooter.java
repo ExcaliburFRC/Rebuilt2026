@@ -45,11 +45,11 @@ public class Shooter extends SubsystemBase implements Logged {
         robotPositionSupplier = translationSupplier;
 
         angleController = new PIDController(HOOD_PID_GAINS.kp, HOOD_PID_GAINS.ki, HOOD_PID_GAINS.kd);
-        angleController.setTolerance(0);
+        angleController.setTolerance(0.01);
 
         hoodMotor.setIdleState(IdleState.COAST);
         hoodMotor.setInverted(DirectionState.REVERSE);
-        hoodAngleSupplier = () -> (-hoodEncoder.getPosition().getValueAsDouble() * POSITION_CONVERSION_FACTOR)+0.69;
+        hoodAngleSupplier = () -> (-hoodEncoder.getPosition().getValueAsDouble() * POSITION_CONVERSION_FACTOR) + 0.69;
 
         hoodMotor.setPositionConversionFactor(0.048869);
         hoodMotor.setMotorPosition(hoodAngleSupplier.getAsDouble());
@@ -82,7 +82,7 @@ public class Shooter extends SubsystemBase implements Logged {
     public Command setHoodAngleCommand(DoubleSupplier angleSetpoint) {
 
         return new RunCommand(
-                () -> hoodMechanism.setVoltage(getPIDForAngle(angleSetpoint)),
+                () -> hoodMechanism.setVoltage(getPIDForAngle(() -> hoodSoftLimit.limit(angleSetpoint.getAsDouble()))),
                 this
         );
     }
@@ -118,8 +118,7 @@ public class Shooter extends SubsystemBase implements Logged {
     }
 
     @Log.NT
-    public double getEncoderHoodAngle() {
-        return hoodAngleSupplier.getAsDouble();
+    public boolean isInTolerance(){
+        return angleController.atSetpoint();
     }
-
 }

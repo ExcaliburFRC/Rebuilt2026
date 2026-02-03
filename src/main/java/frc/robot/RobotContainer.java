@@ -57,9 +57,9 @@ public class RobotContainer implements Logged {
 //                )
 //        );
 
-        primary.triangle().toggleOnTrue(shooter.setHoodAngleCommand(()-> 0.2));
-        primary.circle().toggleOnTrue(shooter.setHoodAngleCommand(()-> 0.1));
-        primary.cross().toggleOnTrue(shooter.setHoodAngleCommand(()-> 0));
+        primary.triangle().toggleOnTrue(shooter.setHoodAngleCommand(()-> 0.8));
+        primary.circle().toggleOnTrue(shooter.setHoodAngleCommand(()-> 1));
+        primary.cross().toggleOnTrue(shooter.setHoodAngleCommand(()-> 0.9));
     }
 
     public Command getAutonomousCommand() {

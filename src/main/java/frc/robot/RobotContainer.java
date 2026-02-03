@@ -8,6 +8,8 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.*;
 import frc.excalib.control.math.Vector2D;
 import frc.excalib.swerve.Swerve;
@@ -42,6 +44,8 @@ public class RobotContainer implements Logged {
 
 //        superstructure = new Superstructure(primary, swerve);
 
+        primary.triangle().toggleOnTrue(swerve.driveToPoseCommand(new Pose2d(new Translation2d(8,4),new Rotation2d())));
+
         configureBindings();
         registerCommands();
     }
@@ -64,7 +68,7 @@ public class RobotContainer implements Logged {
     }
 
     public Command getAutonomousCommand() {
-        return AutoBuilder.buildAuto("New Auto");
+        return AutoBuilder.buildAuto("Auto #1");
     }
 
     public double applyDeadband(double val) {
@@ -72,12 +76,13 @@ public class RobotContainer implements Logged {
     }
 
     public void registerCommands() {
-        NamedCommands.registerCommand("floorIntake", new PrintCommand("florIntake"));
-        NamedCommands.registerCommand("prepareShooter", new PrintCommand(""));
+        NamedCommands.registerCommand("floorIntake", new PrintCommand("floorIntake"));
+        NamedCommands.registerCommand("prepareShooter", new PrintCommand("prepareShooter"));
         NamedCommands.registerCommand("shoot", new PrintCommand("Shoot"));
-        NamedCommands.registerCommand("extendClimber", new InstantCommand());
-        NamedCommands.registerCommand("retractClimber", new InstantCommand());
-        NamedCommands.registerCommand("retractIntake", new InstantCommand());
+        NamedCommands.registerCommand("extendClimber", new PrintCommand("extentClimber"));
+        NamedCommands.registerCommand("retractClimber", new PrintCommand("retractClimber"));
+        NamedCommands.registerCommand("retractIntake", new PrintCommand("retractIntake"));
+        NamedCommands.registerCommand("depotIntake", new PrintCommand("depotIntake"));
     }
 
 }

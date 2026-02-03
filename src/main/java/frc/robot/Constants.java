@@ -62,14 +62,14 @@ public final class Constants {
                         -TRACK_WIDTH / 2, -TRACK_WIDTH / 2
                 );
 
-        public static final double MAX_MODULE_VEL = 1;
+        public static final double MAX_MODULE_VEL = 3;
         public static final double MAX_FRONT_ACC = 1;
         public static final double MAX_SIDE_ACC = 1;
         public static final double MAX_SKID_ACC = 1;
         public static final double MAX_FORWARD_ACC = 1;
-        public static final double MAX_VEL = 2.5;
-        public static final double MAX_OMEGA_RAD_PER_SEC = 1.5;
-        public static final double MAX_OMEGA_RAD_PER_SEC_SQUARE = 1;
+        public static final double MAX_VEL = 3;
+        public static final double MAX_OMEGA_RAD_PER_SEC = Math.PI;
+        public static final double MAX_OMEGA_RAD_PER_SEC_SQUARE = Math.PI;
 
         public static final PathConstraints MAX_PATH_CONSTRAINTS = new PathConstraints(
                 MAX_VEL,
@@ -91,12 +91,12 @@ public final class Constants {
         private static final double POSITION_CONVERSION_FACTOR = Units.inchesToMeters(4) * Math.PI / 5.27;
         private static final double ROTATION_VELOCITY_CONVERSION_FACTOR = (2 * Math.PI) / (26.09090909090909);
 
-        public static final PIDConstants TRANSLATION_PID_PP_CONSTANTS = new PIDConstants(10.0, 0.0, 0.0); //TODO
-        public static final PIDConstants ANGLE_PID_PP_CONSTANTS = new PIDConstants(5.0, 0.0, 0.0);
+        public static final PIDConstants TRANSLATION_PID_PP_CONSTANTS = new PIDConstants(4.7, 0.0, 0.0); //TODO
+        public static final PIDConstants ANGLE_PID_PP_CONSTANTS = new PIDConstants(0.1, 0.0, 0.0);
         public static final Gains ANGLE_PID_GAINS = new Gains();
         public static final Gains TRANSLATION_PID_GAINS = new Gains();
 
-        private static final IMU GYRO = new Pigeon(GYRO_ID, SWERVE_CANBUS.getName(), new Rotation3d());
+        private static final IMU GYRO = new Pigeon(GYRO_ID, SWERVE_CANBUS.getName(), new Rotation3d(0,0,Math.PI/2));
 
         public static Swerve configureSwerve(Pose2d initialPose) {
             return new Swerve(

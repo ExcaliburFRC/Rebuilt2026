@@ -35,12 +35,13 @@ public class Turret extends SubsystemBase implements Logged {
         turretMotor = new TalonFXMotor(TURRET_MOTOR_ID, new CANBus("Subsystems"));
         turretEncoder = new CANcoder(TURRET_ENCODER_ID, new CANBus("Subsystems"));
         turretEncoder.setPosition(turretEncoder.getAbsolutePosition().getValueAsDouble());
+        turretMotor.setMotorPosition(turretEncoder.getAbsolutePosition().getValueAsDouble() * ENCODER_TO_MOTOR_CONVERSION_FACTOR);
+        turretAngleSupplier = ()-> turretMotor.getPosition().getValueAsDouble() * MOTOR_POSITION_CONVERSION_FACTOR * ROTATIONS_TO_RAD;
 
         turretMotor.setInverted(DirectionState.REVERSE);
-        turretAngleSupplier = () -> turretEncoder.getPosition().getValueAsDouble() * ROTATIONS_TO_RAD * ENCODER_POSITION_CONVERSION_FACTOR;
 
-//        turretMotor.setMotorPosition(turretAngleSupplier.getAsDouble());
-        turretMotor.setPositionConversionFactor(MOTOR_POSITION_CONVERSION_FACTOR*7.09764*0.9036616);
+//      turretMotor.setMotorPosition(turretAngleSupplier.getAsDouble());
+        turretMotor.setPositionConversionFactor(MOTOR_POSITION_CONVERSION_FACTOR);
         turretMotor.setVelocityConversionFactor(MOTOR_POSITION_CONVERSION_FACTOR);
 
 

@@ -24,6 +24,7 @@ public class RobotContainer implements Logged {
     public final Swerve swerve = Constants.SwerveConstants.configureSwerve(Constants.INITIAL_POSE);
 
     public final Shooter shooter;
+
     public final CommandPS5Controller primary = new CommandPS5Controller(PRIMARY_CONTROLLER_PORT);
 
     public static ShootingTarget shootingTarget = ShootingTarget.HUB;

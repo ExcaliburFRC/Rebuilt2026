@@ -4,7 +4,6 @@ import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.hardware.CANcoder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.*;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj2.command.*;
 import frc.excalib.control.limits.SoftLimit;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
@@ -42,17 +41,18 @@ public class Shooter extends SubsystemBase implements Logged {
         transportMotor = new TalonFXMotor(TRANSPORT_MOTOR_ID, new CANBus("Subsystems"));
         hoodEncoder = new CANcoder(HOOD_ENCODER_ID, new CANBus("Subsystems"));
 
+        hoodEncoder.setPosition(hoodEncoder.getAbsolutePosition().getValueAsDouble());
         robotPositionSupplier = translationSupplier;
 
         angleController = new PIDController(HOOD_PID_GAINS.kp, HOOD_PID_GAINS.ki, HOOD_PID_GAINS.kd);
         angleController.setTolerance(0);
 
         hoodMotor.setIdleState(IdleState.COAST);
-        hoodMotor.setInverted(DirectionState.FORWARD);
-        hoodAngleSupplier = () -> (hoodEncoder.getAbsolutePosition().getValueAsDouble() * POSITION_CONVERSION_FACTOR);
+        hoodMotor.setInverted(DirectionState.REVERSE);
+        hoodAngleSupplier = () -> (-hoodEncoder.getPosition().getValueAsDouble() * POSITION_CONVERSION_FACTOR)+0.69;
 
-        hoodMotor.setMotorPosition(hoodEncoder.getAbsolutePosition().getValueAsDouble() * 2 * Math.PI);
-        hoodMotor.setPositionConversionFactor(POSITION_CONVERSION_FACTOR * 2 * Math.PI);
+        hoodMotor.setPositionConversionFactor(0.048869);
+        hoodMotor.setMotorPosition(hoodAngleSupplier.getAsDouble());
 
         transportMechanism = new Mechanism(transportMotor);
         hoodMechanism = new Mechanism(hoodMotor);
@@ -88,7 +88,7 @@ public class Shooter extends SubsystemBase implements Logged {
     }
 
     public double getPIDForAngle(DoubleSupplier angleSetpoint) {
-        double val = angleController.calculate(getHoodAngle(), angleSetpoint.getAsDouble());
+        double val = angleController.calculate(getHoodMotorAngle(), angleSetpoint.getAsDouble());
         System.out.println(val);
         return val;
     }
@@ -113,8 +113,13 @@ public class Shooter extends SubsystemBase implements Logged {
 
 
     @Log.NT
-    public double getHoodAngle(){
+    public double getHoodMotorAngle() {
         return hoodMotor.getMotorPosition();
+    }
+
+    @Log.NT
+    public double getEncoderHoodAngle() {
+        return hoodAngleSupplier.getAsDouble();
     }
 
 }

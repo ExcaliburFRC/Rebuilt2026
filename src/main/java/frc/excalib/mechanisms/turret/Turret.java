@@ -15,6 +15,7 @@ import frc.excalib.control.motor.controllers.Motor;
 import frc.excalib.mechanisms.Mechanism;
 import frc.robot.Constants;
 import monologue.Annotations;
+import monologue.Annotations.Log;
 import monologue.Logged;
 
 import java.util.function.DoubleSupplier;
@@ -46,7 +47,7 @@ public final class Turret extends Mechanism implements Logged {
         m_angleFFcontroller = new SimpleMotorFeedforward(angleGains.ks, angleGains.kv, angleGains.ka);
 
         m_anglePIDcontroller.setTolerance(PIDtolerance);
-        m_anglePIDcontroller.enableContinuousInput(-Math.PI, Math.PI);
+//        m_anglePIDcontroller.enableContinuousInput(-Math.PI, Math.PI);
 
         m_POSITION_SUPPLIER = positionSupplier;
     }
@@ -59,7 +60,7 @@ public final class Turret extends Mechanism implements Logged {
         m_angleFFcontroller = new SimpleMotorFeedforward(angleGains.ks, angleGains.kv, angleGains.ka);
 
         m_anglePIDcontroller.setTolerance(PIDtolerance);
-        m_anglePIDcontroller.enableContinuousInput(-Math.PI, Math.PI);
+//        m_anglePIDcontroller.enableContinuousInput(-Math.PI, Math.PI);
 
         m_POSITION_SUPPLIER = positionSupplier;
     }
@@ -80,10 +81,14 @@ public final class Turret extends Mechanism implements Logged {
     public void setPosition(Rotation2d wantedPosition) {
 //        double smartSetpoint = m_rotationLimit.getSetpoint(getPosition().getRadians(), wantedPosition.getRadians());
         this.wantedSetpoint = wantedPosition.getRadians();
-        smartSetpoint = m_rotationLimit.getSetpoint(getPosition().getRadians(), wantedPosition.getRadians());
-        double pid = m_anglePIDcontroller.calculate(m_POSITION_SUPPLIER.getAsDouble(), smartSetpoint);
+        double smartSetpoint = m_rotationLimit.getSetpoint(getPosition().getRadians(), wantedPosition.getRadians());
+        this.smartSetpoint = m_rotationLimit.limit(smartSetpoint);
+        double pid = m_anglePIDcontroller.calculate(m_POSITION_SUPPLIER.getAsDouble(), this.smartSetpoint);
         double ff = m_angleFFcontroller.getKs() * Math.signum(pid);
-        super.setVoltage(pid);
+        if (m_anglePIDcontroller.atSetpoint()){
+            ff = 0;
+        }
+        super.setVoltage(pid+ff);
     }
 
     /**
@@ -101,4 +106,13 @@ public final class Turret extends Mechanism implements Logged {
         return new InstantCommand(super.m_motor::stopMotor, requirements);
     }
 
+    @Log.NT
+    public double getSmartSetpoint(){
+        return smartSetpoint;
+    }
+
+    @Log.NT
+    public double getWantedSetpoint() {
+        return wantedSetpoint;
+    }
 }

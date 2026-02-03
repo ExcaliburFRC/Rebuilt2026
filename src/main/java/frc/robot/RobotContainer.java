@@ -64,9 +64,11 @@ public class RobotContainer implements Logged {
 //                )
 //        );
 
-        turret.setDefaultCommand(turret.setPositionCommand(() -> new Rotation2d(primary.getLeftX())));
 
          primary.circle().toggleOnTrue(turret.setPositionCommand(()->new Rotation2d(0)));
+         primary.cross().toggleOnTrue(turret.setPositionCommand(()->new Rotation2d(Math.PI/2)));
+         primary.triangle().toggleOnTrue(turret.setPositionCommand(()->new Rotation2d(-Math.PI/2
+         )));
     }
 
 

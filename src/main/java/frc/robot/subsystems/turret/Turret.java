@@ -14,7 +14,6 @@ import frc.excalib.control.motor.controllers.TalonFXMotor;
 import frc.excalib.control.motor.motor_specs.DirectionState;
 import frc.excalib.control.motor.motor_specs.IdleState;
 import frc.robot.util.ShootingTarget;
-import monologue.Annotations;
 import monologue.Annotations.Log;
 import monologue.Logged;
 
@@ -35,10 +34,10 @@ public class Turret extends SubsystemBase implements Logged {
         turretMotor = new TalonFXMotor(TURRET_MOTOR_ID, new CANBus("Subsystems"));
         turretEncoder = new CANcoder(TURRET_ENCODER_ID, new CANBus("Subsystems"));
         turretEncoder.setPosition(turretEncoder.getAbsolutePosition().getValueAsDouble());
-        turretMotor.setMotorPosition(turretEncoder.getAbsolutePosition().getValueAsDouble() * ENCODER_TO_MOTOR_CONVERSION_FACTOR);
-        turretAngleSupplier = ()-> turretMotor.getPosition().getValueAsDouble() * MOTOR_POSITION_CONVERSION_FACTOR * ROTATIONS_TO_RAD;
+        turretAngleSupplier = () -> turretEncoder.getPosition().getValueAsDouble() * ENCODER_POSITION_CONVERSION_FACTOR;
+        turretMotor.setMotorPosition(turretEncoder.getPosition().getValueAsDouble());
 
-        turretMotor.setInverted(DirectionState.REVERSE);
+        turretMotor.setInverted(DirectionState.FORWARD);
 
 //      turretMotor.setMotorPosition(turretAngleSupplier.getAsDouble());
         turretMotor.setPositionConversionFactor(MOTOR_POSITION_CONVERSION_FACTOR);
@@ -56,7 +55,7 @@ public class Turret extends SubsystemBase implements Logged {
                 TURRET_CONTINUOUS_SOFTLIMIT,
                 TURRET_GAINS,
                 PID_TOLERANCE,
-                this::getTurretPosition,
+                this::getEncoderPosition,
                 new TrapezoidProfile.Constraints(Math.PI * 4, Math.PI * 50)
         );
 
@@ -101,8 +100,7 @@ public class Turret extends SubsystemBase implements Logged {
     }
 
     @Log.NT
-    public double getTurretPosition() {
-
+    public double getEncoderPosition() {
         return turretAngleSupplier.getAsDouble();
     }
 
@@ -111,5 +109,9 @@ public class Turret extends SubsystemBase implements Logged {
         return turretMechanism.m_anglePIDcontroller.getPositionError();
     }
 
+    @Log.NT
+    public boolean isInTolerance(){
+        return turretMechanism.m_anglePIDcontroller.atSetpoint();
+    }
 
 }

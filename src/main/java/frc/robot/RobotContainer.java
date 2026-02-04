@@ -6,28 +6,31 @@ package frc.robot;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.*;
 import frc.excalib.control.math.Vector2D;
+
 import frc.excalib.swerve.Swerve;
-import frc.robot.subsystems.intake.Intake;
-import frc.robot.superstructure.Superstructure;
+import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.util.ShooterPhysics;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import frc.robot.util.ShootingTarget;
 import monologue.Logged;
 
 import static frc.robot.Constants.PRIMARY_CONTROLLER_PORT;
-import static frc.robot.Constants.SwerveConstants.MAX_OMEGA_RAD_PER_SEC;
-import static frc.robot.Constants.SwerveConstants.MAX_VEL;
 
 public class RobotContainer implements Logged {
     public final ShooterPhysics shooterPhysics;
 
     public final Swerve swerve = Constants.SwerveConstants.configureSwerve(Constants.INITIAL_POSE);
+
+    public final Shooter shooter;
 
     public final CommandPS5Controller primary = new CommandPS5Controller(PRIMARY_CONTROLLER_PORT);
 
@@ -42,7 +45,8 @@ public class RobotContainer implements Logged {
         );
 
 
-        primary.triangle().toggleOnTrue(swerve.driveToPoseCommand(new Pose2d(new Translation2d(8,4),new Rotation2d())));
+        shooter = new Shooter(()-> swerve.getPose2D().getTranslation());
+
 
         configureBindings();
         registerCommands();
@@ -50,7 +54,6 @@ public class RobotContainer implements Logged {
 
 
     private void configureBindings() {
-
         swerve.setDefaultCommand(
                 swerve.driveCommand(
                         () -> new Vector2D(

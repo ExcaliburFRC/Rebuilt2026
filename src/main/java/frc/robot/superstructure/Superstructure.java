@@ -53,43 +53,6 @@ public class Superstructure {
         // TODO
     }
 
-    private Command shootingCommand() {
-        return new ParallelCommandGroup(
-                shooter.getFuelCommand(),
-                transport.manualCommand(() -> SHOOTING_VOLTAGE)
-        );
-    }
-
-    public Command shootToHubCommand() {
-        return new SequentialCommandGroup(
-                turret.setTargetCommand(ShootingTarget.HUB),
-                shootingCommand());
-    }
-
-    public Command shootForDeliveryCommand() {
-
-        double distanceToDeliveryForRight =
-                DELIVERY_RIGHT_POSE_DIATANCE.getAsCurrentAlliance().getTranslation().toTranslation2d().getDistance(swerve.getPose2D().getTranslation());
-        double distanceToDeliveryForLeft =
-                DELIVERY_LEFT_POSE_DISTANCE.getAsCurrentAlliance().getTranslation().toTranslation2d().getDistance(swerve.getPose2D().getTranslation());
-
-        if (distanceToDeliveryForLeft > distanceToDeliveryForRight) {
-            return new InstantCommand(() -> RobotContainer.shootingTarget = LEFT_DELIVERY).andThen(turret.setTargetCommand(LEFT_DELIVERY));
-
-        }
-        return new InstantCommand(() -> RobotContainer.shootingTarget = RIGHT_DELIVERY).andThen(turret.setTargetCommand(RIGHT_DELIVERY));
-    }
-
-    public Command ultimateShootingCommand() {
-        return new ConditionalCommand(
-                shootToHubCommand(),
-                shootForDeliveryCommand(),
-                () -> {
-                    boolean condition = swerve.getPose2D().getX() < BLUE_HUB_CENTER_POSE.getAsCurrentAlliance().getX();
-                    return AllianceUtils.isBlueAlliance() ? condition : !condition;
-                }
-        );
-    }
 
     // turret relative
     public Translation2d getTurretToHubVector() {

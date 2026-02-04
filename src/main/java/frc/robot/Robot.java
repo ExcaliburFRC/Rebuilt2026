@@ -24,7 +24,6 @@ public class Robot extends TimedRobot {
 
         Monologue.setupMonologue(robotContainer, "Robot", false, false);
 
-        addPeriodic(() -> robotContainer.shooterPhysics.solve(RobotContainer.shootingTarget.getTranslation()), PHYSICS_PERIODIC_TIME);
     }
 
     @Override

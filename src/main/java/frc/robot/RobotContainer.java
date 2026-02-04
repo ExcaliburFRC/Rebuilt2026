@@ -6,9 +6,13 @@ package frc.robot;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import frc.excalib.swerve.Swerve;
+import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.turret.Turret;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -21,9 +25,11 @@ import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.util.ShooterPhysics;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import frc.robot.util.ShootingTarget;
+import monologue.Annotations.Log;
 import monologue.Logged;
 
 import static frc.robot.Constants.PRIMARY_CONTROLLER_PORT;
+
 
 public class RobotContainer implements Logged {
     public final ShooterPhysics shooterPhysics;
@@ -36,6 +42,10 @@ public class RobotContainer implements Logged {
 
     public static ShootingTarget shootingTarget = ShootingTarget.HUB;
 
+    public static Turret turret;
+
+//    public static Intake intake;
+
 
     public RobotContainer() {
         shooterPhysics = new ShooterPhysics(
@@ -45,6 +55,8 @@ public class RobotContainer implements Logged {
         );
 
 
+        turret = new Turret(swerve::getPose2D);
+//        intake = new Intake();
         shooter = new Shooter(()-> swerve.getPose2D().getTranslation());
 
 
@@ -54,6 +66,22 @@ public class RobotContainer implements Logged {
 
 
     private void configureBindings() {
+
+//        swerve.setDefaultCommand(
+//                swerve.driveCommand(
+//                        () -> new Vector2D(
+//                                applyDeadband(-primary.getLeftY()) * MAX_VEL,
+//                        applyDeadband(-primary.getLeftX()) * MAX_VEL),
+//                        () -> applyDeadband(-primary.getRightX()) * MAX_OMEGA_RAD_PER_SEC,
+//                        () -> false
+//                )
+//        );
+
+
+         primary.circle().toggleOnTrue(turret.setPositionCommand(()->new Rotation2d(0)));
+         primary.cross().toggleOnTrue(turret.setPositionCommand(()->new Rotation2d(Math.PI/2)));
+         primary.triangle().toggleOnTrue(turret.setPositionCommand(()->new Rotation2d(-Math.PI/2
+         )));
         swerve.setDefaultCommand(
                 swerve.driveCommand(
                         () -> new Vector2D(
@@ -67,6 +95,8 @@ public class RobotContainer implements Logged {
         primary.PS().onTrue(new InstantCommand(() -> swerve.resetOdometry(new Pose2d())).ignoringDisable(true));
 
     }
+
+
 
     public Command getAutonomousCommand() {
         return AutoBuilder.buildAuto("Auto #1");
@@ -84,6 +114,11 @@ public class RobotContainer implements Logged {
         NamedCommands.registerCommand("retractClimber", new PrintCommand("retractClimber"));
         NamedCommands.registerCommand("retractIntake", new PrintCommand("retractIntake"));
         NamedCommands.registerCommand("depotIntake", new PrintCommand("depotIntake"));
+    }
+
+    @Log.NT
+    public double getLeftX(){
+        return primary.getLeftX();
     }
 
 }

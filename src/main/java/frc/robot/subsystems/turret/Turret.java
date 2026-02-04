@@ -2,18 +2,14 @@ package frc.robot.subsystems.turret;
 
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.hardware.CANcoder;
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.excalib.control.math.MathUtils;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
 import frc.excalib.control.motor.motor_specs.DirectionState;
 import frc.excalib.control.motor.motor_specs.IdleState;
-import frc.robot.util.ShootingTarget;
 import monologue.Annotations.Log;
 import monologue.Logged;
 
@@ -28,7 +24,6 @@ public class Turret extends SubsystemBase implements Logged {
     public final DoubleSupplier turretAngleSupplier;
     public final CANcoder turretEncoder;
     public final DoubleSupplier turretRelativeAngleToHub;
-    public ShootingTarget currentTarget = ShootingTarget.HUB;
 
     public Turret(DoubleSupplier turretRelativeAngleToHub) {
         turretMotor = new TalonFXMotor(TURRET_MOTOR_ID, new CANBus("Subsystems"));
@@ -61,9 +56,6 @@ public class Turret extends SubsystemBase implements Logged {
 //        setDefaultCommand(followTargetCommand());
     }
 
-    public Command setTargetCommand(ShootingTarget targetToSet) {
-        return new InstantCommand(() -> currentTarget = targetToSet);
-    }
 
     public Command speedRelativeFollowHubCommand() {
         return turretMechanism.setPositionCommand(

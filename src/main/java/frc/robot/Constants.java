@@ -26,7 +26,7 @@ public final class Constants {
     public static final Pose2d INITIAL_POSE = new Pose2d();
     public static final double PHYSICS_PERIODIC_TIME = 0.02;
     public static final int PRIMARY_CONTROLLER_PORT = 0;
-    public static final Translation2d TURRET_OFFSET_TRANSLATION = new Translation2d(0,0); //todo robot to turret
+    public static final Translation2d TURRET_OFFSET_TRANSLATION = new Translation2d(-0.16011,0); //todo robot to turret
 
     public static class SwerveConstants {
         public static final int FRONT_LEFT_DRIVE_ID = 20;
@@ -97,7 +97,7 @@ public final class Constants {
         public static final Gains ANGLE_PID_GAINS = new Gains();
         public static final Gains TRANSLATION_PID_GAINS = new Gains();
 
-        private static final IMU GYRO = new Pigeon(GYRO_ID, SWERVE_CANBUS.getName(), new Rotation3d());
+        private static final IMU GYRO = new Pigeon(GYRO_ID, SWERVE_CANBUS.getName(), new Rotation3d(0,0,Math.PI/2));
 
         public static Swerve configureSwerve(Pose2d initialPose) {
             return new Swerve(

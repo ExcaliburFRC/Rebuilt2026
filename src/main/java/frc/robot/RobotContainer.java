@@ -29,6 +29,8 @@ import monologue.Annotations.Log;
 import monologue.Logged;
 
 import static frc.robot.Constants.PRIMARY_CONTROLLER_PORT;
+import static frc.robot.Constants.SwerveConstants.MAX_OMEGA_RAD_PER_SEC;
+import static frc.robot.Constants.SwerveConstants.MAX_VEL;
 
 
 public class RobotContainer implements Logged {

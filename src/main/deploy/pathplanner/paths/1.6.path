@@ -3,35 +3,47 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 0.6,
-        "y": 5.852881597717547
+        "x": 3.3403708987161194,
+        "y": 7.379643366619116
       },
       "prevControl": null,
       "nextControl": {
-        "x": 1.6,
-        "y": 5.852881597717547
+        "x": 4.340370898716119,
+        "y": 7.379643366619116
       },
       "isLocked": false,
-      "linkedName": "depotIntake/1.2"
+      "linkedName": "shot/1.5"
     },
     {
       "anchor": {
-        "x": 1.8265477888730377,
-        "y": 5.917574893009986
+        "x": 7.7265763195435095,
+        "y": 5.154194008559203
       },
       "prevControl": {
-        "x": 0.8265477888730377,
-        "y": 5.917574893009986
+        "x": 6.92437945791726,
+        "y": 7.987760342368045
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "shot/1.3"
+      "linkedName": null
     }
   ],
   "rotationTargets": [],
   "constraintZones": [],
   "pointTowardsZones": [],
-  "eventMarkers": [],
+  "eventMarkers": [
+    {
+      "name": "intakeOpen/1.6",
+      "waypointRelativePos": 0.6417399804496543,
+      "endWaypointRelativePos": null,
+      "command": {
+        "type": "named",
+        "data": {
+          "name": "floorIntake"
+        }
+      }
+    }
+  ],
   "globalConstraints": {
     "maxVelocity": 3.0,
     "maxAcceleration": 3.0,
@@ -42,13 +54,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 175.486
+    "rotation": -75.96375653207349
   },
   "reversed": false,
   "folder": "Auto #1 Paths",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 175.486
+    "rotation": 0.0
   },
   "useDefaultConstraints": true
 }

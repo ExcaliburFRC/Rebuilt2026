@@ -3,70 +3,68 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 0.6,
-        "y": 0.65
+        "x": 1.8265477888730377,
+        "y": 5.917574893009986
       },
       "prevControl": null,
       "nextControl": {
-        "x": 0.7992759536064774,
-        "y": 1.017097165076438
+        "x": 2.253523537803137,
+        "y": 7.496091298145507
       },
       "isLocked": false,
-      "linkedName": "humanIntake"
+      "linkedName": "shot/1.3"
     },
     {
       "anchor": {
-        "x": 1.930057061340941,
-        "y": 3.8473894436519256
+        "x": 4.595420827389443,
+        "y": 7.41845934379458
       },
       "prevControl": {
-        "x": 1.8636208333950632,
-        "y": 2.6689977878886504
+        "x": 3.4728905291660075,
+        "y": 7.377391162152259
       },
       "nextControl": {
-        "x": 1.9964932892868181,
-        "y": 5.025781099415201
+        "x": 5.656390870185448,
+        "y": 7.4572753209700435
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 0.6,
-        "y": 5.852881597717547
+        "x": 7.804208273894435,
+        "y": 5.969329529243937
       },
       "prevControl": {
-        "x": 1.1822396576319543,
-        "y": 6.072838801711841
+        "x": 6.471526390870184,
+        "y": 7.638416547788873
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "depotIntake/1.2"
+      "linkedName": "nutralIntake/1.4"
     }
   ],
-  "rotationTargets": [],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0.4891437935272387,
+      "rotationDegrees": 0.0
+    },
+    {
+      "waypointRelativePos": 1.590331831216707,
+      "rotationDegrees": -45.0
+    }
+  ],
   "constraintZones": [],
   "pointTowardsZones": [],
   "eventMarkers": [
     {
-      "name": "intakeOpen/1.2",
-      "waypointRelativePos": 1.3030303030302925,
+      "name": "intakeOpen/1.3",
+      "waypointRelativePos": 1.4555229716519864,
       "endWaypointRelativePos": null,
       "command": {
         "type": "named",
         "data": {
           "name": "floorIntake"
-        }
-      }
-    },
-    {
-      "name": "depotIntake",
-      "waypointRelativePos": 2.0,
-      "endWaypointRelativePos": null,
-      "command": {
-        "type": "named",
-        "data": {
-          "name": "depotIntake"
         }
       }
     }
@@ -81,13 +79,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 175.48601154199852
+    "rotation": -53.746162262555096
   },
   "reversed": false,
   "folder": "Auto #1 Paths",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 180.0
+    "rotation": 175.486
   },
   "useDefaultConstraints": true
 }

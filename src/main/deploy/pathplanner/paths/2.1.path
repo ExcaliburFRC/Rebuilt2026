@@ -3,29 +3,29 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 0.6,
-        "y": 5.852881597717547
+        "x": 3.573,
+        "y": 0.65
       },
       "prevControl": null,
       "nextControl": {
-        "x": 1.6,
-        "y": 5.852881597717547
+        "x": 2.02,
+        "y": 0.6500000000000002
       },
       "isLocked": false,
-      "linkedName": "depotIntake/1.2"
+      "linkedName": null
     },
     {
       "anchor": {
-        "x": 1.8265477888730377,
-        "y": 5.917574893009986
+        "x": 0.6,
+        "y": 0.65
       },
       "prevControl": {
-        "x": 0.8265477888730377,
-        "y": 5.917574893009986
+        "x": 1.8685825707072437,
+        "y": 0.6499999999999999
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "shot/1.3"
+      "linkedName": "humanIntake/2.1"
     }
   ],
   "rotationTargets": [],
@@ -42,13 +42,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 175.486
+    "rotation": 180.0
   },
   "reversed": false,
-  "folder": "Auto #1 Paths",
+  "folder": "Auto #2 Paths",
   "idealStartingState": {
-    "velocity": 0,
-    "rotation": 175.486
+    "velocity": 0.0,
+    "rotation": 180.0
   },
   "useDefaultConstraints": true
 }

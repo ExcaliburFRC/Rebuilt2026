@@ -3,32 +3,37 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 0.6,
-        "y": 5.852881597717547
+        "x": 7.625265060240963,
+        "y": 2.87666265060241
       },
       "prevControl": null,
       "nextControl": {
-        "x": 1.6,
-        "y": 5.852881597717547
+        "x": 6.554349397590361,
+        "y": 0.24308433734939738
       },
       "isLocked": false,
-      "linkedName": "depotIntake/1.2"
+      "linkedName": "nutralIntake/2.2"
     },
     {
       "anchor": {
-        "x": 1.8265477888730377,
-        "y": 5.917574893009986
+        "x": 3.5820120481927713,
+        "y": 0.6583373493975899
       },
       "prevControl": {
-        "x": 0.8265477888730377,
-        "y": 5.917574893009986
+        "x": 5.745698795180723,
+        "y": 0.84410843373494
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "shot/1.3"
+      "linkedName": "shot/2.3"
     }
   ],
-  "rotationTargets": [],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0.5509677419354813,
+      "rotationDegrees": 0.0
+    }
+  ],
   "constraintZones": [],
   "pointTowardsZones": [],
   "eventMarkers": [],
@@ -42,13 +47,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 175.486
+    "rotation": 0.0
   },
   "reversed": false,
-  "folder": "Auto #1 Paths",
+  "folder": "Auto #2 Paths",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 175.486
+    "rotation": 64.65382405805333
   },
   "useDefaultConstraints": true
 }

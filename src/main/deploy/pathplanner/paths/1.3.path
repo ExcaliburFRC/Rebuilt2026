@@ -3,72 +3,35 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 1.2313694721825963,
-        "y": 5.969329529243937
+        "x": 0.7397004279600568,
+        "y": 5.917574893009986
       },
       "prevControl": null,
       "nextControl": {
-        "x": 1.6583452211126959,
-        "y": 7.547845934379458
+        "x": 1.7397004279600568,
+        "y": 5.917574893009986
       },
       "isLocked": false,
       "linkedName": "depotIntake/1.2"
     },
     {
       "anchor": {
-        "x": 4.595420827389443,
-        "y": 7.41845934379458
+        "x": 1.8265477888730377,
+        "y": 5.917574893009986
       },
       "prevControl": {
-        "x": 3.4728905291660075,
-        "y": 7.377391162152259
-      },
-      "nextControl": {
-        "x": 5.656390870185448,
-        "y": 7.4572753209700435
-      },
-      "isLocked": false,
-      "linkedName": null
-    },
-    {
-      "anchor": {
-        "x": 7.804208273894435,
-        "y": 5.969329529243937
-      },
-      "prevControl": {
-        "x": 6.471526390870184,
-        "y": 7.638416547788873
+        "x": 0.8265477888730377,
+        "y": 5.917574893009986
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "shot/1.3"
     }
   ],
-  "rotationTargets": [
-    {
-      "waypointRelativePos": 0.4891437935272387,
-      "rotationDegrees": 0.0
-    },
-    {
-      "waypointRelativePos": 1.590331831216707,
-      "rotationDegrees": -45.0
-    }
-  ],
+  "rotationTargets": [],
   "constraintZones": [],
   "pointTowardsZones": [],
-  "eventMarkers": [
-    {
-      "name": "intakeOpen/1.3",
-      "waypointRelativePos": 1.4555229716519864,
-      "endWaypointRelativePos": null,
-      "command": {
-        "type": "named",
-        "data": {
-          "name": "floorIntake"
-        }
-      }
-    }
-  ],
+  "eventMarkers": [],
   "globalConstraints": {
     "maxVelocity": 3.0,
     "maxAcceleration": 3.0,
@@ -79,13 +42,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": -53.74616226255509
+    "rotation": 175.486
   },
   "reversed": false,
   "folder": "Auto #1 Paths",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 180.0
+    "rotation": 175.486
   },
   "useDefaultConstraints": true
 }

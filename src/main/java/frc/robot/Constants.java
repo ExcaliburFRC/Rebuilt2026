@@ -143,7 +143,7 @@ public final class Constants {
                             new SwerveModule(
                                     new TalonFXMotor(BACK_RIGHT_DRIVE_ID, SWERVE_CANBUS),
                                     new TalonFXMotor(BACK_RIGHT_ROTATION_ID, SWERVE_CANBUS),
-                                    new Gains(5.2 ,0, 0,0,0,0,0),
+                                    new Gains(5.2 ,0, 0,0.64,0,0,0),
                                     new Gains(0, 0, 0, 0, 1.98768795, 0, 0),
                                     PID_TOLERANCE,
                                     BACK_RIGHT_TRANSLATION,

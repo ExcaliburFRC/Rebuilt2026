@@ -7,6 +7,8 @@ package frc.robot;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -29,6 +31,8 @@ import monologue.Annotations.Log;
 import monologue.Logged;
 
 import static frc.robot.Constants.PRIMARY_CONTROLLER_PORT;
+import static frc.robot.Constants.SwerveConstants.MAX_OMEGA_RAD_PER_SEC;
+import static frc.robot.Constants.SwerveConstants.MAX_VEL;
 
 
 public class RobotContainer implements Logged {
@@ -44,6 +48,8 @@ public class RobotContainer implements Logged {
 
     public static Turret turret;
 
+    private final SendableChooser<String> autoChooser = new SendableChooser<>();
+
 //    public static Intake intake;
 
 
@@ -53,11 +59,20 @@ public class RobotContainer implements Logged {
                 () -> swerve.getRobotRelativeSpeeds().vxMetersPerSecond,
                 () -> swerve.getRobotRelativeSpeeds().vyMetersPerSecond
         );
+        swerve.resetOdometry(new Pose2d(0,0, new Rotation2d(0)));
 
 
         turret = new Turret(swerve::getPose2D);
 //        intake = new Intake();
         shooter = new Shooter(()-> swerve.getPose2D().getTranslation());
+
+        autoChooser.setDefaultOption("/ null Auto", "/ null Auto");
+
+        for (String autoName : AutoBuilder.getAllAutoNames()) {
+            autoChooser.addOption(autoName, autoName);
+        }
+
+        SmartDashboard.putData("Auto Chooser", autoChooser);
 
 
         configureBindings();
@@ -87,7 +102,8 @@ public class RobotContainer implements Logged {
                         () -> new Vector2D(
                                 applyDeadband(-primary.getLeftY()) * MAX_VEL,
                                 applyDeadband(-primary.getLeftX()) * MAX_VEL),
-                        () -> applyDeadband(primary.getRightX()) * MAX_OMEGA_RAD_PER_SEC,
+                        () -> applyDeadband(primary.getRightX()) *
+                                MAX_OMEGA_RAD_PER_SEC,
                         () -> true
                 )
         );
@@ -99,7 +115,13 @@ public class RobotContainer implements Logged {
 
 
     public Command getAutonomousCommand() {
-        return AutoBuilder.buildAuto("Auto #1");
+        String selectedAuto = autoChooser.getSelected();
+
+        if (selectedAuto == null || selectedAuto.equals("/ null Auto")) {
+            return new PrintCommand("This auto is empty");
+        }
+
+        return AutoBuilder.buildAuto(selectedAuto);
     }
 
     public double applyDeadband(double val) {
@@ -108,6 +130,7 @@ public class RobotContainer implements Logged {
 
     public void registerCommands() {
         NamedCommands.registerCommand("floorIntake", new PrintCommand("floorIntake"));
+        NamedCommands.registerCommand("closeIntake", new PrintCommand("closeIntake"));
         NamedCommands.registerCommand("prepareShooter", new PrintCommand("prepareShooter"));
         NamedCommands.registerCommand("shoot", new PrintCommand("Shoot"));
         NamedCommands.registerCommand("extendClimber", new PrintCommand("extentClimber"));

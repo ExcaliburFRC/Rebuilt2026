@@ -1,5 +1,6 @@
 package frc.robot.subsystems.transport;
 
+import com.ctre.phoenix6.CANBus;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
@@ -14,7 +15,7 @@ public class Transport extends SubsystemBase {
     public Mechanism drumMechanism;
 
     public Transport() {
-        drumMotor = new TalonFXMotor(DRUM_MOTOR_ID);
+        drumMotor = new TalonFXMotor(DRUM_MOTOR_ID, new CANBus("Subsystems"));
         drumMechanism = new Mechanism(drumMotor);
     }
     public Command manualCommand(DoubleSupplier output) {

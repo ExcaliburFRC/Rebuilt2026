@@ -17,4 +17,5 @@ public class ShooterConstants {
     public static final double POSITION_CONVERSION_FACTOR = 0.350566;
     public static final Gains HOOD_PID_GAINS = new Gains(21, 0, 0);
     public static final int FINAL_VEL = 0;
+    public static final double STATIC_SHOOTING_VELOCITY = 0;
 }

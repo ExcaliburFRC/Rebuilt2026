@@ -26,6 +26,7 @@ public final class Constants {
     public static final Pose2d INITIAL_POSE = new Pose2d();
     public static final double PHYSICS_PERIODIC_TIME = 0.02;
     public static final int PRIMARY_CONTROLLER_PORT = 0;
+    public static final Translation2d TURRET_OFFSET_TRANSLATION = new Translation2d(-0.16011,0); //todo robot to turret
 
     public static class SwerveConstants {
         public static final int FRONT_LEFT_DRIVE_ID = 20;
@@ -62,14 +63,14 @@ public final class Constants {
                         -TRACK_WIDTH / 2, -TRACK_WIDTH / 2
                 );
 
-        public static final double MAX_MODULE_VEL = 3;
+        public static final double MAX_MODULE_VEL = 1;
         public static final double MAX_FRONT_ACC = 1;
         public static final double MAX_SIDE_ACC = 1;
         public static final double MAX_SKID_ACC = 1;
         public static final double MAX_FORWARD_ACC = 1;
-        public static final double MAX_VEL = 3;
-        public static final double MAX_OMEGA_RAD_PER_SEC = Math.PI;
-        public static final double MAX_OMEGA_RAD_PER_SEC_SQUARE = Math.PI;
+        public static final double MAX_VEL = 2.5;
+        public static final double MAX_OMEGA_RAD_PER_SEC = 1.5;
+        public static final double MAX_OMEGA_RAD_PER_SEC_SQUARE = 1;
 
         public static final PathConstraints MAX_PATH_CONSTRAINTS = new PathConstraints(
                 MAX_VEL,
@@ -91,8 +92,8 @@ public final class Constants {
         private static final double POSITION_CONVERSION_FACTOR = Units.inchesToMeters(4) * Math.PI / 5.27;
         private static final double ROTATION_VELOCITY_CONVERSION_FACTOR = (2 * Math.PI) / (26.09090909090909);
 
-        public static final PIDConstants TRANSLATION_PID_PP_CONSTANTS = new PIDConstants(4.7, 0.0, 0.0); //TODO
-        public static final PIDConstants ANGLE_PID_PP_CONSTANTS = new PIDConstants(0.1, 0.0, 0.0);
+        public static final PIDConstants TRANSLATION_PID_PP_CONSTANTS = new PIDConstants(10.0, 0.0, 0.0); //TODO
+        public static final PIDConstants ANGLE_PID_PP_CONSTANTS = new PIDConstants(5.0, 0.0, 0.0);
         public static final Gains ANGLE_PID_GAINS = new Gains();
         public static final Gains TRANSLATION_PID_GAINS = new Gains();
 
@@ -164,11 +165,11 @@ public final class Constants {
         // all the units of length are in meters
 
         public static final AllianceUtils.AlliancePose BLUE_HUB_CENTER_POSE = new
-                AllianceUtils.AlliancePose(5.06, 4.03, 1.83, 0);
+                AllianceUtils.AlliancePose(5.06, 4.03, 0);
         public static final AllianceUtils.AlliancePose DELIVERY_RIGHT_POSE_DIATANCE = new
-                AllianceUtils.AlliancePose(1.988, 6.523, 0, 0);
+                AllianceUtils.AlliancePose(1.988, 6.523, 0);
         public static final AllianceUtils.AlliancePose DELIVERY_LEFT_POSE_DISTANCE = new
-                AllianceUtils.AlliancePose(1.988, 2.172, 0, 0);
+                AllianceUtils.AlliancePose(1.988, 2.172, 0);
         public static final Translation3d BLUE_CLIMB_TOWER_POSE_L1 = new
                 Translation3d(1.148, 4.32, 0.6858);
         public static final Translation3d BLUE_CLIMB_TOWER_POSE_L2 = new

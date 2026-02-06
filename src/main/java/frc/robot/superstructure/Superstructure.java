@@ -13,6 +13,9 @@ import frc.robot.util.ShootingTarget;
 import frc.robot.subsystems.turret.Turret;
 import frc.robot.util.ShooterPhysics;
 
+import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
+
 import static frc.robot.Constants.FieldConstants.*;
 import static frc.robot.subsystems.transport.transportConstans.SHOOTING_VOLTAGE;
 import static frc.robot.util.ShootingTarget.*;
@@ -65,6 +68,22 @@ public class Superstructure {
                 shootingCommand());
     }
 
+    public Command testShotCommand(double turretAngle, double hoodAngle, double flyWheelVelocity){
+        return new ParallelCommandGroup(
+                        turret.setPositionCommand(() -> new Rotation2d(turretAngle)),
+                        shooter.setHoodAngleCommand(() -> 1),
+                        shooter.setFlyWheelVelocityCommand(() -> 37),
+                        new WaitCommand(1.5).andThen(new InstantCommand(
+                                        () -> shooter.transportMechanism.setVoltage(5)
+                                ))
+                        )
+        ;
+    }
+
+    public Command flyWheelCommand() {
+        return shooter.flyWheelManualCommand(13);
+    }
+
     public Command shootForDeliveryCommand() {
 
         double distanceToDeliveryForRight =
@@ -78,6 +97,7 @@ public class Superstructure {
         }
         return new InstantCommand(() -> RobotContainer.shootingTarget = RIGHT_DELIVERY).andThen(turret.setTargetCommand(RIGHT_DELIVERY));
     }
+
 
     public Command ultimateShootingCommand() {
         return new ConditionalCommand(

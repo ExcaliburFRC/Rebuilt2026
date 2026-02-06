@@ -25,7 +25,7 @@
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "humanIntake"
+      "linkedName": "humanIntake/2.1"
     }
   ],
   "rotationTargets": [],
@@ -45,7 +45,7 @@
     "rotation": 180.0
   },
   "reversed": false,
-  "folder": "Auto #1 Paths",
+  "folder": "Auto #2 Paths",
   "idealStartingState": {
     "velocity": 0.0,
     "rotation": 180.0

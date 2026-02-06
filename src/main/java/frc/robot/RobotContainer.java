@@ -7,23 +7,22 @@ package frc.robot;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import frc.excalib.swerve.Swerve;
 import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.transport.Transport;
 import frc.robot.subsystems.turret.Turret;
-import com.pathplanner.lib.commands.PathPlannerAuto;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.*;
 import frc.excalib.control.math.Vector2D;
 
-import frc.excalib.swerve.Swerve;
 import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.superstructure.Superstructure;
 import frc.robot.util.ShooterPhysics;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import frc.robot.util.ShootingTarget;
@@ -35,23 +34,17 @@ import static frc.robot.Constants.SwerveConstants.MAX_OMEGA_RAD_PER_SEC;
 import static frc.robot.Constants.SwerveConstants.MAX_VEL;
 
 
-public class RobotContainer implements Logged {
+public class RobotContainer extends TimedRobot implements Logged {
     public final ShooterPhysics shooterPhysics;
 
     public final Swerve swerve = Constants.SwerveConstants.configureSwerve(Constants.INITIAL_POSE);
 
-    public final Shooter shooter;
-
     public final CommandPS5Controller primary = new CommandPS5Controller(PRIMARY_CONTROLLER_PORT);
 
     public static ShootingTarget shootingTarget = ShootingTarget.HUB;
-
-    public static Turret turret;
+    public final Superstructure superstructure = new Superstructure(primary, swerve);
 
     private final SendableChooser<String> autoChooser = new SendableChooser<>();
-
-//    public static Intake intake;
-
 
     public RobotContainer() {
         shooterPhysics = new ShooterPhysics(
@@ -60,11 +53,6 @@ public class RobotContainer implements Logged {
                 () -> swerve.getRobotRelativeSpeeds().vyMetersPerSecond
         );
         swerve.resetOdometry(new Pose2d(0,0, new Rotation2d(0)));
-
-
-        turret = new Turret(swerve::getPose2D);
-//        intake = new Intake();
-        shooter = new Shooter(()-> swerve.getPose2D().getTranslation());
 
         autoChooser.setDefaultOption("/ null Auto", "/ null Auto");
 
@@ -91,12 +79,9 @@ public class RobotContainer implements Logged {
 //                        () -> false
 //                )
 //        );
+         primary.cross().toggleOnTrue(superstructure.testShotCommand(Math.PI/4, 0.6, 40));
+//        primary.circle().toggleOnTrue(superstructure.flyWheelCommand());
 
-
-         primary.circle().toggleOnTrue(turret.setPositionCommand(()->new Rotation2d(0)));
-         primary.cross().toggleOnTrue(turret.setPositionCommand(()->new Rotation2d(Math.PI/2)));
-         primary.triangle().toggleOnTrue(turret.setPositionCommand(()->new Rotation2d(-Math.PI/2
-         )));
         swerve.setDefaultCommand(
                 swerve.driveCommand(
                         () -> new Vector2D(
@@ -137,6 +122,9 @@ public class RobotContainer implements Logged {
         NamedCommands.registerCommand("retractClimber", new PrintCommand("retractClimber"));
         NamedCommands.registerCommand("retractIntake", new PrintCommand("retractIntake"));
         NamedCommands.registerCommand("depotIntake", new PrintCommand("depotIntake"));
+        SmartDashboard.putNumber("match time", DriverStation.getMatchTime());
+
+
     }
 
     @Log.NT

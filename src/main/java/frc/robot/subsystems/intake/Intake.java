@@ -1,5 +1,6 @@
 package frc.robot.subsystems.intake;
 
+import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.hardware.CANcoder;
 import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -8,13 +9,15 @@ import frc.excalib.control.math.physics.Mass;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
 import frc.excalib.mechanisms.Arm.Arm;
 import frc.excalib.mechanisms.Mechanism;
+import monologue.Annotations.Log;
+import monologue.Logged;
 
 import java.util.function.DoubleSupplier;
 
 import static frc.robot.subsystems.intake.IntakeConstants.*;
 import static frc.robot.subsystems.intake.IntakeConstants.ARM_VELOCITY_LIMIT;
 
-public class Intake extends SubsystemBase {
+public class Intake extends SubsystemBase implements Logged {
 
     public final TalonFXMotor fourBarMotor;
     public final TalonFXMotor rollerMotor;
@@ -25,7 +28,7 @@ public class Intake extends SubsystemBase {
     public final CANcoder angleEncoder;
 
     public final SoftLimit intakeAngleLimit;
-
+    public boolean isIntakeOpen = false;
     public final DoubleSupplier angleSupplier;
     public final Trigger atPositionTrigger;
     public TargetAngle targetPosition;
@@ -33,9 +36,9 @@ public class Intake extends SubsystemBase {
     public Intake() {
         targetPosition = TargetAngle.CLOSE;
 
-        angleEncoder = new CANcoder(ANGLE_ENCODER_ID);
-        fourBarMotor = new TalonFXMotor(FOUR_BAR_MOTOR_ID);
-        rollerMotor = new TalonFXMotor(ROLLER_MOTOR_ID);
+        angleEncoder = new CANcoder(ANGLE_ENCODER_ID, new CANBus("Subsystems"));
+        fourBarMotor = new TalonFXMotor(FOUR_BAR_MOTOR_ID, new CANBus("Subsystems"));
+        rollerMotor = new TalonFXMotor(ROLLER_MOTOR_ID, new CANBus("Subsystems"));
 
         rollerMotorMechanism = new Mechanism(rollerMotor);
 
@@ -78,11 +81,17 @@ public class Intake extends SubsystemBase {
         );
     }
 
+    @Log.NT
+    public boolean getIsIntakeOpen() {
+        return isIntakeOpen;
+    }
+
     public Command rollerManualCommand(double voltage) {
         return rollerMotorMechanism.manualCommand(() -> voltage);
     }
 
     public Command openIntakeCommand() {
+        isIntakeOpen = true;
         return new InstantCommand(() -> setAnglePosition(TargetAngle.OPEN));
     }
 

@@ -80,12 +80,16 @@ public class Shooter extends SubsystemBase implements Logged {
     }
 
     public Command setHoodAngleCommand(DoubleSupplier angleSetpoint) {
-
         return new RunCommand(
                 () -> hoodMechanism.setVoltage(getPIDForAngle(() -> hoodSoftLimit.limit(angleSetpoint.getAsDouble()))),
                 this
         );
     }
+
+    public Command flyWheelManualCommand(double volt) {
+        return flyWheelMechanism.manualCommand(() -> volt, this);
+    }
+
 
     public double getPIDForAngle(DoubleSupplier angleSetpoint) {
         double val = angleController.calculate(getHoodMotorAngle(), angleSetpoint.getAsDouble());
@@ -109,6 +113,10 @@ public class Shooter extends SubsystemBase implements Logged {
         );
         command.addRequirements(this);
         return command;
+    }
+
+    public Command transportManualCommand(double voltage) {
+        return transportMechanism.manualCommand(() -> voltage, this);
     }
 
 

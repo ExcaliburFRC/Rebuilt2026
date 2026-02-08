@@ -26,9 +26,11 @@ import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import monologue.Annotations;
 import monologue.Logged;
 
+import static edu.wpi.first.math.MathUtil.applyDeadband;
 import static frc.robot.Constants.PRIMARY_CONTROLLER_PORT;
 import static frc.robot.Constants.SwerveConstants.MAX_OMEGA_RAD_PER_SEC;
 import static frc.robot.Constants.SwerveConstants.MAX_VEL;
+import static frc.robot.subsystems.shooter.ShooterConstants.HOOD_MAX_ANGLE_LIMIT_IN_TRENCH;
 import static monologue.Annotations.*;
 
 
@@ -62,7 +64,7 @@ public class RobotContainer implements Logged {
 
 
     private void configureBindings() {
-
+        superstructure.turret.setDefaultCommand(superstructure.turretTest());
         swerve.setDefaultCommand(
                 swerve.driveCommand(
                         () -> new Vector2D(
@@ -74,17 +76,24 @@ public class RobotContainer implements Logged {
                 )
         );
 
-        primary.triangle().toggleOnTrue(superstructure.testShotCommand());
+        superstructure.shooter.setDefaultCommand(new ConditionalCommand(
+                superstructure.shooter.setHoodAngleCommand(() -> 1),
+                new InstantCommand(() -> {}),
+                () -> (swerve.getPose2D().getTranslation().getDistance(Constants.FieldConstants.BLUE_DOWN_FIELD_TRENCH_POSE)) <= Constants.FieldConstants.SHOOTER_TO_TRENCH_LIMIT
+                            || ((swerve.getPose2D().getTranslation().getDistance(Constants.FieldConstants.BLUE_UP_FIELD_TRENCH_POSE)) <= Constants.FieldConstants.SHOOTER_TO_TRENCH_LIMIT)));
+
+        primary.triangle().toggleOnTrue(new PrintCommand(String.valueOf((swerve.getPose2D().getTranslation().getDistance(Constants.FieldConstants.BLUE_DOWN_FIELD_TRENCH_POSE)))));
 
         primary.PS().onTrue(new InstantCommand(() -> swerve.resetOdometry(new Pose2d())).ignoringDisable(true));
 
         primary.circle().onTrue(superstructure.testIntake(-0.9)); //todo moves cHood for some reason
 
-        primary.cross().onTrue(new PrintCommand("" + Units.radiansToDegrees(superstructure.getTurretToHubVectorAngle())).ignoringDisable(true));
+        //primary.cross().onTrue(new PrintCommand("" + Units.radiansToDegrees(superstructure.getTurretToHubVectorAngle())).ignoringDisable(true));
     }
 
 
     public Command getAutonomousCommand() {
+
         return AutoBuilder.buildAuto("Auto #1");
     }
 

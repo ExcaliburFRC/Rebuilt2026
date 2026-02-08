@@ -43,7 +43,7 @@ public class Superstructure implements Logged {
 
         turret = new Turret(() -> getTurretToHubVector().get().getAngle().getRadians());
 
-        shooter = new Shooter(() -> getTurretToHubVector().get().getNorm());
+        shooter = new Shooter(() -> getTurretToHubVector().get().getNorm(), () -> swerve.getPose2D());
 
         this.controller = controller;
 
@@ -91,13 +91,13 @@ public class Superstructure implements Logged {
         return () -> turretToDelivery;
     }
 
-    public Command turnTurretToAllianceZoneCommand() {
-        return turret.setPositionCommand(() -> new Rotation2d(180));
+    public Command turretTest() {
+        return turret.setPositionCommand(() -> getTurretToHubVector().get().getAngle());
     }
 
     public Command testShotCommand() {
         return new ParallelCommandGroup(
-                turret.setPositionCommand(() -> new Rotation2d(Math.PI / 4)),
+                turret.setPositionCommand(() -> new Rotation2d(Math.PI / 2)),
                 //shooter.setHoodAngleCommand(() -> 1),
                 shooter.setFlyWheelVelocityCommand(() -> 80),
                 new WaitCommand(4).andThen(
@@ -122,8 +122,21 @@ public class Superstructure implements Logged {
     }
 
     @Log.NT
+    public double getTurretToDeliveryVectorAngle() {
+        return Units.radiansToDegrees(getTurretToDeliveryVector().get().getAngle().getRadians());
+    }
+
+    @Log.NT
     public double getTurretToHubVectorDist() {
         return getTurretToHubVector().get().getNorm();
+    }
+
+    @Log.NT
+    public Pose2d getpoSE(){
+        return new Pose2d(
+                swerve.getPose2D().getTranslation(),
+                getTurretToHubVector().get().getAngle()
+        );
     }
 
 

@@ -9,6 +9,7 @@ public class ShooterConstants {
     public static final int TRANSPORT_MOTOR_ID = 33;
     public static final int HOOD_ENCODER_ID = 34;
     public static final double FLY_WHEEL_MAX_ACCELERATION = 3;
+    public static final double HOOD_MAX_ANGLE_LIMIT_IN_TRENCH = 0.8;
     public static final double TRANSPORT_VOLTAGE = 0;
     public static final double FLY_WHEEL_MAX_JERK = 0;
     public static final double HOOD_MIN_ANGLE_LIMIT = 0.7;

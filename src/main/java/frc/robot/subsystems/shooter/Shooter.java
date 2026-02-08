@@ -12,6 +12,7 @@ import frc.excalib.control.motor.motor_specs.DirectionState;
 import frc.excalib.control.motor.motor_specs.IdleState;
 import frc.excalib.mechanisms.Mechanism;
 import frc.excalib.mechanisms.fly_wheel.FlyWheel;
+import frc.robot.Constants;
 import monologue.Annotations.Log;
 import monologue.Logged;
 
@@ -33,12 +34,14 @@ public class Shooter extends SubsystemBase implements Logged {
     public DoubleSupplier hoodAngleSupplier;
     public final SoftLimit hoodSoftLimit;
 
+    public final Supplier<Pose2d> robotPositionSupplier;
+
     public final DoubleSupplier turretRelativeDistanceFromHub;
     public final CANcoder hoodEncoder;
 
     public final InterpolatingDoubleTreeMap angleDistanceMap;
 
-    public Shooter(DoubleSupplier turretRelativeDistanceFromHub) {
+    public Shooter(DoubleSupplier turretRelativeDistanceFromHub, Supplier<Pose2d> poseSupplier) {
         hoodMotor = new TalonFXMotor(HOOD_MOTOR_ID, new CANBus("Subsystems"));
         flyWheelMotor = new TalonFXMotor(FLYWHEEL_MOTOR_ID, new CANBus("Subsystems"));
         transportMotor = new TalonFXMotor(TRANSPORT_MOTOR_ID, new CANBus("Subsystems"));
@@ -62,20 +65,23 @@ public class Shooter extends SubsystemBase implements Logged {
 
         flyWheelMechanism = new FlyWheel(flyWheelMotor, FLY_WHEEL_MAX_ACCELERATION, FLY_WHEEL_MAX_JERK, FLYWHEEL_GAINS);
 
+        robotPositionSupplier = poseSupplier;
+
         angleDistanceMap = new InterpolatingDoubleTreeMap();
         initMap();
 
 //        hoodSoftLimit = new SoftLimit(
 //                () -> HOOD_MIN_ANGLE_LIMIT,
 //                () -> {
-//                    if ((robotPositionSupplier.get().getDistance(Constants.FieldConstants.BLUE_DOWN_FIELD_TRENCH_POSE) <= Constants.FieldConstants.SHOOTER_TO_TRENCH_LIMET)
-//                            || (robotPositionSupplier.get().getDistance(Constants.FieldConstants.BLUE_UP_FIELD_TRENCH_POSE) <= Constants.FieldConstants.SHOOTER_TO_TRENCH_LIMET)) {
+//                    if ((robotPositionSupplier.get().getTranslation().getDistance(Constants.FieldConstants.BLUE_DOWN_FIELD_TRENCH_POSE) <= Constants.FieldConstants.SHOOTER_TO_TRENCH_LIMIT)
+//                            || (robotPositionSupplier.get().getTranslation().getDistance(Constants.FieldConstants.BLUE_UP_FIELD_TRENCH_POSE) <= Constants.FieldConstants.SHOOTER_TO_TRENCH_LIMIT)) {
 //                        return HOOD_MAX_ANGLE_LIMIT_IN_TRENCH;
 //                    } else {
 //                        return HOOD_MAX_ANGLE_LIMIT;
 //                    }
 //                }
 //        );
+
         hoodSoftLimit = new SoftLimit(() -> HOOD_MIN_ANGLE_LIMIT, () -> HOOD_MAX_ANGLE_LIMIT);
 
 

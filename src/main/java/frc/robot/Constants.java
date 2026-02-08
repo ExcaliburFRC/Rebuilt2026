@@ -178,7 +178,7 @@ public final class Constants {
                 Translation3d(1.148, 4.32, 1.6002);
         public static final Translation2d BLUE_OUTPOST_POSE_CENTER = new
                 Translation2d(0, 0.63);
-        public static final int SHOOTER_TO_TRENCH_LIMET = 100;
+        public static final int SHOOTER_TO_TRENCH_LIMIT = 1;
         public static final Translation2d BLUE_DOWN_FIELD_TRENCH_POSE = new
                 Translation2d(5.06, 0.63);
         public static final Translation2d BLUE_UP_FIELD_TRENCH_POSE = new

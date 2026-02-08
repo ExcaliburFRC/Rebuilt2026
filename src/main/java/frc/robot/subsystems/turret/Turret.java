@@ -50,7 +50,7 @@ public class Turret extends SubsystemBase implements Logged {
                 TURRET_GAINS,
                 PID_TOLERANCE,
                 this::getEncoderPosition,
-                new TrapezoidProfile.Constraints(Math.PI * 4, Math.PI * 50)
+                new TrapezoidProfile.Constraints(Math.PI * 16, Math.PI * 60)
         );
 
 //        setDefaultCommand(followTargetCommand());
@@ -76,7 +76,5 @@ public class Turret extends SubsystemBase implements Logged {
     public double getTurretRelativeAngleToHub(){
         return turretRelativeAngleToHub.getAsDouble();
     }
-
-
 
 }

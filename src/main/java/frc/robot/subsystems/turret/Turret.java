@@ -73,13 +73,10 @@ public class Turret extends SubsystemBase implements Logged {
     }
 
     @Log.NT
-    public double getError() {
-        return turretMechanism.m_anglePIDcontroller.getPositionError();
+    public double getTurretRelativeAngleToHub(){
+        return turretRelativeAngleToHub.getAsDouble();
     }
 
-    @Log.NT
-    public boolean isInTolerance() {
-        return turretMechanism.m_anglePIDcontroller.atSetpoint();
-    }
+
 
 }

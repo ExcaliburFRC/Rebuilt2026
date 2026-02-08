@@ -7,7 +7,7 @@ public class IntakeConstants {
 
     // ==== ID's ==== //
     public static final int FOUR_BAR_MOTOR_ID = 10;
-    public static final int ROLLER_MOTOR_ID = 11;
+    public static final int ROLLER_MOTOR_ID = 30;
     public static final int ANGLE_ENCODER_ID = 12;
 
     // ==== Voltages ==== //

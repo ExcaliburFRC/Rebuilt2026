@@ -91,6 +91,10 @@ public class Superstructure implements Logged {
         return () -> turretToDelivery;
     }
 
+    public Command turnTurretToAllianceZoneCommand() {
+        return turret.setPositionCommand(() -> new Rotation2d(180));
+    }
+
     public Command testShotCommand() {
         return new ParallelCommandGroup(
                 turret.setPositionCommand(() -> new Rotation2d(Math.PI / 4)),

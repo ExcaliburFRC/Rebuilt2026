@@ -23,6 +23,7 @@ import frc.excalib.control.math.Vector2D;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.superstructure.Superstructure;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
+import frc.robot.util.HubTimerSubsystem;
 import monologue.Annotations;
 import monologue.Logged;
 
@@ -37,6 +38,8 @@ import static monologue.Annotations.*;
 public class RobotContainer implements Logged {
 
     public final Swerve swerve = Constants.SwerveConstants.configureSwerve(Constants.INITIAL_POSE);
+
+    private final HubTimerSubsystem hubTimer = new HubTimerSubsystem();
 
     public Pose2d auroraPose = new Pose2d();
     public final CommandPS5Controller primary = new CommandPS5Controller(PRIMARY_CONTROLLER_PORT);
@@ -64,7 +67,11 @@ public class RobotContainer implements Logged {
 
 
     private void configureBindings() {
-        superstructure.turret.setDefaultCommand(superstructure.turretTest());
+        //
+        //
+        //
+        //
+        //superstructure.turret.setDefaultCommand(superstructure.turretTest());
         swerve.setDefaultCommand(
                 swerve.driveCommand(
                         () -> new Vector2D(
@@ -76,17 +83,30 @@ public class RobotContainer implements Logged {
                 )
         );
 
-        superstructure.shooter.setDefaultCommand(new ConditionalCommand(
-                superstructure.shooter.setHoodAngleCommand(() -> 1),
-                new InstantCommand(() -> {}),
-                () -> (swerve.getPose2D().getTranslation().getDistance(Constants.FieldConstants.BLUE_DOWN_FIELD_TRENCH_POSE)) <= Constants.FieldConstants.SHOOTER_TO_TRENCH_LIMIT
-                            || ((swerve.getPose2D().getTranslation().getDistance(Constants.FieldConstants.BLUE_UP_FIELD_TRENCH_POSE)) <= Constants.FieldConstants.SHOOTER_TO_TRENCH_LIMIT)));
+        // superstructure.shooter.setDefaultCommand(superstructure.shooter.flyWheelMechanism,);
 
-        primary.triangle().toggleOnTrue(new PrintCommand(String.valueOf((swerve.getPose2D().getTranslation().getDistance(Constants.FieldConstants.BLUE_DOWN_FIELD_TRENCH_POSE)))));
+//        superstructure.shooter.setDefaultCommand(new ConditionalCommand(
+//                superstructure.shooter.setHoodAngleCommand(() -> 1),
+//                new InstantCommand(() -> {}),
+//                () -> (swerve.getPose2D().getTranslation().getDistance(Constants.FieldConstants.BLUE_DOWN_FIELD_TRENCH_POSE)) <= Constants.FieldConstants.SHOOTER_TO_TRENCH_LIMIT
+//                        || ((swerve.getPose2D().getTranslation().getDistance(Constants.FieldConstants.BLUE_UP_FIELD_TRENCH_POSE)) <= Constants.FieldConstants.SHOOTER_TO_TRENCH_LIMIT)));
 
-        primary.PS().onTrue(new InstantCommand(() -> swerve.resetOdometry(new Pose2d())).ignoringDisable(true));
+        superstructure.shooter.setDefaultCommand(superstructure.shooter.smartHoodAngleCommand());
+//        primary.triangle().toggleOnTrue(superstructure.shooter.setHoodAngleCommand(() -> 0.9));
+//        primary.circle().toggleOnTrue(superstructure.shooter.setHoodAngleCommand(() -> 0.7));
+//        primary.cross().toggleOnTrue(superstructure.shooter.setHoodAngleCommand(() -> 0.8));
 
-        primary.circle().onTrue(superstructure.testIntake(-0.9)); //todo moves cHood for some reason
+        //superstructure.shooter.setDefaultCommand(superstructure.shooter.setHoodAngleCommand(() -> (1 - applyDeadband(-primary.getLeftY()) * 0.01)));
+        //primary.triangle().toggleOnTrue(new PrintCommand(String.valueOf((swerve.getPose2D().getTranslation().getDistance(Constants.FieldConstants.BLUE_DOWN_FIELD_TRENCH_POSE)))));
+
+        //primary.triangle().toggleOnTrue(superstructure.shooter.setFlyWheelVelocityCommand(() -> 20));
+        //primary.L2().toggleOnTrue(superstructure.testIntake(-0.4));
+
+        //primary.cross().toggleOnTrue(superstructure.testShotCommand());
+
+        primary.PS().onTrue(new InstantCommand(() -> swerve.resetOdometry(new Pose2d(new Translation2d(3.65, 4.03), new Rotation2d(0)))).ignoringDisable(true));
+
+        //primary.circle().onTrue(superstructure.testIntake(-0.9)); //todo moves cHood for some reason
 
         //primary.cross().onTrue(new PrintCommand("" + Units.radiansToDegrees(superstructure.getTurretToHubVectorAngle())).ignoringDisable(true));
     }
@@ -108,7 +128,6 @@ public class RobotContainer implements Logged {
         NamedCommands.registerCommand("extendClimber", new InstantCommand());
         NamedCommands.registerCommand("retractClimber", new InstantCommand());
         NamedCommands.registerCommand("retractIntake", new InstantCommand());
-        SmartDashboard.putNumber("match time", DriverStation.getMatchTime());
     }
 
     @Log.NT

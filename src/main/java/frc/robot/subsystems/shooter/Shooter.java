@@ -5,6 +5,7 @@ import com.ctre.phoenix6.hardware.CANcoder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
+import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
 import edu.wpi.first.wpilibj2.command.*;
 import frc.excalib.control.limits.SoftLimit;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
@@ -13,9 +14,12 @@ import frc.excalib.control.motor.motor_specs.IdleState;
 import frc.excalib.mechanisms.Mechanism;
 import frc.excalib.mechanisms.fly_wheel.FlyWheel;
 import frc.robot.Constants;
+import frc.robot.superstructure.Superstructure;
 import monologue.Annotations.Log;
 import monologue.Logged;
 
+import javax.swing.*;
+import javax.swing.plaf.PanelUI;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
@@ -68,7 +72,7 @@ public class Shooter extends SubsystemBase implements Logged {
         robotPositionSupplier = poseSupplier;
 
         angleDistanceMap = new InterpolatingDoubleTreeMap();
-        initMap();
+        initMap(angleDistanceMap);
 
 //        hoodSoftLimit = new SoftLimit(
 //                () -> HOOD_MIN_ANGLE_LIMIT,
@@ -88,19 +92,32 @@ public class Shooter extends SubsystemBase implements Logged {
     }
 
 
-    public void initMap() {
-        return; //todo
+    public void initMap(InterpolatingTreeMap<Double, Double> angleDistanceMapTable) {
+        angleDistanceMapTable.put(1.0, 0.9);
+        angleDistanceMapTable.put(2.0, 0.85);
+        angleDistanceMapTable.put(3.0, 0.8);
+        angleDistanceMapTable.put(4.0, 0.75);
     }
 
     public Command setHoodAngleCommand(DoubleSupplier angleSetpoint) {
-        return new RunCommand(() -> hoodMechanism.setVoltage(getPIDForAngle(() -> hoodSoftLimit.limit(angleSetpoint.getAsDouble()))), this);
+        return new RunCommand(
+                () -> hoodMechanism.setVoltage(getPIDForAngle(() -> hoodSoftLimit.limit(
+                        angleSetpoint.getAsDouble()))), this);
     }
 
-    public double getPIDForAngle(DoubleSupplier angleSetpoint) {
-        double val = angleController.calculate(getHoodMotorAngle(), angleSetpoint.getAsDouble());
-        System.out.println(val);
-        return val;
+    public Command smartHoodAngleCommand() {
+        return new RunCommand(
+                () -> hoodMechanism.setVoltage(getPIDForAngle(() -> hoodSoftLimit.limit(
+                        angleDistanceMap.get(this.turretRelativeDistanceFromHub.getAsDouble())))), this);
     }
+
+
+
+
+    public double getPIDForAngle(DoubleSupplier angleSetpoint) {
+        return angleController.calculate(getHoodMotorAngle(), angleSetpoint.getAsDouble());
+    }
+
 
     public Command prepareShooterAccordingToHubCommand() {
         return new ParallelCommandGroup(
@@ -112,7 +129,7 @@ public class Shooter extends SubsystemBase implements Logged {
     }
 
     public Command setFlyWheelVelocityCommand(DoubleSupplier velocity) {
-        return flyWheelMechanism.smartVelocityCommand(velocity);
+        return flyWheelMechanism.setDynamicVelocityCommand(velocity);
     }
 
     public Command getFuelCommand() {
@@ -129,4 +146,6 @@ public class Shooter extends SubsystemBase implements Logged {
     public boolean isInTolerance() {
         return angleController.atSetpoint();
     }
+
+
 }

@@ -50,7 +50,7 @@ public class Turret extends SubsystemBase implements Logged {
                 TURRET_GAINS,
                 PID_TOLERANCE,
                 this::getEncoderPosition,
-                new TrapezoidProfile.Constraints(Math.PI * 16, Math.PI * 60)
+                new TrapezoidProfile.Constraints(Math.PI * 12, Math.PI * 50)
         );
 
 //        setDefaultCommand(followTargetCommand());

@@ -161,11 +161,17 @@ public final class Constants {
 
     }
 
+    // vel * kv = v
+    // v / vel = kv
+
+    // ks -
+
+
     public static class FieldConstants {
         // all the units of length are in meters
 
         public static final AllianceUtils.AlliancePose BLUE_HUB_CENTER_POSE = new
-                AllianceUtils.AlliancePose(5.06, 4.03, 0);
+                AllianceUtils.AlliancePose(4.62, 4.03, 0);
         public static final AllianceUtils.AlliancePose DELIVERY_RIGHT_POSE = new
                 AllianceUtils.AlliancePose(1.988, 6.523, 0);
         public static final AllianceUtils.AlliancePose DELIVERY_LEFT_POSE = new
@@ -178,7 +184,7 @@ public final class Constants {
                 Translation3d(1.148, 4.32, 1.6002);
         public static final Translation2d BLUE_OUTPOST_POSE_CENTER = new
                 Translation2d(0, 0.63);
-        public static final int SHOOTER_TO_TRENCH_LIMIT = 1;
+        public static final double SHOOTER_TO_TRENCH_LIMIT = 0.5;
         public static final Translation2d BLUE_DOWN_FIELD_TRENCH_POSE = new
                 Translation2d(5.06, 0.63);
         public static final Translation2d BLUE_UP_FIELD_TRENCH_POSE = new

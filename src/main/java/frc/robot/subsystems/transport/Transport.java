@@ -5,6 +5,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
 import frc.excalib.mechanisms.Mechanism;
+import frc.excalib.mechanisms.fly_wheel.FlyWheel;
 
 import java.util.function.DoubleSupplier;
 
@@ -16,8 +17,9 @@ public class Transport extends SubsystemBase {
 
     public Transport() {
         drumMotor = new TalonFXMotor(DRUM_MOTOR_ID, new CANBus("Subsystems"));
-        drumMechanism = new Mechanism(drumMotor);
+        drumMechanism = new FlyWheel(drumMotor, MAX_ACCELERATION, MAX_JERK, gains);
     }
+
     public Command manualCommand(DoubleSupplier output) {
         return drumMechanism.manualCommand(output, this);
     }

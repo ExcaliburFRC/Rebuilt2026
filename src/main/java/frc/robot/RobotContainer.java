@@ -6,6 +6,7 @@ package frc.robot;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
@@ -26,6 +27,9 @@ import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import frc.robot.util.HubTimerSubsystem;
 import monologue.Annotations;
 import monologue.Logged;
+
+import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
 import static edu.wpi.first.math.MathUtil.applyDeadband;
 import static frc.robot.Constants.PRIMARY_CONTROLLER_PORT;
@@ -65,13 +69,7 @@ public class RobotContainer implements Logged {
 
     }
 
-
     private void configureBindings() {
-        //
-        //
-        //
-        //
-        //superstructure.turret.setDefaultCommand(superstructure.turretTest());
         swerve.setDefaultCommand(
                 swerve.driveCommand(
                         () -> new Vector2D(
@@ -83,32 +81,9 @@ public class RobotContainer implements Logged {
                 )
         );
 
-        // superstructure.shooter.setDefaultCommand(superstructure.shooter.flyWheelMechanism,);
-
-//        superstructure.shooter.setDefaultCommand(new ConditionalCommand(
-//                superstructure.shooter.setHoodAngleCommand(() -> 1),
-//                new InstantCommand(() -> {}),
-//                () -> (swerve.getPose2D().getTranslation().getDistance(Constants.FieldConstants.BLUE_DOWN_FIELD_TRENCH_POSE)) <= Constants.FieldConstants.SHOOTER_TO_TRENCH_LIMIT
-//                        || ((swerve.getPose2D().getTranslation().getDistance(Constants.FieldConstants.BLUE_UP_FIELD_TRENCH_POSE)) <= Constants.FieldConstants.SHOOTER_TO_TRENCH_LIMIT)));
-
-        superstructure.shooter.setDefaultCommand(superstructure.shooter.smartHoodAngleCommand());
-//        primary.triangle().toggleOnTrue(superstructure.shooter.setHoodAngleCommand(() -> 0.9));
-//        primary.circle().toggleOnTrue(superstructure.shooter.setHoodAngleCommand(() -> 0.7));
-//        primary.cross().toggleOnTrue(superstructure.shooter.setHoodAngleCommand(() -> 0.8));
-
-        //superstructure.shooter.setDefaultCommand(superstructure.shooter.setHoodAngleCommand(() -> (1 - applyDeadband(-primary.getLeftY()) * 0.01)));
-        //primary.triangle().toggleOnTrue(new PrintCommand(String.valueOf((swerve.getPose2D().getTranslation().getDistance(Constants.FieldConstants.BLUE_DOWN_FIELD_TRENCH_POSE)))));
-
-        //primary.triangle().toggleOnTrue(superstructure.shooter.setFlyWheelVelocityCommand(() -> 20));
-        //primary.L2().toggleOnTrue(superstructure.testIntake(-0.4));
-
-        //primary.cross().toggleOnTrue(superstructure.testShotCommand());
+        superstructure.shooter.setDefaultCommand(superstructure.autoHoodAndTurretAim());
 
         primary.PS().onTrue(new InstantCommand(() -> swerve.resetOdometry(new Pose2d(new Translation2d(3.65, 4.03), new Rotation2d(0)))).ignoringDisable(true));
-
-        //primary.circle().onTrue(superstructure.testIntake(-0.9)); //todo moves cHood for some reason
-
-        //primary.cross().onTrue(new PrintCommand("" + Units.radiansToDegrees(superstructure.getTurretToHubVectorAngle())).ignoringDisable(true));
     }
 
 
@@ -143,5 +118,10 @@ public class RobotContainer implements Logged {
 
         return auroraPose;
     };
+
+    @Log.NT
+    public boolean square() {
+        return primary.circle().getAsBoolean();
+    }
 
 }

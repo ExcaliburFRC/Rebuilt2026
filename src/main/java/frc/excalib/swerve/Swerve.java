@@ -8,7 +8,9 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.networktables.GenericEntry;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
@@ -48,7 +50,6 @@ public class Swerve extends SubsystemBase implements Logged {
     private Rotation2d pi = new Rotation2d(Math.PI);
 
     private final SwerveDriveKinematics m_swerveDriveKinematics;
-
     private final PIDController angleController = new PIDController(ANGLE_PID_GAINS.kp, ANGLE_PID_GAINS.ki, ANGLE_PID_GAINS.kd);
     private final PIDController xController = new PIDController(
             TRANSLATION_PID_GAINS.kp, TRANSLATION_PID_GAINS.ki, TRANSLATION_PID_GAINS.kd
@@ -494,8 +495,27 @@ public class Swerve extends SubsystemBase implements Logged {
         modules.periodic();
         field.setRobotPose(getPose2D());
         updateOdometry();
+        Pose2d arrPose = getAuroraPose2de();
+        if (!((arrPose.getX() == 0) && (arrPose.getY() == 0) && (arrPose.getRotation().getRadians() == 0))) {
+            m_odometry.resetOdometry(modules.getModulesPositions(), getAuroraPose2de());
+        }
+
 
     }
+
+    @Log.NT
+    public Pose2d getAuroraPose2de() {
+       Pose2d auroraPose = new Pose2d(
+                new Translation2d(
+                        NetworkTableInstance.getDefault().getTable("Aurora").getSubTable("robotPose").getEntry("x").getDouble(0),
+                        NetworkTableInstance.getDefault().getTable("Aurora").getSubTable("robotPose").getEntry("y").getDouble(0)
+                ),
+                new Rotation2d(NetworkTableInstance.getDefault().getTable("Aurora").getSubTable("robotPose").getEntry("yaw").getDouble(0)
+                )
+        );
+
+        return auroraPose;
+    };
 
     @Log.NT
     public boolean isAtPosition() {

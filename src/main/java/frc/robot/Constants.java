@@ -28,6 +28,9 @@ public final class Constants {
     public static final int PRIMARY_CONTROLLER_PORT = 0;
     public static final Translation2d TURRET_OFFSET_TRANSLATION = new Translation2d(-0.16011,0); //todo robot to turret
 
+    public static final double SHOOTER_TRANSPORT_VOLTAGE = 6;
+    public static final double SPINDEXER_TRANSPORT_VOLTAGE = -6;
+
     public static class SwerveConstants {
         public static final int FRONT_LEFT_DRIVE_ID = 20;
         public static final int FRONT_RIGHT_DRIVE_ID = 10;
@@ -172,6 +175,8 @@ public final class Constants {
 
         public static final AllianceUtils.AlliancePose BLUE_HUB_CENTER_POSE = new
                 AllianceUtils.AlliancePose(4.62, 4.03, 0);
+        public static final AllianceUtils.AlliancePose RED_HUB_CENTER_POSE = new
+                AllianceUtils.AlliancePose(4.62, 12.49, 0);
         public static final AllianceUtils.AlliancePose DELIVERY_RIGHT_POSE = new
                 AllianceUtils.AlliancePose(1.988, 6.523, 0);
         public static final AllianceUtils.AlliancePose DELIVERY_LEFT_POSE = new

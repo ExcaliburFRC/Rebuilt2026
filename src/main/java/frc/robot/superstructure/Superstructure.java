@@ -1,12 +1,11 @@
 package frc.robot.superstructure;
 
 import edu.wpi.first.math.geometry.*;
+import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
-import edu.wpi.first.wpilibj2.command.WaitCommand;
+import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import frc.excalib.swerve.Swerve;
 import frc.robot.Constants;
@@ -29,7 +28,7 @@ public class Superstructure implements Logged {
     public final Turret turret;
     public final Swerve swerve;
 
-    //public final InterpolatingDoubleTreeMap distanceTimeOfFlightMap;
+    public final InterpolatingDoubleTreeMap distanceTimeOfFlightMap;
 
     public final CommandPS5Controller controller;
 
@@ -46,19 +45,16 @@ public class Superstructure implements Logged {
         this.controller = controller;
 
 
-        //distanceTimeOfFlightMap = new InterpolatingDoubleTreeMap();
-        //initDistanceTimeOfFlightMap();
+        distanceTimeOfFlightMap = new InterpolatingDoubleTreeMap();
+        initDistanceTimeOfFlightMap(distanceTimeOfFlightMap);
     }
 
-    private void initDistanceTimeOfFlightMap(InterpolatingTreeMap table) {
-//        table.put();
-//        table.put();
-//        table.put();
-//        table.put();
-//        table.put();
+    private void initDistanceTimeOfFlightMap(InterpolatingTreeMap distanceFlightTimeTable) {
+//        distanceFlightTimeTable.put(distance[meters], flight time);
+        distanceFlightTimeTable.put(2.99, 0.9);
+        distanceFlightTimeTable.put(2.38, 0.7);
+        distanceFlightTimeTable.put(3.88, 0.95);
     }
-
-    // turret relative
 
     public Supplier<Translation2d> getTurretToHubVector() {
         Translation2d fieldToHubTranslation = BLUE_HUB_CENTER_POSE.get().getTranslation();
@@ -68,16 +64,24 @@ public class Superstructure implements Logged {
         Translation2d turretToHub = robotToHub.minus(Constants.TURRET_OFFSET_TRANSLATION);
 
 
-//        ChassisSpeeds robotSpeeds = swerve.getRobotRelativeSpeeds();
+        ChassisSpeeds robotSpeeds = swerve.getRobotRelativeSpeeds();
 
-//        Translation2d virtualHubOffset = new Translation2d(
-//                robotSpeeds.vxMetersPerSecond + Constants.TURRET_OFFSET_TRANSLATION.getY() * robotSpeeds.omegaRadiansPerSecond,
-//                robotSpeeds.vyMetersPerSecond + Constants.TURRET_OFFSET_TRANSLATION.getX() * robotSpeeds.omegaRadiansPerSecond
-//        ).times(distanceTimeOfFlightMap.get(turretToHub.getNorm()));
-//        return turretToHub.minus(virtualHubOffset);  for shooting on the fly
+        return () -> {
+            Translation2d virtualHubOffset = new Translation2d(
+                    robotSpeeds.vxMetersPerSecond
+                            + Constants.TURRET_OFFSET_TRANSLATION.getY()
+                            * robotSpeeds.omegaRadiansPerSecond,
 
-        return () -> turretToHub;
+                    robotSpeeds.vyMetersPerSecond
+                            + Constants.TURRET_OFFSET_TRANSLATION.getX()
+                            * robotSpeeds.omegaRadiansPerSecond
+            ).times(distanceTimeOfFlightMap.get(turretToHub.getNorm()));
+
+            return turretToHub.minus(virtualHubOffset);
+        };
+//        return () -> turretToHub;
     }
+
 
     public Supplier<Translation2d> getTurretToDeliveryVector() {
         Translation2d fieldToDeliveryTranslation;
@@ -95,28 +99,31 @@ public class Superstructure implements Logged {
         return () -> turretToDelivery;
     }
 
-    public Command turretTest() {
-        return turret.setPositionCommand(() -> getTurretToHubVector().get().getAngle());
+    public Command autoHoodAndTurretAim() {
+        return new RunCommand(
+                () -> {
+                    new ParallelCommandGroup(
+                            turret.setPositionCommand(() -> getTurretToHubVector().get().getAngle()),
+                            shooter.setHoodAngleCommand(
+                                    () -> shooter.angleDistanceMap.get(turretDistanceFromHub.getAsDouble())
+                            )
+                    );
+                }, shooter
+        );
     }
 
-    public Command testShotCommand() {
-        return new ParallelCommandGroup(
-                //turret.setPositionCommand(() -> new Rotation2d(Math.PI / 2)),
-                //shooter.setHoodAngleCommand(() -> 1),
-                shooter.setFlyWheelVelocityCommand(() -> 50),
-                new WaitCommand(4).andThen(
-                        new ParallelCommandGroup(
-                                new InstantCommand(
-                                        () -> shooter.transportMechanism.setVoltage(6)
-                                ),
-                                new InstantCommand(
-                                        () -> transport.drumMechanism.setVoltage(-6)
-                                )
-                        )
+    public Command shotSquenceCommand() {
+        return new SequentialCommandGroup(
+                shooter.smartFlyWheelVelocity(),
+                new WaitUntilCommand(shooter.flyWheelInToleranceTrigger),
+                new ParallelCommandGroup(
+                        transport.manualCommand(() -> Constants.SHOOTER_TRANSPORT_VOLTAGE),
+                        shooter.transportMechanism.manualCommand(() -> Constants.SPINDEXER_TRANSPORT_VOLTAGE)
                 )
         );
     }
-    public Command testIntake(double voltage) {
+
+    public Command intakeRollerActivationCommand(double voltage) {
         return intake.rollerManualCommand(voltage);
     }
 
@@ -136,37 +143,19 @@ public class Superstructure implements Logged {
     }
 
     @Log.NT
-    public Pose2d getpoSE(){
-        return new Pose2d(
-                swerve.getPose2D().getTranslation(),
-                getTurretToHubVector().get().getAngle()
-        );
-    }
-
-    @Log.NT
-    public double getKv() {
-        return (shooter.flyWheelMechanism.logVoltage() / shooter.flyWheelMechanism.getVelocity());
-    }
-
-    @Log.NT
-    public double getVel() {
-        return shooter.flyWheelMechanism.getVelocity();
-    }
-
-    @Log.NT
-    public double getSet() {
-        return 20;
-    }
-
-    @Log.NT
-    public double getDisFromHub() {
-        return getTurretToHubVector().get().getNorm();
-    }
+    DoubleSupplier turretDistanceFromHub = () -> getTurretToHubVector().get().getNorm();
 
     @Log.NT
     public double getSetpointHoodAngle(){
         return shooter.angleDistanceMap.get(getTurretToHubVector().get().getNorm());
     }
+
+
+
+
+
+
+
 
 
 

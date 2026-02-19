@@ -24,9 +24,12 @@ import frc.excalib.swerve.SwerveModule;
 
 public final class Constants {
     public static final Pose2d INITIAL_POSE = new Pose2d();
+
     public static final double PHYSICS_PERIODIC_TIME = 0.02;
+
     public static final int PRIMARY_CONTROLLER_PORT = 0;
-    public static final Translation2d TURRET_OFFSET_TRANSLATION = new Translation2d(-0.16011,0); //todo robot to turret
+
+    public static final double CONTROLLER_DEADBAND = 0.9;
 
     public static final double SHOOTER_TRANSPORT_VOLTAGE = 6;
     public static final double SPINDEXER_TRANSPORT_VOLTAGE = -6;
@@ -100,7 +103,7 @@ public final class Constants {
         public static final Gains ANGLE_PID_GAINS = new Gains();
         public static final Gains TRANSLATION_PID_GAINS = new Gains();
 
-        private static final IMU GYRO = new Pigeon(GYRO_ID, SWERVE_CANBUS.getName(), new Rotation3d(0,0,Math.PI/2));
+        private static final IMU GYRO = new Pigeon(GYRO_ID, SWERVE_CANBUS.getName(), new Rotation3d(0, 0, Math.PI / 2));
 
         public static Swerve configureSwerve(Pose2d initialPose) {
             return new Swerve(
@@ -108,7 +111,7 @@ public final class Constants {
                             new SwerveModule(
                                     new TalonFXMotor(FRONT_LEFT_DRIVE_ID, SWERVE_CANBUS),
                                     new TalonFXMotor(FRONT_LEFT_ROTATION_ID, SWERVE_CANBUS),
-                                    new Gains(5.2 ,0, 0,0,0,0,0),
+                                    new Gains(5.2, 0, 0, 0, 0, 0, 0),
                                     new Gains(0, 0, 0, 0, 2.01523875, 0, 0),
                                     PID_TOLERANCE,
                                     FRONT_LEFT_TRANSLATION,
@@ -121,7 +124,7 @@ public final class Constants {
                             new SwerveModule(
                                     new TalonFXMotor(FRONT_RIGHT_DRIVE_ID, SWERVE_CANBUS),
                                     new TalonFXMotor(FRONT_RIGHT_ROTATION_ID, SWERVE_CANBUS),
-                                    new Gains(5.2 ,0, 0,0,0,0,0),
+                                    new Gains(5.2, 0, 0, 0, 0, 0, 0),
                                     new Gains(0, 0, 0, 0, 2.4315075, 0, 0),
                                     PID_TOLERANCE,
                                     FRONT_RIGHT_TRANSLATION,
@@ -134,7 +137,7 @@ public final class Constants {
                             new SwerveModule(
                                     new TalonFXMotor(BACK_LEFT_DRIVE_ID, SWERVE_CANBUS),
                                     new TalonFXMotor(BACK_LEFT_ROTATION_ID, SWERVE_CANBUS),
-                                    new Gains(5.2 ,0, 0,0,0,0,0),
+                                    new Gains(5.2, 0, 0, 0, 0, 0, 0),
                                     new Gains(0, 0, 0, 0, 1.92770175, 0, 0),
                                     PID_TOLERANCE,
                                     BACK_LEFT_TRANSLATION,
@@ -147,7 +150,7 @@ public final class Constants {
                             new SwerveModule(
                                     new TalonFXMotor(BACK_RIGHT_DRIVE_ID, SWERVE_CANBUS),
                                     new TalonFXMotor(BACK_RIGHT_ROTATION_ID, SWERVE_CANBUS),
-                                    new Gains(5.2 ,0, 0,0,0,0,0),
+                                    new Gains(5.2, 0, 0, 0, 0, 0, 0),
                                     new Gains(0, 0, 0, 0, 1.98768795, 0, 0),
                                     PID_TOLERANCE,
                                     BACK_RIGHT_TRANSLATION,
@@ -164,15 +167,8 @@ public final class Constants {
 
     }
 
-    // vel * kv = v
-    // v / vel = kv
-
-    // ks -
-
-
     public static class FieldConstants {
         // all the units of length are in meters
-
         public static final AllianceUtils.AlliancePose BLUE_HUB_CENTER_POSE = new
                 AllianceUtils.AlliancePose(4.62, 4.03, 0);
         public static final AllianceUtils.AlliancePose RED_HUB_CENTER_POSE = new
@@ -211,6 +207,9 @@ public final class Constants {
 
     }
 
-    public static final double DEADBAND_X = 0.07;
+    public static class PhysicalConstants {
+        public static final Translation2d TURRET_OFFSET_TRANSLATION = new Translation2d(-0.16011, 0); //todo robot to turret
+    }
+
 
 }

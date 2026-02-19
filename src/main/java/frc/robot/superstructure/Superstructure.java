@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import frc.excalib.swerve.Swerve;
 import frc.robot.Constants;
+import frc.robot.Constants.PhysicalConstants;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.transport.Transport;
@@ -20,6 +21,7 @@ import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 import static frc.robot.Constants.FieldConstants.*;
+import static frc.robot.Constants.PhysicalConstants.TURRET_OFFSET_TRANSLATION;
 
 public class Superstructure implements Logged {
     public final Intake intake;
@@ -61,7 +63,7 @@ public class Superstructure implements Logged {
         Translation2d fieldToRobot = swerve.getPose2D().getTranslation();
 
         Translation2d robotToHub = (fieldToHubTranslation.minus(fieldToRobot)).rotateBy(swerve.getRotation2D().unaryMinus()); //maybe revese (unary minus) todo
-        Translation2d turretToHub = robotToHub.minus(Constants.TURRET_OFFSET_TRANSLATION);
+        Translation2d turretToHub = robotToHub.minus(TURRET_OFFSET_TRANSLATION);
 
 
         ChassisSpeeds robotSpeeds = swerve.getRobotRelativeSpeeds();
@@ -69,11 +71,11 @@ public class Superstructure implements Logged {
         return () -> {
             Translation2d virtualHubOffset = new Translation2d(
                     robotSpeeds.vxMetersPerSecond
-                            + Constants.TURRET_OFFSET_TRANSLATION.getY()
+                            + TURRET_OFFSET_TRANSLATION.getY()
                             * robotSpeeds.omegaRadiansPerSecond,
 
                     robotSpeeds.vyMetersPerSecond
-                            + Constants.TURRET_OFFSET_TRANSLATION.getX()
+                            + TURRET_OFFSET_TRANSLATION.getX()
                             * robotSpeeds.omegaRadiansPerSecond
             ).times(distanceTimeOfFlightMap.get(turretToHub.getNorm()));
 
@@ -94,7 +96,7 @@ public class Superstructure implements Logged {
         Translation2d fieldToRobot = swerve.getPose2D().getTranslation();
 
         Translation2d robotToDelivery = (fieldToDeliveryTranslation.minus(fieldToRobot)).rotateBy(swerve.getRotation2D().unaryMinus());
-        Translation2d turretToDelivery = robotToDelivery.minus(Constants.TURRET_OFFSET_TRANSLATION);
+        Translation2d turretToDelivery = robotToDelivery.minus(TURRET_OFFSET_TRANSLATION);
 
         return () -> turretToDelivery;
     }

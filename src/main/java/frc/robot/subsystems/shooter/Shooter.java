@@ -14,12 +14,14 @@ import frc.excalib.control.motor.motor_specs.DirectionState;
 import frc.excalib.control.motor.motor_specs.IdleState;
 import frc.excalib.mechanisms.Mechanism;
 import frc.excalib.mechanisms.fly_wheel.FlyWheel;
+import frc.robot.Constants;
 import monologue.Annotations.Log;
 import monologue.Logged;
 
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
+import static frc.robot.Constants.SUBSYSTEMS_CANBUS;
 import static frc.robot.subsystems.shooter.ShooterConstants.*;
 
 public class Shooter extends SubsystemBase implements Logged {
@@ -47,10 +49,10 @@ public class Shooter extends SubsystemBase implements Logged {
     public final InterpolatingDoubleTreeMap velocityDistanceMap;
 
     public Shooter(DoubleSupplier turretRelativeDistanceFromHub, Supplier<Pose2d> poseSupplier) {
-        hoodMotor = new TalonFXMotor(HOOD_MOTOR_ID, new CANBus("Subsystems"));
-        flyWheelMotor = new TalonFXMotor(FLYWHEEL_MOTOR_ID, new CANBus("Subsystems"));
-        transportMotor = new TalonFXMotor(TRANSPORT_MOTOR_ID, new CANBus("Subsystems"));
-        hoodEncoder = new CANcoder(HOOD_ENCODER_ID, new CANBus("Subsystems"));
+        hoodMotor = new TalonFXMotor(HOOD_MOTOR_ID, SUBSYSTEMS_CANBUS);
+        flyWheelMotor = new TalonFXMotor(FLYWHEEL_MOTOR_ID, SUBSYSTEMS_CANBUS);
+        transportMotor = new TalonFXMotor(TRANSPORT_MOTOR_ID, SUBSYSTEMS_CANBUS);
+        hoodEncoder = new CANcoder(HOOD_ENCODER_ID, SUBSYSTEMS_CANBUS);
 
         hoodEncoder.setPosition(hoodEncoder.getAbsolutePosition().getValueAsDouble());
         this.turretRelativeDistanceFromHub = turretRelativeDistanceFromHub;
@@ -77,7 +79,6 @@ public class Shooter extends SubsystemBase implements Logged {
         transportMechanism = new Mechanism(transportMotor);
         hoodMechanism = new Mechanism(hoodMotor);
 
-
         robotPositionSupplier = poseSupplier;
 
         angleDistanceMap = new InterpolatingDoubleTreeMap();
@@ -87,7 +88,6 @@ public class Shooter extends SubsystemBase implements Logged {
         initVelocityMap(velocityDistanceMap);
 
         hoodSoftLimit = new SoftLimit(() -> HOOD_MIN_ANGLE_LIMIT, () -> HOOD_MAX_ANGLE_LIMIT);
-
     }
 
 

@@ -14,6 +14,7 @@ import monologue.Logged;
 
 import java.util.function.DoubleSupplier;
 
+import static frc.robot.Constants.SUBSYSTEMS_CANBUS;
 import static frc.robot.subsystems.intake.IntakeConstants.*;
 import static frc.robot.subsystems.intake.IntakeConstants.ARM_VELOCITY_LIMIT;
 
@@ -36,9 +37,9 @@ public class Intake extends SubsystemBase implements Logged {
     public Intake() {
         targetPosition = TargetAngle.CLOSE;
 
-        angleEncoder = new CANcoder(ANGLE_ENCODER_ID, new CANBus("Subsystems"));
-        fourBarMotor = new TalonFXMotor(FOUR_BAR_MOTOR_ID, new CANBus("Subsystems"));
-        rollerMotor = new TalonFXMotor(ROLLER_MOTOR_ID, new CANBus("Subsystems"));
+        angleEncoder = new CANcoder(ANGLE_ENCODER_ID, SUBSYSTEMS_CANBUS);
+        fourBarMotor = new TalonFXMotor(FOUR_BAR_MOTOR_ID, SUBSYSTEMS_CANBUS);
+        rollerMotor = new TalonFXMotor(ROLLER_MOTOR_ID, SUBSYSTEMS_CANBUS);
 
         rollerMotorMechanism = new Mechanism(rollerMotor);
 

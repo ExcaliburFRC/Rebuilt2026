@@ -84,7 +84,7 @@ public class Swerve extends SubsystemBase implements Logged {
         angleController.setTolerance(0.0628);
 
 
-        finishTrigger = new Trigger(xController::atSetpoint).and(yController::atSetpoint).and(angleController::atSetpoint).debounce(0.1);
+        finishTrigger = new Trigger(xController::atSetpoint).and(yController::atSetpoint).and(angleController::atSetpoint).debounce(0.04);
         // Initialize odometry with the current yaw angle
         this.m_odometry = new Odometry(
                 modules.getSwerveDriveKinematics(),
@@ -505,7 +505,7 @@ public class Swerve extends SubsystemBase implements Logged {
 
     @Log.NT
     public Pose2d getAuroraPose2de() {
-       Pose2d auroraPose = new Pose2d(
+        Pose2d auroraPose = new Pose2d(
                 new Translation2d(
                         NetworkTableInstance.getDefault().getTable("Aurora").getSubTable("robotPose").getEntry("x").getDouble(0),
                         NetworkTableInstance.getDefault().getTable("Aurora").getSubTable("robotPose").getEntry("y").getDouble(0)
@@ -515,7 +515,9 @@ public class Swerve extends SubsystemBase implements Logged {
         );
 
         return auroraPose;
-    };
+    }
+
+    ;
 
     @Log.NT
     public boolean isAtPosition() {

@@ -33,13 +33,14 @@ public class RobotContainer implements Logged {
     private final LoggablePS5Controller primary = new LoggablePS5Controller(PRIMARY_CONTROLLER_PORT);
 
     private final Swerve swerve = Constants.SwerveConstants.configureSwerve(Constants.INITIAL_POSE);
-    public final Superstructure superstructure = new Superstructure(primary, swerve);
+//    public final Superstructure superstructure = new Superstructure(primary, swerve);
 
     private final SendableChooser<String> autoChooser = new SendableChooser<>();
     private final HubTimerSubsystem hubTimer = new HubTimerSubsystem();
 
     public RobotContainer() {
         swerve.resetOdometry(AuroraPoseGetter.getPose2d());
+
 
         setAutoChooser();
         configureBindings();
@@ -58,17 +59,8 @@ public class RobotContainer implements Logged {
                 )
         );
 
-        superstructure.shooter.setDefaultCommand(superstructure.autoHoodAndTurretAim());
+//        superstructure.shooter.setDefaultCommand(superstructure.autoHoodAndTurretAim());
 
-        primary.PS().onTrue(
-                new InstantCommand(
-                        () -> swerve.resetOdometry(
-                                new Pose2d(
-                                        new Translation2d(3.65, 4.03),
-                                        new Rotation2d(0)
-                                )
-                        )
-                ).ignoringDisable(true));
     }
 
 

@@ -119,20 +119,20 @@ public class SwerveModule implements Logged {
                             Vector2D velocity = moduleVelocity.get();
                             double speed = velocity.getDistance();
 
-                            if (speed < 0.1) {
+                            if (speed < 0.05) {
                                 speed = 0;
                             }
 
-                    boolean optimize = isOptimizable(velocity);
-                    return optimize ? -speed : speed;
-                }),
+                            boolean optimize = isOptimizable(velocity);
+                            return optimize ? -speed : speed;
+                        }),
                 m_turret.setPositionCommand(() -> {
                     Vector2D velocity = moduleVelocity.get();
                     double speed = velocity.getDistance();
 
-                            if (speed < 0.1) {
-                                return m_turret.getPosition();
-                            }
+                    if (speed < 0.05) {
+                        return m_turret.getPosition();
+                    }
 
                     boolean optimize = isOptimizable(velocity);
                     Rotation2d direction = velocity.getDirection();
@@ -150,10 +150,12 @@ public class SwerveModule implements Logged {
             DoubleSupplier omegaRadPerSec,
             DoubleSupplier velocityRatioLimit) {
 
-        return setVelocityCommand(() -> getSigmaVelocity(
-                translationVelocity.get(),
-                omegaRadPerSec.getAsDouble(),
-                velocityRatioLimit.getAsDouble()));
+        return setVelocityCommand(
+                () -> getSigmaVelocity(
+                        translationVelocity.get(),
+                        omegaRadPerSec.getAsDouble(),
+                        velocityRatioLimit.getAsDouble())
+        );
     }
 
     public Command coastCommand() {

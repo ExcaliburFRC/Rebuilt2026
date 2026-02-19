@@ -37,9 +37,11 @@ public class LoggablePS5Controller extends CommandPS5Controller implements Logge
 
     public double getJoystickDistance(Position joystickPosition) {
         if (joystickPosition == Position.LEFT) {
-            return Math.sqrt(Math.pow(super.getLeftX(), 2) - Math.pow(super.getLeftY(), 2));
+//            return Math.sqrt(Math.pow(super.getLeftX(), 2) - Math.pow(super.getLeftY(), 2));
+            return Math.hypot(getLeftX(), getLeftY());
         } else {
-            return Math.sqrt(Math.pow(super.getRightX(), 2) - Math.pow(super.getRightY(), 2));
+//            return Math.sqrt(Math.pow(super.getRightX(), 2) - Math.pow(super.getRightY(), 2));
+            return Math.hypot(getRightX(), getRightY());
         }
     }
 
@@ -58,7 +60,7 @@ public class LoggablePS5Controller extends CommandPS5Controller implements Logge
         isPrimary = primary;
     }
 
-    public Command getDefaultControllerCommand(){
+    public Command getDefaultControllerCommand() {
         return defaultControllerCommand;
     }
 

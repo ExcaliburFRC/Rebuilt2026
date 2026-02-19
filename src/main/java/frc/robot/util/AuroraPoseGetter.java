@@ -11,7 +11,7 @@ public class AuroraPoseGetter implements Logged {
 
     public static Pose3d visionPose;
 
-    public static void init() {
+    public static void periodic() {
         visionPose = new Pose3d(
                 new Translation3d(
                         networkTableInstance.getEntry("x").getDouble(0),

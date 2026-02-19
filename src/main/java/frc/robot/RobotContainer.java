@@ -46,6 +46,7 @@ public class RobotContainer implements Logged {
     private final HubTimerSubsystem hubTimer = new HubTimerSubsystem();
 
     public Pose2d auroraPose = new Pose2d();
+
     public final CommandPS5Controller primary = new CommandPS5Controller(PRIMARY_CONTROLLER_PORT);
 
     public final Superstructure superstructure = new Superstructure(primary, swerve);
@@ -104,24 +105,4 @@ public class RobotContainer implements Logged {
         NamedCommands.registerCommand("retractClimber", new InstantCommand());
         NamedCommands.registerCommand("retractIntake", new InstantCommand());
     }
-
-    @Log.NT
-    public Pose2d getAuroraPose2d() {
-        auroraPose = new Pose2d(
-                new Translation2d(
-                        NetworkTableInstance.getDefault().getTable("Aurora").getSubTable("robotPose").getEntry("x").getDouble(0),
-                        NetworkTableInstance.getDefault().getTable("Aurora").getSubTable("robotPose").getEntry("y").getDouble(0)
-                ),
-                new Rotation2d(NetworkTableInstance.getDefault().getTable("Aurora").getSubTable("robotPose").getEntry("yaw").getDouble(0)
-                )
-        );
-
-        return auroraPose;
-    };
-
-    @Log.NT
-    public boolean square() {
-        return primary.circle().getAsBoolean();
-    }
-
 }

@@ -31,8 +31,7 @@ public final class Constants {
 
     public static final double CONTROLLER_DEADBAND = 0.9;
 
-    public static final double SHOOTER_TRANSPORT_VOLTAGE = 6;
-    public static final double SPINDEXER_TRANSPORT_VOLTAGE = -6;
+
 
     public static class SwerveConstants {
         public static final int FRONT_LEFT_DRIVE_ID = 20;
@@ -209,7 +208,7 @@ public final class Constants {
 
     public static class PhysicalConstants {
         public static final Translation2d TURRET_OFFSET_TRANSLATION = new Translation2d(-0.16011, 0); //todo robot to turret
+        public static final double SHOOTER_TRANSPORT_VOLTAGE = 6;
+    public static final double SPINDEXER_TRANSPORT_VOLTAGE = -6;
     }
-
-
 }

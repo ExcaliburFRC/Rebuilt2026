@@ -8,8 +8,6 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import frc.excalib.swerve.Swerve;
-import frc.robot.Constants;
-import frc.robot.Constants.PhysicalConstants;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.transport.Transport;
@@ -21,7 +19,7 @@ import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 import static frc.robot.Constants.FieldConstants.*;
-import static frc.robot.Constants.PhysicalConstants.TURRET_OFFSET_TRANSLATION;
+import static frc.robot.Constants.PhysicalConstants.*;
 
 public class Superstructure implements Logged {
     public final Intake intake;
@@ -38,24 +36,21 @@ public class Superstructure implements Logged {
         intake = new Intake();
         transport = new Transport();
 
-        this.swerve = swerve;
-
         turret = new Turret(() -> getTurretToHubVector().get().getAngle().getRadians());
-
         shooter = new Shooter(() -> getTurretToHubVector().get().getNorm(), swerve::getPose2D);
 
+        this.swerve = swerve;
         this.controller = controller;
 
-
         distanceTimeOfFlightMap = new InterpolatingDoubleTreeMap();
-        initDistanceTimeOfFlightMap(distanceTimeOfFlightMap);
+        initDistanceTimeOfFlightMap();
     }
 
-    private void initDistanceTimeOfFlightMap(InterpolatingTreeMap distanceFlightTimeTable) {
+    private void initDistanceTimeOfFlightMap() {
 //        distanceFlightTimeTable.put(distance[meters], flight time);
-        distanceFlightTimeTable.put(2.99, 0.9);
-        distanceFlightTimeTable.put(2.38, 0.7);
-        distanceFlightTimeTable.put(3.88, 0.95);
+        distanceTimeOfFlightMap.put(2.99, 0.9);
+        distanceTimeOfFlightMap.put(2.38, 0.7);
+        distanceTimeOfFlightMap.put(3.88, 0.95);
     }
 
     public Supplier<Translation2d> getTurretToHubVector() {
@@ -64,7 +59,6 @@ public class Superstructure implements Logged {
 
         Translation2d robotToHub = (fieldToHubTranslation.minus(fieldToRobot)).rotateBy(swerve.getRotation2D().unaryMinus()); //maybe revese (unary minus) todo
         Translation2d turretToHub = robotToHub.minus(TURRET_OFFSET_TRANSLATION);
-
 
         ChassisSpeeds robotSpeeds = swerve.getRobotRelativeSpeeds();
 
@@ -119,8 +113,8 @@ public class Superstructure implements Logged {
                 shooter.smartFlyWheelVelocity(),
                 new WaitUntilCommand(shooter.flyWheelInToleranceTrigger),
                 new ParallelCommandGroup(
-                        transport.manualCommand(() -> Constants.SHOOTER_TRANSPORT_VOLTAGE),
-                        shooter.transportMechanism.manualCommand(() -> Constants.SPINDEXER_TRANSPORT_VOLTAGE)
+                        transport.manualCommand(() -> SHOOTER_TRANSPORT_VOLTAGE),
+                        shooter.transportMechanism.manualCommand(() -> SPINDEXER_TRANSPORT_VOLTAGE)
                 )
         );
     }
@@ -151,17 +145,4 @@ public class Superstructure implements Logged {
     public double getSetpointHoodAngle(){
         return shooter.angleDistanceMap.get(getTurretToHubVector().get().getNorm());
     }
-
-
-
-
-
-
-
-
-
-
-
-
-    // v / vel = kv
 }

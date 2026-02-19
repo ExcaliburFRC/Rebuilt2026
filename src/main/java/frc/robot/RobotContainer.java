@@ -6,12 +6,8 @@ package frc.robot;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -19,27 +15,17 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import frc.excalib.additional_utilities.LoggablePS5Controller;
 import frc.excalib.swerve.Swerve;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.wpilibj2.command.*;
 import frc.excalib.control.math.Vector2D;
 
-import frc.robot.subsystems.intake.Intake;
 import frc.robot.superstructure.Superstructure;
-import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import frc.robot.util.AuroraPoseGetter;
 import frc.robot.util.HubTimerSubsystem;
-import monologue.Annotations;
 import monologue.Logged;
 
-import java.util.function.DoubleSupplier;
-import java.util.function.Supplier;
-
-import static edu.wpi.first.math.MathUtil.applyDeadband;
 import static frc.robot.Constants.CONTROLLER_DEADBAND;
 import static frc.robot.Constants.PRIMARY_CONTROLLER_PORT;
 import static frc.robot.Constants.SwerveConstants.MAX_OMEGA_RAD_PER_SEC;
 import static frc.robot.Constants.SwerveConstants.MAX_VEL;
-import static frc.robot.subsystems.shooter.ShooterConstants.HOOD_MAX_ANGLE_LIMIT_IN_TRENCH;
-import static monologue.Annotations.*;
 
 
 public class RobotContainer implements Logged {

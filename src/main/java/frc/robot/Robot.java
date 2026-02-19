@@ -24,17 +24,18 @@ public class Robot extends TimedRobot {
         AuroraPoseGetter.init();
         robotContainer = new RobotContainer();
         Monologue.setupMonologue(robotContainer, "Robot", false, false);
-
     }
 
     @Override
     public void robotPeriodic() {
         Threads.setCurrentThreadPriority(true, 99);
+
         CommandScheduler.getInstance().run();
         Monologue.updateAll();
         GameDataClient.updateGameData();
 
         TalonFXMotor.refreshAll();
+
         Threads.setCurrentThreadPriority(false, 10);
     }
 

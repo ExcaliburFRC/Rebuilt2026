@@ -40,7 +40,7 @@ public class Superstructure implements Logged {
 
         turret = new Turret(() -> getTurretToHubVector().get().getAngle().getRadians());
 
-        shooter = new Shooter(() -> getTurretToHubVector().get().getNorm(), () -> swerve.getPose2D());
+        shooter = new Shooter(() -> getTurretToHubVector().get().getNorm(), swerve::getPose2D);
 
         this.controller = controller;
 

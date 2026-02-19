@@ -24,6 +24,7 @@ import frc.excalib.control.math.Vector2D;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.superstructure.Superstructure;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
+import frc.robot.util.AuroraPoseGetter;
 import frc.robot.util.HubTimerSubsystem;
 import monologue.Annotations;
 import monologue.Logged;
@@ -41,33 +42,22 @@ import static monologue.Annotations.*;
 
 public class RobotContainer implements Logged {
 
-    public final Swerve swerve = Constants.SwerveConstants.configureSwerve(Constants.INITIAL_POSE);
+    private final Swerve swerve = Constants.SwerveConstants.configureSwerve(Constants.INITIAL_POSE);
 
     private final HubTimerSubsystem hubTimer = new HubTimerSubsystem();
 
-    public Pose2d auroraPose = new Pose2d();
-
-    public final CommandPS5Controller primary = new CommandPS5Controller(PRIMARY_CONTROLLER_PORT);
+    private final CommandPS5Controller primary = new CommandPS5Controller(PRIMARY_CONTROLLER_PORT);
 
     public final Superstructure superstructure = new Superstructure(primary, swerve);
 
     private final SendableChooser<String> autoChooser = new SendableChooser<>();
 
     public RobotContainer() {
-        swerve.resetOdometry(new Pose2d(0, 0, new Rotation2d(0)));
+        swerve.resetOdometry(AuroraPoseGetter.getPose2d());
 
-        autoChooser.setDefaultOption("/ null Auto", "/ null Auto");
-
-        for (String autoName : AutoBuilder.getAllAutoNames()) {
-            autoChooser.addOption(autoName, autoName);
-        }
-
-        SmartDashboard.putData("Auto Chooser", autoChooser);
-
-
+        setAutoChooser();
         configureBindings();
         registerCommands();
-
     }
 
     private void configureBindings() {
@@ -84,7 +74,15 @@ public class RobotContainer implements Logged {
 
         superstructure.shooter.setDefaultCommand(superstructure.autoHoodAndTurretAim());
 
-        primary.PS().onTrue(new InstantCommand(() -> swerve.resetOdometry(new Pose2d(new Translation2d(3.65, 4.03), new Rotation2d(0)))).ignoringDisable(true));
+        primary.PS().onTrue(
+                new InstantCommand(
+                        () -> swerve.resetOdometry(
+                                new Pose2d(
+                                        new Translation2d(3.65, 4.03),
+                                        new Rotation2d(0)
+                                )
+                        )
+                ).ignoringDisable(true));
     }
 
 
@@ -104,5 +102,15 @@ public class RobotContainer implements Logged {
         NamedCommands.registerCommand("extendClimber", new InstantCommand());
         NamedCommands.registerCommand("retractClimber", new InstantCommand());
         NamedCommands.registerCommand("retractIntake", new InstantCommand());
+    }
+
+    public void setAutoChooser() {
+        autoChooser.setDefaultOption("/ null Auto", "/ null Auto");
+
+        for (String autoName : AutoBuilder.getAllAutoNames()) {
+            autoChooser.addOption(autoName, autoName);
+        }
+
+        SmartDashboard.putData("Auto Chooser", autoChooser);
     }
 }

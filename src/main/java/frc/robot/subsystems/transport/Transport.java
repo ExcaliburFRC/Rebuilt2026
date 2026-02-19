@@ -9,7 +9,7 @@ import frc.excalib.mechanisms.fly_wheel.FlyWheel;
 import java.util.function.DoubleSupplier;
 
 import static frc.robot.Constants.SUBSYSTEMS_CANBUS;
-import static frc.robot.subsystems.transport.transportConstans.*;
+import static frc.robot.subsystems.transport.TransportConstants.*;
 
 public class Transport extends SubsystemBase {
     private final TalonFXMotor drumMotor;

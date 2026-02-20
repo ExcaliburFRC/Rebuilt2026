@@ -47,12 +47,16 @@ public class SwerveModule implements Logged {
     public SwerveModule(Motor driveMotor, Motor rotationMotor, Gains angleGains, Gains velocityGains,
                         double PIDTolerance, Translation2d moduleLocation, DoubleSupplier angleSupplier,
                         double maxVel, double velocityConversionFactor, double positionConversionFactor,
-                        double rotationVelocityConversionFactor) {
-        driveMotor.setInverted(REVERSE);
+                        double rotationVelocityConversionFactor, boolean invert) {
+        if (invert)
+            driveMotor.setInverted(REVERSE);
+        else
+            driveMotor.setInverted(FORWARD);
+
         driveMotor.setVelocityConversionFactor(velocityConversionFactor);
         driveMotor.setIdleState(BRAKE);
         driveMotor.setPositionConversionFactor(positionConversionFactor);
-        driveMotor.setCurrentLimit(0, 30);
+        driveMotor.setCurrentLimit(0, 50);
 
         rotationMotor.setIdleState(BRAKE);
         rotationMotor.setMotorPosition(angleSupplier.getAsDouble());
@@ -119,7 +123,7 @@ public class SwerveModule implements Logged {
                             Vector2D velocity = moduleVelocity.get();
                             double speed = velocity.getDistance();
 
-                            if (speed < 0.05) {
+                            if (speed < 0.1) {
                                 speed = 0;
                             }
 
@@ -130,7 +134,7 @@ public class SwerveModule implements Logged {
                     Vector2D velocity = moduleVelocity.get();
                     double speed = velocity.getDistance();
 
-                    if (speed < 0.05) {
+                    if (speed < 0.1) {
                         return m_turret.getPosition();
                     }
 

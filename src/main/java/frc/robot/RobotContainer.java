@@ -6,20 +6,21 @@ package frc.robot;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import frc.excalib.additional_utilities.LoggablePS5Controller;
 import frc.excalib.swerve.Swerve;
-import edu.wpi.first.math.geometry.Pose2d;
 import frc.excalib.control.math.Vector2D;
 
-import frc.robot.superstructure.Superstructure;
 import frc.robot.util.AuroraPoseGetter;
 import frc.robot.util.HubTimerSubsystem;
+import monologue.Annotations.Log;
 import monologue.Logged;
 
 import static frc.robot.Constants.CONTROLLER_DEADBAND;
@@ -41,7 +42,6 @@ public class RobotContainer implements Logged {
     public RobotContainer() {
         swerve.resetOdometry(AuroraPoseGetter.getPose2d());
 
-
         setAutoChooser();
         configureBindings();
         registerCommands();
@@ -55,11 +55,13 @@ public class RobotContainer implements Logged {
                                 applyDeadband(-primary.getLeftX()) * MAX_VEL),
                         () -> applyDeadband(primary.getRightX()) *
                                 MAX_OMEGA_RAD_PER_SEC,
-                        () -> true
+                        () -> false
                 )
         );
 
 //        superstructure.shooter.setDefaultCommand(superstructure.autoHoodAndTurretAim());
+
+        primary.PS().onTrue(new RunCommand(() -> swerve.resetOdometry(new Pose2d())));
 
     }
 
@@ -87,7 +89,13 @@ public class RobotContainer implements Logged {
         for (String autoName : AutoBuilder.getAllAutoNames()) {
             autoChooser.addOption(autoName, autoName);
         }
-
         SmartDashboard.putData("Auto Chooser", autoChooser);
     }
+
+    public void perodic() {
+        if (!AuroraPoseGetter.getPose2d().equals(new Pose2d())) {
+            swerve.m_odometry.addVisionMeasurement(AuroraPoseGetter.getPose2d(), Timer.getFPGATimestamp());
+        }
+    }
+
 }

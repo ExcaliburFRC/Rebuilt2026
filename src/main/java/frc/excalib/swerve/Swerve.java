@@ -77,12 +77,10 @@ public class Swerve extends SubsystemBase implements Logged {
         this.m_imu = imu;
         m_imu.setRotation(new Rotation2d(Math.PI / 2));
 
-
         angleController.enableContinuousInput(-Math.PI, Math.PI);
         xController.setTolerance(0.01);
         yController.setTolerance(0.01);
         angleController.setTolerance(0.0628);
-
 
         finishTrigger = new Trigger(xController::atSetpoint).and(yController::atSetpoint).and(angleController::atSetpoint).debounce(0.04);
         // Initialize odometry with the current yaw angle
@@ -113,7 +111,7 @@ public class Swerve extends SubsystemBase implements Logged {
         // Precompute values to avoid redundant calculations
         Supplier<Vector2D> adjustedVelocitySupplier = () -> {
             Vector2D velocity = velocityMPS.get();
-//            Vector2D velocity = getSmartTranslationalVelocitySetPoint(getVelocity(), velocityMPS.get());
+//            Vector2D velocity = SwerveAccUtils.getSmartTranslationalVelocitySetpoint(getVelocity(), velocityMPS.get());
             if (fieldOriented.getAsBoolean()) {
                 Rotation2d yaw = getRotation2D().unaryMinus();
                 if (!AllianceUtils.isBlueAlliance()) yaw = yaw.plus(pi);

@@ -53,15 +53,14 @@ public class RobotContainer implements Logged {
                         () -> new Vector2D(
                                 applyDeadband(-primary.getLeftY()) * MAX_VEL,
                                 applyDeadband(-primary.getLeftX()) * MAX_VEL),
-                        () -> applyDeadband(primary.getRightX()) *
-                                MAX_OMEGA_RAD_PER_SEC,
-                        () -> false
+                        () -> applyDeadband(primary.getRightX()) * MAX_OMEGA_RAD_PER_SEC,
+                        () -> true
                 )
         );
 
 //        superstructure.shooter.setDefaultCommand(superstructure.autoHoodAndTurretAim());
 
-        primary.PS().onTrue(new RunCommand(() -> swerve.resetOdometry(new Pose2d())));
+        primary.options().onTrue(new RunCommand(() -> swerve.resetOdometry(new Pose2d())));
 
     }
 

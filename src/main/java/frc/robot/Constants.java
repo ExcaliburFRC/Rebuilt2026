@@ -111,7 +111,7 @@ public final class Constants {
                                     new TalonFXMotor(FRONT_LEFT_DRIVE_ID, SWERVE_CANBUS),
                                     new TalonFXMotor(FRONT_LEFT_ROTATION_ID, SWERVE_CANBUS),
                                     new Gains(5.2, 0, 0, 0, 0, 0, 0),
-                                    new Gains(0, 0, 0, 0, 2.008314, 0, 0),
+                                    new Gains(0, 0, 0, 0.2, 2.008314, 0, 0),
                                     PID_TOLERANCE,
                                     FRONT_LEFT_TRANSLATION,
                                     () -> FRONT_LEFT_ABS_ENCODER.getAbsolutePosition().getValueAsDouble() * 2 * Math.PI,
@@ -119,13 +119,13 @@ public final class Constants {
                                     VELOCITY_CONVERSION_FACTOR,
                                     POSITION_CONVERSION_FACTOR,
                                     ROTATION_VELOCITY_CONVERSION_FACTOR,
-                                    true
+                                    false
                             ),
                             new SwerveModule(
                                     new TalonFXMotor(FRONT_RIGHT_DRIVE_ID, SWERVE_CANBUS),
                                     new TalonFXMotor(FRONT_RIGHT_ROTATION_ID, SWERVE_CANBUS),
                                     new Gains(5.2, 0, 0, 0, 0, 0, 0),
-                                    new Gains(0, 0, 0, 0, 2.008314, 0, 0),
+                                    new Gains(0, 0, 0, 0.2, 2.008314, 0, 0),
                                     PID_TOLERANCE,
                                     FRONT_RIGHT_TRANSLATION,
                                     () -> FRONT_RIGHT_ABS_ENCODER.getAbsolutePosition().getValueAsDouble() * 2 * Math.PI,
@@ -133,13 +133,13 @@ public final class Constants {
                                     VELOCITY_CONVERSION_FACTOR,
                                     POSITION_CONVERSION_FACTOR,
                                     ROTATION_VELOCITY_CONVERSION_FACTOR,
-                                    true
+                                    false
                             ),
                             new SwerveModule(
                                     new TalonFXMotor(BACK_LEFT_DRIVE_ID, SWERVE_CANBUS),
                                     new TalonFXMotor(BACK_LEFT_ROTATION_ID, SWERVE_CANBUS),
                                     new Gains(5.2, 0, 0, 0, 0, 0, 0),
-                                    new Gains(0, 0, 0, 0, 2.1496566873600003, 0, 0),
+                                    new Gains(0, 0, 0, 0.42, 2.1496566873600003, 0, 0),
                                     PID_TOLERANCE,
                                     BACK_LEFT_TRANSLATION,
                                     () -> BACK_LEFT_ABS_ENCODER.getAbsolutePosition().getValueAsDouble() * 2 * Math.PI,
@@ -153,7 +153,7 @@ public final class Constants {
                                     new TalonFXMotor(BACK_RIGHT_DRIVE_ID, SWERVE_CANBUS),
                                     new TalonFXMotor(BACK_RIGHT_ROTATION_ID, SWERVE_CANBUS),
                                     new Gains(5.2, 0, 0, 0, 0, 0, 0),
-                                    new Gains(0, 0, 0, 0, 2.065*0.976, 0, 0),
+                                    new Gains(0, 0, 0, 0.42, 2.065*0.976, 0, 0),
                                     PID_TOLERANCE,
                                     BACK_RIGHT_TRANSLATION,
                                     () -> BACK_RIGHT_ABS_ENCODER.getAbsolutePosition().getValueAsDouble() * 2 * Math.PI,

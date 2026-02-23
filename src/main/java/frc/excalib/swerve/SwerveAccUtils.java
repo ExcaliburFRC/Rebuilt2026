@@ -15,8 +15,7 @@ public class SwerveAccUtils {
      * @return translational velocity setpoint
      */
     public static Vector2D getSmartTranslationalVelocitySetpoint(Vector2D currentVel, Vector2D velocitySetPoint) {
-        Vector2D deltaVelocity = velocitySetPoint.plus(
-                currentVel.mul(-1));
+        Vector2D deltaVelocity = velocitySetPoint.plus(currentVel.mul(-1));
         Vector2D actualDeltaVelocity = applyAccelerationLimits(currentVel, deltaVelocity);
         return currentVel.plus(actualDeltaVelocity);
     }

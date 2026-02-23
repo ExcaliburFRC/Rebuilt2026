@@ -24,9 +24,13 @@ import frc.excalib.swerve.SwerveModule;
 
 public final class Constants {
     public static final Pose2d INITIAL_POSE = new Pose2d();
+
     public static final double PHYSICS_PERIODIC_TIME = 0.02;
     public static final int PRIMARY_CONTROLLER_PORT = 0;
-    public static final Translation2d TURRET_OFFSET_TRANSLATION = new Translation2d(-0.16011,0); //todo robot to turret
+
+    public static final double CONTROLLER_DEADBAND = 0.09;
+
+    public static final CANBus SUBSYSTEMS_CANBUS = new CANBus("Subsystems");
 
     public static class SwerveConstants {
         public static final int FRONT_LEFT_DRIVE_ID = 20;
@@ -63,12 +67,13 @@ public final class Constants {
                         -TRACK_WIDTH / 2, -TRACK_WIDTH / 2
                 );
 
-        public static final double MAX_MODULE_VEL = 1;
-        public static final double MAX_FRONT_ACC = 1;
-        public static final double MAX_SIDE_ACC = 1;
-        public static final double MAX_SKID_ACC = 1;
-        public static final double MAX_FORWARD_ACC = 1;
+        public static final double MAX_MODULE_VEL = 2.5;
         public static final double MAX_VEL = 2.5;
+
+        public static final double MAX_FRONT_ACC = 10;
+        public static final double MAX_SIDE_ACC = 10;
+        public static final double MAX_SKID_ACC = 10;
+        public static final double MAX_FORWARD_ACC = 10;
         public static final double MAX_OMEGA_RAD_PER_SEC = 1.5;
         public static final double MAX_OMEGA_RAD_PER_SEC_SQUARE = 1;
 
@@ -97,7 +102,7 @@ public final class Constants {
         public static final Gains ANGLE_PID_GAINS = new Gains();
         public static final Gains TRANSLATION_PID_GAINS = new Gains();
 
-        private static final IMU GYRO = new Pigeon(GYRO_ID, SWERVE_CANBUS.getName(), new Rotation3d(0,0,Math.PI/2));
+        private static final IMU GYRO = new Pigeon(GYRO_ID, SWERVE_CANBUS.getName(), new Rotation3d(0, 0, Math.PI / 2));
 
         public static Swerve configureSwerve(Pose2d initialPose) {
             return new Swerve(
@@ -105,54 +110,58 @@ public final class Constants {
                             new SwerveModule(
                                     new TalonFXMotor(FRONT_LEFT_DRIVE_ID, SWERVE_CANBUS),
                                     new TalonFXMotor(FRONT_LEFT_ROTATION_ID, SWERVE_CANBUS),
-                                    new Gains(5.2 ,0, 0,0,0,0,0),
-                                    new Gains(0, 0, 0, 0, 2.01523875, 0, 0),
+                                    new Gains(5.2, 0, 0, 0, 0, 0, 0),
+                                    new Gains(0, 0, 0, 0.2, 2.008314, 0, 0),
                                     PID_TOLERANCE,
                                     FRONT_LEFT_TRANSLATION,
                                     () -> FRONT_LEFT_ABS_ENCODER.getAbsolutePosition().getValueAsDouble() * 2 * Math.PI,
-                                    MAX_VEL,
+                                    MAX_MODULE_VEL,
                                     VELOCITY_CONVERSION_FACTOR,
                                     POSITION_CONVERSION_FACTOR,
-                                    ROTATION_VELOCITY_CONVERSION_FACTOR
+                                    ROTATION_VELOCITY_CONVERSION_FACTOR,
+                                    false
                             ),
                             new SwerveModule(
                                     new TalonFXMotor(FRONT_RIGHT_DRIVE_ID, SWERVE_CANBUS),
                                     new TalonFXMotor(FRONT_RIGHT_ROTATION_ID, SWERVE_CANBUS),
-                                    new Gains(5.2 ,0, 0,0,0,0,0),
-                                    new Gains(0, 0, 0, 0, 2.4315075, 0, 0),
+                                    new Gains(5.2, 0, 0, 0, 0, 0, 0),
+                                    new Gains(0, 0, 0, 0.2, 2.008314, 0, 0),
                                     PID_TOLERANCE,
                                     FRONT_RIGHT_TRANSLATION,
                                     () -> FRONT_RIGHT_ABS_ENCODER.getAbsolutePosition().getValueAsDouble() * 2 * Math.PI,
                                     MAX_MODULE_VEL,
                                     VELOCITY_CONVERSION_FACTOR,
                                     POSITION_CONVERSION_FACTOR,
-                                    ROTATION_VELOCITY_CONVERSION_FACTOR
+                                    ROTATION_VELOCITY_CONVERSION_FACTOR,
+                                    false
                             ),
                             new SwerveModule(
                                     new TalonFXMotor(BACK_LEFT_DRIVE_ID, SWERVE_CANBUS),
                                     new TalonFXMotor(BACK_LEFT_ROTATION_ID, SWERVE_CANBUS),
-                                    new Gains(5.2 ,0, 0,0,0,0,0),
-                                    new Gains(0, 0, 0, 0, 1.92770175, 0, 0),
+                                    new Gains(5.2, 0, 0, 0, 0, 0, 0),
+                                    new Gains(0, 0, 0, 0.42, 2.1496566873600003, 0, 0),
                                     PID_TOLERANCE,
                                     BACK_LEFT_TRANSLATION,
                                     () -> BACK_LEFT_ABS_ENCODER.getAbsolutePosition().getValueAsDouble() * 2 * Math.PI,
                                     MAX_MODULE_VEL,
                                     VELOCITY_CONVERSION_FACTOR,
                                     POSITION_CONVERSION_FACTOR,
-                                    ROTATION_VELOCITY_CONVERSION_FACTOR
+                                    ROTATION_VELOCITY_CONVERSION_FACTOR,
+                                    false
                             ),
                             new SwerveModule(
                                     new TalonFXMotor(BACK_RIGHT_DRIVE_ID, SWERVE_CANBUS),
                                     new TalonFXMotor(BACK_RIGHT_ROTATION_ID, SWERVE_CANBUS),
-                                    new Gains(5.2 ,0, 0,0,0,0,0),
-                                    new Gains(0, 0, 0, 0, 1.98768795, 0, 0),
+                                    new Gains(5.2, 0, 0, 0, 0, 0, 0),
+                                    new Gains(0, 0, 0, 0.42, 2.065*0.976, 0, 0),
                                     PID_TOLERANCE,
                                     BACK_RIGHT_TRANSLATION,
                                     () -> BACK_RIGHT_ABS_ENCODER.getAbsolutePosition().getValueAsDouble() * 2 * Math.PI,
                                     MAX_MODULE_VEL,
                                     VELOCITY_CONVERSION_FACTOR,
                                     POSITION_CONVERSION_FACTOR,
-                                    ROTATION_VELOCITY_CONVERSION_FACTOR
+                                    ROTATION_VELOCITY_CONVERSION_FACTOR,
+                                    false
                             )),
                     GYRO,
                     initialPose
@@ -163,30 +172,27 @@ public final class Constants {
 
     public static class FieldConstants {
         // all the units of length are in meters
-
         public static final AllianceUtils.AlliancePose BLUE_HUB_CENTER_POSE = new
-                AllianceUtils.AlliancePose(5.06, 4.03, 0);
-        public static final AllianceUtils.AlliancePose DELIVERY_RIGHT_POSE_DIATANCE = new
-                AllianceUtils.AlliancePose(1.988, 6.523, 0);
-        public static final AllianceUtils.AlliancePose DELIVERY_LEFT_POSE_DISTANCE = new
-                AllianceUtils.AlliancePose(1.988, 2.172, 0);
+                AllianceUtils.AlliancePose(4.62, 4.03, 0);
+        public static final AllianceUtils.AlliancePose DELIVERY_RIGHT_POSE = new
+                AllianceUtils.AlliancePose(2, 6.523, 0);
+        public static final AllianceUtils.AlliancePose DELIVERY_LEFT_POSE = new
+                AllianceUtils.AlliancePose(2, 2.172, 0);
         public static final Translation3d BLUE_CLIMB_TOWER_POSE_L1 = new
-                Translation3d(1.148, 4.32, 0.6858);
+                Translation3d(1.05, 3.74, 0.6858);
         public static final Translation3d BLUE_CLIMB_TOWER_POSE_L2 = new
-                Translation3d(1.148, 4.32, 1.143);
+                Translation3d(1.05, 3.74, 1.143);
         public static final Translation3d BLUE_CLIMB_TOWER_POSE_L3 = new
-                Translation3d(1.148, 4.32, 1.6002);
-        public static final Translation2d BLUE_OUTPOST_POSE_CENTER = new
-                Translation2d(0, 0.63);
-        public static final int SHOOTER_TO_TRENCH_LIMET = 100;
-        public static final Translation2d BLUE_DOWN_FIELD_TRENCH_POSE = new
-                Translation2d(5.06, 0.63);
-        public static final Translation2d BLUE_UP_FIELD_TRENCH_POSE = new
-                Translation2d(5.06, 7.43);
-        public static final Translation2d BLUE_UP_FIELD_PICKUP_FUEL_PLACEMENT = new
-                Translation2d(0.34, 6.509);
-        public static final Translation2d BLUE_DOWN_FIELD_PICKUP_FUEL_PLACEMENT = new
-                Translation2d(0.34, 4.829);
+                Translation3d(1.05, 3.74, 1.6002);
+        public static final AllianceUtils.AlliancePose BLUE_OUTPOST_POSE_CENTER = new
+                AllianceUtils.AlliancePose(0, 0.63,0);
+        public static final double SHOOTER_TO_TRENCH_LIMIT = 0.5;
+        public static final AllianceUtils.AlliancePose BLUE_DOWN_FIELD_TRENCH_POSE = new
+                AllianceUtils.AlliancePose(4.62, 0.63,0);
+        public static final AllianceUtils.AlliancePose BLUE_UP_FIELD_TRENCH_POSE = new
+                AllianceUtils.AlliancePose(4.62, 7.43,0);
+        public static final AllianceUtils.AlliancePose BLUE_UP_FIELD_PICKUP_FUEL_PLACEMENT = new
+                AllianceUtils.AlliancePose(0.39, 6.06,0);
 
         public static final double FUEL_DIAMETER = 0.15;
         public static final Translation2d BLUE_SOTER_LIMET_OTASE = new
@@ -200,6 +206,9 @@ public final class Constants {
 
     }
 
-    public static final double DEADBAND_X = 0.07;
-
+    public static class PhysicalConstants {
+        public static final Translation2d TURRET_OFFSET_TRANSLATION = new Translation2d(-0.16011, 0); //todo robot to turret
+        public static final double SHOOTER_TRANSPORT_VOLTAGE = 6;
+        public static final double SPINDEXER_TRANSPORT_VOLTAGE = -6;
+    }
 }

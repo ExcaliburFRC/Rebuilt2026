@@ -16,6 +16,7 @@ import monologue.Logged;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
+import static frc.robot.Constants.SUBSYSTEMS_CANBUS;
 import static frc.robot.subsystems.turret.TurretConstants.*;
 
 public class Turret extends SubsystemBase implements Logged {
@@ -26,8 +27,8 @@ public class Turret extends SubsystemBase implements Logged {
     public final DoubleSupplier turretRelativeAngleToHub;
 
     public Turret(DoubleSupplier turretRelativeAngleToHub) {
-        turretMotor = new TalonFXMotor(TURRET_MOTOR_ID, new CANBus("Subsystems"));
-        turretEncoder = new CANcoder(TURRET_ENCODER_ID, new CANBus("Subsystems"));
+        turretMotor = new TalonFXMotor(TURRET_MOTOR_ID, SUBSYSTEMS_CANBUS);
+        turretEncoder = new CANcoder(TURRET_ENCODER_ID, SUBSYSTEMS_CANBUS);
         turretEncoder.setPosition(turretEncoder.getAbsolutePosition().getValueAsDouble());
         turretAngleSupplier = () -> turretEncoder.getPosition().getValueAsDouble() * ENCODER_POSITION_CONVERSION_FACTOR;
         turretMotor.setMotorPosition(turretEncoder.getPosition().getValueAsDouble());
@@ -50,7 +51,7 @@ public class Turret extends SubsystemBase implements Logged {
                 TURRET_GAINS,
                 PID_TOLERANCE,
                 this::getEncoderPosition,
-                new TrapezoidProfile.Constraints(Math.PI * 4, Math.PI * 50)
+                new TrapezoidProfile.Constraints(Math.PI * 12, Math.PI * 50)
         );
 
 //        setDefaultCommand(followTargetCommand());
@@ -63,6 +64,8 @@ public class Turret extends SubsystemBase implements Logged {
         );
     }
 
+
+
     public Command setPositionCommand(Supplier<Rotation2d> position) {
         return turretMechanism.setPositionCommand(position, this);
     }
@@ -73,13 +76,8 @@ public class Turret extends SubsystemBase implements Logged {
     }
 
     @Log.NT
-    public double getError() {
-        return turretMechanism.m_anglePIDcontroller.getPositionError();
-    }
-
-    @Log.NT
-    public boolean isInTolerance() {
-        return turretMechanism.m_anglePIDcontroller.atSetpoint();
+    public double getTurretRelativeAngleToHub(){
+        return turretRelativeAngleToHub.getAsDouble();
     }
 
 }

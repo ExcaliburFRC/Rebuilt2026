@@ -8,7 +8,9 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.networktables.GenericEntry;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
@@ -48,7 +50,6 @@ public class Swerve extends SubsystemBase implements Logged {
     private Rotation2d pi = new Rotation2d(Math.PI);
 
     private final SwerveDriveKinematics m_swerveDriveKinematics;
-
     private final PIDController angleController = new PIDController(ANGLE_PID_GAINS.kp, ANGLE_PID_GAINS.ki, ANGLE_PID_GAINS.kd);
     private final PIDController xController = new PIDController(
             TRANSLATION_PID_GAINS.kp, TRANSLATION_PID_GAINS.ki, TRANSLATION_PID_GAINS.kd
@@ -76,14 +77,12 @@ public class Swerve extends SubsystemBase implements Logged {
         this.m_imu = imu;
         m_imu.setRotation(new Rotation2d(Math.PI / 2));
 
-
         angleController.enableContinuousInput(-Math.PI, Math.PI);
         xController.setTolerance(0.01);
         yController.setTolerance(0.01);
         angleController.setTolerance(0.0628);
 
-
-        finishTrigger = new Trigger(xController::atSetpoint).and(yController::atSetpoint).and(angleController::atSetpoint).debounce(0.1);
+        finishTrigger = new Trigger(xController::atSetpoint).and(yController::atSetpoint).and(angleController::atSetpoint).debounce(0.04);
         // Initialize odometry with the current yaw angle
         this.m_odometry = new Odometry(
                 modules.getSwerveDriveKinematics(),
@@ -112,7 +111,7 @@ public class Swerve extends SubsystemBase implements Logged {
         // Precompute values to avoid redundant calculations
         Supplier<Vector2D> adjustedVelocitySupplier = () -> {
             Vector2D velocity = velocityMPS.get();
-//            Vector2D velocity = getSmartTranslationalVelocitySetPoint(getVelocity(), velocityMPS.get());
+//            Vector2D velocity = SwerveAccUtils.getSmartTranslationalVelocitySetpoint(getVelocity(), velocityMPS.get());
             if (fieldOriented.getAsBoolean()) {
                 Rotation2d yaw = getRotation2D().unaryMinus();
                 if (!AllianceUtils.isBlueAlliance()) yaw = yaw.plus(pi);
@@ -494,8 +493,29 @@ public class Swerve extends SubsystemBase implements Logged {
         modules.periodic();
         field.setRobotPose(getPose2D());
         updateOdometry();
+        Pose2d arrPose = getAuroraPose2de();
+        if (!((arrPose.getX() == 0) && (arrPose.getY() == 0) && (arrPose.getRotation().getRadians() == 0))) {
+            m_odometry.resetOdometry(modules.getModulesPositions(), getAuroraPose2de());
+        }
+
 
     }
+
+    @Log.NT
+    public Pose2d getAuroraPose2de() {
+        Pose2d auroraPose = new Pose2d(
+                new Translation2d(
+                        NetworkTableInstance.getDefault().getTable("Aurora").getSubTable("robotPose").getEntry("x").getDouble(0),
+                        NetworkTableInstance.getDefault().getTable("Aurora").getSubTable("robotPose").getEntry("y").getDouble(0)
+                ),
+                new Rotation2d(NetworkTableInstance.getDefault().getTable("Aurora").getSubTable("robotPose").getEntry("yaw").getDouble(0)
+                )
+        );
+
+        return auroraPose;
+    }
+
+    ;
 
     @Log.NT
     public boolean isAtPosition() {

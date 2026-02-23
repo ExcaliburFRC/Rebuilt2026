@@ -5,6 +5,7 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+import edu.wpi.first.wpilibj2.command.PrintCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.excalib.control.math.Vector2D;
 import monologue.Logged;
@@ -90,15 +91,15 @@ public class ModulesHolder implements Logged {
         return new Vector2D(totalX * 0.25, totalY * 0.25);
     }
 
-//    @Log.NT(key = "angular vel")
-//    public double getOmegaRadPerSec() {
-//        return new SwerveDriveKinematics(
-//                m_frontLeft.m_MODULE_LOCATION,
-//                m_frontRight.m_MODULE_LOCATION,
-//                m_backLeft.m_MODULE_LOCATION,
-//                m_backRight.m_MODULE_LOCATION
-//        ).toChassisSpeeds(logStates()).omegaRadiansPerSecond;
-//    }
+    @Log.NT(key = "angular vel")
+    public double getOmegaRadPerSec() {
+        return new SwerveDriveKinematics(
+                m_frontLeft.m_MODULE_LOCATION,
+                m_frontRight.m_MODULE_LOCATION,
+                m_backLeft.m_MODULE_LOCATION,
+                m_backRight.m_MODULE_LOCATION
+        ).toChassisSpeeds(logStates()).omegaRadiansPerSecond;
+    }
 
     @Log.NT(key = "swerve velocity")
     public double getVelocityDistance() {

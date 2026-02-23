@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
+import frc.robot.util.AuroraPoseGetter;
 import frc.robot.util.GameDataClient;
 import monologue.Monologue;
 
@@ -20,20 +21,23 @@ public class Robot extends TimedRobot {
     private final RobotContainer robotContainer;
 
     public Robot() {
+        AuroraPoseGetter.periodic();
         robotContainer = new RobotContainer();
-
         Monologue.setupMonologue(robotContainer, "Robot", false, false);
-
     }
 
     @Override
     public void robotPeriodic() {
+        AuroraPoseGetter.periodic();
+        GameDataClient.updateGameData();
+        robotContainer.perodic();
+
         Threads.setCurrentThreadPriority(true, 99);
+
         CommandScheduler.getInstance().run();
         Monologue.updateAll();
-        GameDataClient.updateGameData();
-
         TalonFXMotor.refreshAll();
+
         Threads.setCurrentThreadPriority(false, 10);
     }
 

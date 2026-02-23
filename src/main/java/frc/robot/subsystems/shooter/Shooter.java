@@ -27,10 +27,12 @@ import static frc.excalib.additional_utilities.AllianceUtils.FIELD_WIDTH_METERS;
 import static frc.robot.Constants.FieldConstants.*;
 import static frc.robot.Constants.SUBSYSTEMS_CANBUS;
 import static frc.robot.subsystems.shooter.ShooterConstants.*;
+import static monologue.Annotations.Log.*;
 
 public class Shooter extends SubsystemBase implements Logged {
 
     public final TalonFXMotor hoodMotor, flyWheelMotor;
+    public final CANcoder hoodEncoder;
     public final PIDController angleController;
 
     public final FlyWheel flyWheelMechanism;
@@ -41,13 +43,10 @@ public class Shooter extends SubsystemBase implements Logged {
     public DoubleSupplier hoodAngleSupplier;
     public final SoftLimit hoodSoftLimit;
 
-    public final Trigger flyWheelToleranceTrigger;
-    public double flywheelVelocitySetpoint;
-
     public final Supplier<Pose2d> robotPositionSupplier;
 
     public final DoubleSupplier turretRelativeDistanceFromTarget;
-    public final CANcoder hoodEncoder;
+    public DoubleSupplier flywheelVelocitySetpoint;
 
     public final InterpolatingDoubleTreeMap angleDistanceMap;
     public final InterpolatingDoubleTreeMap velocityDistanceMap;
@@ -75,14 +74,9 @@ public class Shooter extends SubsystemBase implements Logged {
 
         hoodMotor.setPositionConversionFactor(0.048869);
         hoodMotor.setMotorPosition(1.348);
+        flywheelVelocitySetpoint = () -> 0;
 
         flyWheelMechanism = new FlyWheel(flyWheelMotor, FLY_WHEEL_MAX_ACCELERATION, FLY_WHEEL_MAX_JERK, FLYWHEEL_GAINS);
-        flywheelVelocitySetpoint = DEFAULT_FLYWHEEL_VELOCITY;
-
-        flyWheelToleranceTrigger = new Trigger(
-                () -> (flyWheelMechanism.getVelocity() < (flywheelVelocitySetpoint + FLY_WHEEL_TOLERANCE) &&
-                        flyWheelMechanism.getVelocity() > (flywheelVelocitySetpoint - FLY_WHEEL_TOLERANCE))
-        );
 
         transportMechanism = new Mechanism(transportMotor);
 
@@ -120,6 +114,8 @@ public class Shooter extends SubsystemBase implements Logged {
                     return HOOD_MAX_ANGLE_LIMIT;
                 }
         );
+
+        setDefaultCommand(defaultCommand());
     }
 
 
@@ -158,6 +154,7 @@ public class Shooter extends SubsystemBase implements Logged {
                 () -> {
                     double distance = turretRelativeDistanceFromTarget.getAsDouble();
                     double velocity = velocityDistanceMap.get(distance);
+                    flywheelVelocitySetpoint = () -> velocity;
                     flyWheelMechanism.setDynamicVelocity(velocity); // DIRECT motor control
                 }
         );
@@ -179,7 +176,7 @@ public class Shooter extends SubsystemBase implements Logged {
                 new ParallelCommandGroup(
                         setAdjustedFlyWheelVelocity(),
                         setAdjustedHoodAngle(),
-                        transportMechanism.manualCommand(() -> TRANSPORT_VOLTAGE).onlyIf(shootingMode).onlyIf(flyWheelToleranceTrigger)),
+                        transportMechanism.manualCommand(() -> TRANSPORT_VOLTAGE).onlyIf(shootingMode)),
                 () -> shooterTarget.equals(Target.IDLE)
         );
         c.addRequirements(this);
@@ -190,7 +187,7 @@ public class Shooter extends SubsystemBase implements Logged {
         return angleController.calculate(hoodMotor.getMotorPosition(), angleSetpoint.getAsDouble());
     }
 
-    @Log.NT
+    @NT
     public double getEncoderAngle() {
         return hoodEncoder.getAbsolutePosition().getValueAsDouble();
     }
@@ -211,5 +208,15 @@ public class Shooter extends SubsystemBase implements Logged {
                 () -> new InstantCommand(() -> shooterTarget = Target.DELIVERY).andThen(new InstantCommand(() -> shootingMode = () -> true)),
                 () -> new InstantCommand(() -> shooterTarget = Target.IDLE).andThen(new InstantCommand(() -> shootingMode = () -> false))
         );
+    }
+
+    @NT
+    public double getFlyWheelVelocitySetpoint(){
+        return flywheelVelocitySetpoint.getAsDouble();
+    }
+
+    @NT
+    public double getFlyWheelVelocity(){
+        return flyWheelMechanism.getVelocity();
     }
 }

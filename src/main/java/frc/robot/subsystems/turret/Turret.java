@@ -1,15 +1,13 @@
 package frc.robot.subsystems.turret;
 
-import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.hardware.CANcoder;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.*;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
 import frc.excalib.control.motor.motor_specs.DirectionState;
 import frc.excalib.control.motor.motor_specs.IdleState;
+import frc.robot.util.Target;
 import monologue.Annotations.Log;
 import monologue.Logged;
 
@@ -25,6 +23,7 @@ public class Turret extends SubsystemBase implements Logged {
     public final DoubleSupplier turretAngleSupplier;
     public final CANcoder turretEncoder;
     public final DoubleSupplier turretRelativeAngleToHub;
+    public Target turretTarget;
 
     public Turret(DoubleSupplier turretRelativeAngleToHub) {
         turretMotor = new TalonFXMotor(TURRET_MOTOR_ID, SUBSYSTEMS_CANBUS);
@@ -35,6 +34,7 @@ public class Turret extends SubsystemBase implements Logged {
 
         this.turretRelativeAngleToHub = turretRelativeAngleToHub;
         turretMotor.setInverted(DirectionState.FORWARD);
+        turretTarget = Target.IDLE;
 
 //      turretMotor.setMotorPosition(turretAngleSupplier.getAsDouble());
         turretMotor.setPositionConversionFactor(MOTOR_POSITION_CONVERSION_FACTOR);
@@ -54,7 +54,7 @@ public class Turret extends SubsystemBase implements Logged {
                 new TrapezoidProfile.Constraints(Math.PI * 12, Math.PI * 50)
         );
 
-//        setDefaultCommand(followTargetCommand());
+        setDefaultCommand(defaultCommand());
     }
 
 
@@ -64,6 +64,15 @@ public class Turret extends SubsystemBase implements Logged {
         );
     }
 
+    public Command defaultCommand() {
+        Command c = new ConditionalCommand(
+                Commands.none(),
+                setPositionCommand(() -> Rotation2d.fromRadians(turretRelativeAngleToHub.getAsDouble())),
+                () -> turretTarget.equals(Target.IDLE)
+        );
+        c.addRequirements(this);
+        return c;
+    }
 
 
     public Command setPositionCommand(Supplier<Rotation2d> position) {
@@ -76,8 +85,12 @@ public class Turret extends SubsystemBase implements Logged {
     }
 
     @Log.NT
-    public double getTurretRelativeAngleToHub(){
+    public double getTurretRelativeAngleToHub() {
         return turretRelativeAngleToHub.getAsDouble();
+    }
+
+    public Command setTargetCommand(Target targetToSet) {
+        return new InstantCommand(() -> turretTarget = targetToSet);
     }
 
 }

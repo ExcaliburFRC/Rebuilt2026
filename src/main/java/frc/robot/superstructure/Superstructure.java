@@ -11,6 +11,7 @@ import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.transport.Transport;
 import frc.robot.subsystems.turret.Turret;
+import frc.robot.util.Target;
 import monologue.Annotations.Log;
 import monologue.Logged;
 
@@ -27,6 +28,8 @@ public class Superstructure implements Logged {
     public final Turret turret;
     public final Swerve swerve;
 
+    public Target currentTarget = Target.IDLE;
+
     public final InterpolatingDoubleTreeMap distanceTimeOfFlightMap;
 
     public final CommandPS5Controller controller;
@@ -35,8 +38,8 @@ public class Superstructure implements Logged {
         intake = new Intake();
         transport = new Transport();
 
-        turret = new Turret(() -> getTurretToHubVector().get().getAngle().getRadians());
-        shooter = new Shooter(() -> getTurretToHubVector().get().getNorm(), swerve::getPose2D);
+        turret = new Turret(() -> getTurretToTargetVector(() -> currentTarget).get().getAngle().getRadians());
+        shooter = new Shooter(() -> getTurretToTargetVector(() -> currentTarget).get().getNorm(), swerve::getPose2D);
 
         this.swerve = swerve;
         this.controller = controller;
@@ -52,17 +55,17 @@ public class Superstructure implements Logged {
         distanceTimeOfFlightMap.put(3.88, 0.95);
     }
 
-    public Supplier<Translation2d> getTurretToHubVector() {
-        Translation2d fieldToHubTranslation = BLUE_HUB_CENTER_POSE.get().getTranslation();
+    public Supplier<Translation2d> getTurretToTargetVector(Supplier<Target> target) {
+        Translation2d fieldToTargetTranslation = target.get().targetTranslation;
         Translation2d fieldToRobot = swerve.getPose2D().getTranslation();
 
-        Translation2d robotToHub = (fieldToHubTranslation.minus(fieldToRobot)).rotateBy(swerve.getRotation2D().unaryMinus()); //maybe revese (unary minus) todo
-        Translation2d turretToHub = robotToHub.minus(TURRET_OFFSET_TRANSLATION);
+        Translation2d robotToTarget = (fieldToTargetTranslation.minus(fieldToRobot)).rotateBy(swerve.getRotation2D().unaryMinus()); //maybe revese (unary minus) todo
+        Translation2d turretToTarget = robotToTarget.minus(TURRET_OFFSET_TRANSLATION);
 
         ChassisSpeeds robotSpeeds = swerve.getRobotRelativeSpeeds();
 
         return () -> {
-            Translation2d virtualHubOffset = new Translation2d(
+            Translation2d virtualTargetOffset = new Translation2d(
                     robotSpeeds.vxMetersPerSecond
                             + TURRET_OFFSET_TRANSLATION.getY()
                             * robotSpeeds.omegaRadiansPerSecond,
@@ -70,9 +73,9 @@ public class Superstructure implements Logged {
                     robotSpeeds.vyMetersPerSecond
                             + TURRET_OFFSET_TRANSLATION.getX()
                             * robotSpeeds.omegaRadiansPerSecond
-            ).times(distanceTimeOfFlightMap.get(turretToHub.getNorm()));
+            ).times(distanceTimeOfFlightMap.get(turretToTarget.getNorm()));
 
-            return turretToHub.minus(virtualHubOffset);
+            return turretToTarget.minus(virtualTargetOffset);
         };
 //        return () -> turretToHub;
     }
@@ -81,7 +84,7 @@ public class Superstructure implements Logged {
     public Supplier<Translation2d> getTurretToDeliveryVector() {
         Translation2d fieldToDeliveryTranslation;
         if (swerve.getPose2D().getTranslation().getDistance(DELIVERY_LEFT_POSE.get().getTranslation()) >
-                swerve.getPose2D().getTranslation().getDistance(DELIVERY_RIGHT_POSE.get().getTranslation())){
+                swerve.getPose2D().getTranslation().getDistance(DELIVERY_RIGHT_POSE.get().getTranslation())) {
             fieldToDeliveryTranslation = DELIVERY_RIGHT_POSE.get().getTranslation();
         } else {
             fieldToDeliveryTranslation = DELIVERY_LEFT_POSE.get().getTranslation();
@@ -98,7 +101,7 @@ public class Superstructure implements Logged {
         return new RunCommand(
                 () -> {
                     new ParallelCommandGroup(
-                            turret.setPositionCommand(() -> getTurretToHubVector().get().getAngle()),
+                            turret.setPositionCommand(() -> getTurretToTargetVector(() -> currentTarget).get().getAngle()),
                             shooter.setHoodAngleCommand(
                                     () -> shooter.angleDistanceMap.get(turretDistanceFromHub.getAsDouble())
                             )
@@ -107,10 +110,10 @@ public class Superstructure implements Logged {
         );
     }
 
-    public Command shotSquenceCommand() {
+    public Command shootSquenceCommand() {
         return new SequentialCommandGroup(
-                shooter.smartFlyWheelVelocity(),
-                new WaitUntilCommand(shooter.flyWheelInToleranceTrigger),
+                shooter.setAdjustedFlyWheelVelocity(),
+                new WaitUntilCommand(shooter.flyWheelToleranceTrigger),
                 new ParallelCommandGroup(
                         transport.manualCommand(() -> SHOOTER_TRANSPORT_VOLTAGE),
                         shooter.transportMechanism.manualCommand(() -> SPINDEXER_TRANSPORT_VOLTAGE)
@@ -124,7 +127,7 @@ public class Superstructure implements Logged {
 
     @Log.NT
     public double getTurretToHubVectorAngle() {
-        return Units.radiansToDegrees(getTurretToHubVector().get().getAngle().getRadians());
+        return Units.radiansToDegrees(getTurretToTargetVector(() -> currentTarget).get().getAngle().getRadians());
     }
 
     @Log.NT
@@ -134,14 +137,14 @@ public class Superstructure implements Logged {
 
     @Log.NT
     public double getTurretToHubVectorDist() {
-        return getTurretToHubVector().get().getNorm();
+        return getTurretToTargetVector(() -> currentTarget).get().getNorm();
     }
 
     @Log.NT
-    DoubleSupplier turretDistanceFromHub = () -> getTurretToHubVector().get().getNorm();
+    DoubleSupplier turretDistanceFromHub = () -> getTurretToTargetVector(() -> currentTarget).get().getNorm();
 
     @Log.NT
-    public double getSetpointHoodAngle(){
-        return shooter.angleDistanceMap.get(getTurretToHubVector().get().getNorm());
+    public double getSetpointHoodAngle() {
+        return shooter.angleDistanceMap.get(getTurretToTargetVector(() -> currentTarget).get().getNorm());
     }
 }

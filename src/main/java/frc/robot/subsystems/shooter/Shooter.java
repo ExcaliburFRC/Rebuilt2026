@@ -1,6 +1,5 @@
 package frc.robot.subsystems.shooter;
 
-import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.hardware.CANcoder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.*;
@@ -14,7 +13,7 @@ import frc.excalib.control.motor.motor_specs.DirectionState;
 import frc.excalib.control.motor.motor_specs.IdleState;
 import frc.excalib.mechanisms.Mechanism;
 import frc.excalib.mechanisms.fly_wheel.FlyWheel;
-import frc.robot.Constants;
+import frc.robot.util.Target;
 import monologue.Annotations.Log;
 import monologue.Logged;
 
@@ -37,25 +36,27 @@ public class Shooter extends SubsystemBase implements Logged {
     public DoubleSupplier hoodAngleSupplier;
     public final SoftLimit hoodSoftLimit;
 
-    public final Trigger flyWheelInToleranceTrigger;
+    public final Trigger flyWheelToleranceTrigger;
     public double flywheelVelocitySetpoint;
 
     public final Supplier<Pose2d> robotPositionSupplier;
 
-    public final DoubleSupplier turretRelativeDistanceFromHub;
+    public final DoubleSupplier turretRelativeDistanceFromTarget;
     public final CANcoder hoodEncoder;
 
     public final InterpolatingDoubleTreeMap angleDistanceMap;
     public final InterpolatingDoubleTreeMap velocityDistanceMap;
 
-    public Shooter(DoubleSupplier turretRelativeDistanceFromHub, Supplier<Pose2d> poseSupplier) {
+    public Target shooterTarget = Target.IDLE;
+
+    public Shooter(DoubleSupplier turretRelativeDistanceFromTarget, Supplier<Pose2d> poseSupplier) {
         hoodMotor = new TalonFXMotor(HOOD_MOTOR_ID, SUBSYSTEMS_CANBUS);
         flyWheelMotor = new TalonFXMotor(FLYWHEEL_MOTOR_ID, SUBSYSTEMS_CANBUS);
         transportMotor = new TalonFXMotor(TRANSPORT_MOTOR_ID, SUBSYSTEMS_CANBUS);
         hoodEncoder = new CANcoder(HOOD_ENCODER_ID, SUBSYSTEMS_CANBUS);
 
         hoodEncoder.setPosition(hoodEncoder.getAbsolutePosition().getValueAsDouble());
-        this.turretRelativeDistanceFromHub = turretRelativeDistanceFromHub;
+        this.turretRelativeDistanceFromTarget = turretRelativeDistanceFromTarget;
 
         angleController = new PIDController(HOOD_PID_GAINS.kp, HOOD_PID_GAINS.ki, HOOD_PID_GAINS.kd);
         angleController.setTolerance(0.01);
@@ -71,7 +72,7 @@ public class Shooter extends SubsystemBase implements Logged {
         flyWheelMechanism = new FlyWheel(flyWheelMotor, FLY_WHEEL_MAX_ACCELERATION, FLY_WHEEL_MAX_JERK, FLYWHEEL_GAINS);
         flywheelVelocitySetpoint = DEFAULT_FLYWHEEL_VELOCITY;
 
-        flyWheelInToleranceTrigger = new Trigger(
+        flyWheelToleranceTrigger = new Trigger(
                 () -> (flyWheelMechanism.getVelocity() < (flywheelVelocitySetpoint + FLY_WHEEL_TOLERANCE) &&
                         flyWheelMechanism.getVelocity() > (flywheelVelocitySetpoint - FLY_WHEEL_TOLERANCE))
         );
@@ -99,18 +100,18 @@ public class Shooter extends SubsystemBase implements Logged {
         angleDistanceMapTable.put(4.67, 1.429);
         angleDistanceMapTable.put(2.49, 1.347);
         angleDistanceMapTable.put(2.98, 1.346);
-        angleDistanceMapTable.put(4.08,  1.344);
+        angleDistanceMapTable.put(4.08, 1.344);
     }
 
     public void initVelocityMap(InterpolatingTreeMap<Double, Double> velocityDistanceMapTable) {
 //          velocityDistanceMapTable.put(distance[meters], flywheel velocity);
-          velocityDistanceMapTable.put(2.16, 21.0);
-          velocityDistanceMapTable.put(3.29, 24.0);
-          velocityDistanceMapTable.put(4.39, 26.0);
-          velocityDistanceMapTable.put(4.67, 26.0);
-          velocityDistanceMapTable.put(2.49, 22.0);
-          velocityDistanceMapTable.put(2.98, 23.0);
-          velocityDistanceMapTable.put(4.08, 25.0);
+        velocityDistanceMapTable.put(2.16, 21.0);
+        velocityDistanceMapTable.put(3.29, 24.0);
+        velocityDistanceMapTable.put(4.39, 26.0);
+        velocityDistanceMapTable.put(4.67, 26.0);
+        velocityDistanceMapTable.put(2.49, 22.0);
+        velocityDistanceMapTable.put(2.98, 23.0);
+        velocityDistanceMapTable.put(4.08, 25.0);
     }
 
     public Command setHoodAngleCommand(DoubleSupplier angleSetpoint) {
@@ -119,15 +120,26 @@ public class Shooter extends SubsystemBase implements Logged {
                         angleSetpoint.getAsDouble()))), this);
     }
 
-    public Command smartFlyWheelVelocity() {
+    public Command setAdjustedFlyWheelVelocity() {
         return new RunCommand(
                 () -> {
-                    double distance = turretRelativeDistanceFromHub.getAsDouble();
+                    double distance = turretRelativeDistanceFromTarget.getAsDouble();
                     double velocity = velocityDistanceMap.get(distance);
                     flyWheelMechanism.setDynamicVelocity(velocity); // DIRECT motor control
-                },
-                this
+                }
         );
+    }
+
+    public Command defaultCommand() {
+        Command c = new ConditionalCommand(
+                Commands.none(),
+                new ParallelCommandGroup(
+                        setAdjustedFlyWheelVelocity(),
+                        setHoodAngleCommand(() -> angleDistanceMap.get(turretRelativeDistanceFromTarget.getAsDouble()))),
+                () -> shooterTarget.equals(Target.IDLE)
+        );
+        c.addRequirements(this);
+        return c;
     }
 
     public double getPIDForAngle(DoubleSupplier angleSetpoint) {
@@ -137,6 +149,10 @@ public class Shooter extends SubsystemBase implements Logged {
     @Log.NT
     public double getEncoderAngle() {
         return hoodEncoder.getAbsolutePosition().getValueAsDouble();
+    }
+
+    public Command setTargetCommand(Target targetToSet) {
+        return new InstantCommand(() -> shooterTarget = targetToSet);
     }
 
 }

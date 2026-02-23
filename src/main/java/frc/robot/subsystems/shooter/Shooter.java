@@ -4,7 +4,6 @@ import com.ctre.phoenix6.hardware.CANcoder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
-import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
 import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.excalib.additional_utilities.AllianceUtils;
@@ -15,9 +14,9 @@ import frc.excalib.control.motor.motor_specs.IdleState;
 import frc.excalib.mechanisms.Mechanism;
 import frc.excalib.mechanisms.fly_wheel.FlyWheel;
 import frc.robot.util.Target;
-import monologue.Annotations.Log;
 import monologue.Logged;
 
+import javax.swing.text.StyledEditorKit;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
@@ -31,30 +30,30 @@ import static monologue.Annotations.Log.*;
 
 public class Shooter extends SubsystemBase implements Logged {
 
-    public final TalonFXMotor hoodMotor, flyWheelMotor;
-    public final CANcoder hoodEncoder;
-    public final PIDController angleController;
+    private final TalonFXMotor hoodMotor, flyWheelMotor;
+    private final CANcoder hoodEncoder;
+    private final PIDController angleController;
 
-    public final FlyWheel flyWheelMechanism;
-    public final Mechanism hoodMechanism;
-    public final Mechanism transportMechanism;
+    private final FlyWheel flyWheelMechanism;
+    private final Mechanism hoodMechanism;
+    private final Mechanism transportMechanism;
 
-    public final TalonFXMotor transportMotor;
-    public DoubleSupplier hoodAngleSupplier;
-    public final SoftLimit hoodSoftLimit;
+    private final TalonFXMotor transportMotor;
+    private DoubleSupplier hoodAngleSupplier;
+    private final SoftLimit hoodSoftLimit;
 
-    public final Supplier<Pose2d> robotPositionSupplier;
+    private final Supplier<Pose2d> robotPositionSupplier;
 
-    public final DoubleSupplier turretRelativeDistanceFromTarget;
-    public DoubleSupplier flywheelVelocitySetpoint;
+    private final DoubleSupplier turretRelativeDistanceFromTarget;
+    private DoubleSupplier flywheelVelocitySetpoint;
 
-    public final InterpolatingDoubleTreeMap angleDistanceMap;
-    public final InterpolatingDoubleTreeMap velocityDistanceMap;
+    private final InterpolatingDoubleTreeMap angleDistanceMap;
+    private final InterpolatingDoubleTreeMap velocityDistanceMap;
 
-    public final Trigger volitileTrenchHoodTrigger;
+    private final Trigger volitileTrenchHoodTrigger;
 
-    public Target shooterTarget = Target.IDLE;
-    public BooleanSupplier shootingMode = () -> false;
+    private Target shooterTarget = Target.IDLE;
+    private BooleanSupplier shootingMode = () -> false;
 
     public Shooter(DoubleSupplier turretRelativeDistanceFromTarget, Supplier<Pose2d> poseSupplier) {
         hoodMotor = new TalonFXMotor(HOOD_MOTOR_ID, SUBSYSTEMS_CANBUS);
@@ -199,6 +198,13 @@ public class Shooter extends SubsystemBase implements Logged {
     public Command shootToHubCommand() {
         return new StartEndCommand(
                 () -> new InstantCommand(() -> shooterTarget = Target.HUB).andThen(new InstantCommand(() -> shootingMode = () -> true)),
+                () -> new InstantCommand(() -> shooterTarget = Target.IDLE).andThen(new InstantCommand(() -> shootingMode = () -> false))
+        );
+    }
+
+    public Command trackHubCommand(){
+        return new StartEndCommand(
+                () -> new InstantCommand(() -> shooterTarget = Target.HUB).andThen(new InstantCommand(() -> shootingMode = () -> false)),
                 () -> new InstantCommand(() -> shooterTarget = Target.IDLE).andThen(new InstantCommand(() -> shootingMode = () -> false))
         );
     }

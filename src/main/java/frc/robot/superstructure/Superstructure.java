@@ -97,35 +97,18 @@ public class Superstructure implements Logged {
         return () -> turretToDelivery;
     }
 
-    public Command autoHoodAndTurretAim() {
-        return new RunCommand(
-                () -> {
-                    new ParallelCommandGroup(
-                            turret.setPositionCommand(() -> getTurretToTargetVector(() -> currentTarget).get().getAngle()),
-                            shooter.setHoodAngleCommand(
-                                    () -> shooter.angleDistanceMap.get(turretDistanceFromHub.getAsDouble())
-                            )
-                    );
-                }, shooter
-        );
-    }
-
-    public Command shootSquenceCommand() {
-        return new SequentialCommandGroup(
-                shooter.setAdjustedFlyWheelVelocity(),
-                new WaitUntilCommand(shooter.flyWheelToleranceTrigger),
-                new ParallelCommandGroup(
-                        transport.manualCommand(() -> SHOOTER_TRANSPORT_VOLTAGE),
-                        shooter.transportMechanism.manualCommand(() -> SPINDEXER_TRANSPORT_VOLTAGE)
-                )
-        );
-    }
-
     public Command shootToHubCommand(){
         return new ParallelCommandGroup(
                 shooter.shootToHubCommand(),
                 turret.targetHubCommand(),
                 transport.transportFuelCommand()
+        );
+    }
+
+    public Command trackHubCommand(){
+        return new ParallelCommandGroup(
+                shooter.trackHubCommand(),
+                turret.targetHubCommand()
         );
     }
 
@@ -146,13 +129,5 @@ public class Superstructure implements Logged {
     @Log.NT
     public double getTurretToHubVectorDist() {
         return getTurretToTargetVector(() -> currentTarget).get().getNorm();
-    }
-
-    @Log.NT
-    DoubleSupplier turretDistanceFromHub = () -> getTurretToTargetVector(() -> currentTarget).get().getNorm();
-
-    @Log.NT
-    public double getSetpointHoodAngle() {
-        return shooter.angleDistanceMap.get(getTurretToTargetVector(() -> currentTarget).get().getNorm());
     }
 }

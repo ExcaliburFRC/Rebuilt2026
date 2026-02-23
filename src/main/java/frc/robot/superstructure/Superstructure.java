@@ -121,6 +121,14 @@ public class Superstructure implements Logged {
         );
     }
 
+    public Command shootToHubCommand(){
+        return new ParallelCommandGroup(
+                shooter.shootToHubCommand(),
+                turret.targetHubCommand(),
+                transport.transportFuelCommand()
+        );
+    }
+
     public Command intakeRollerActivationCommand(double voltage) {
         return intake.rollerManualCommand(voltage);
     }

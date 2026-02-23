@@ -23,4 +23,8 @@ public class Transport extends SubsystemBase {
     public Command manualCommand(DoubleSupplier output) {
         return drumMechanism.manualCommand(output, this);
     }
+
+    public Command transportFuelCommand() {
+        return manualCommand(() -> TRANSPORT_VOLTAGE);
+    }
 }

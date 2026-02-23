@@ -89,8 +89,16 @@ public class Turret extends SubsystemBase implements Logged {
         return turretRelativeAngleToHub.getAsDouble();
     }
 
-    public Command setTargetCommand(Target targetToSet) {
-        return new InstantCommand(() -> turretTarget = targetToSet);
+    public Command targetHubCommand() {
+        return new InstantCommand(() -> turretTarget = Target.HUB);
+    }
+
+    public Command targetDeliveryCommand(Target targetToSet) {
+        return new InstantCommand(() -> turretTarget = Target.DELIVERY);
+    }
+
+    public Command idleCommand(Target targetToSet) {
+        return new InstantCommand(() -> turretTarget = Target.IDLE);
     }
 
 }

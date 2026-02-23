@@ -77,8 +77,6 @@ public class RobotContainer implements Logged {
         NamedCommands.registerCommand("floorIntake", new InstantCommand());
         NamedCommands.registerCommand("prepareShooter", new InstantCommand());
         NamedCommands.registerCommand("shoot", new InstantCommand());
-        NamedCommands.registerCommand("extendClimber", new InstantCommand());
-        NamedCommands.registerCommand("retractClimber", new InstantCommand());
         NamedCommands.registerCommand("retractIntake", new InstantCommand());
     }
 

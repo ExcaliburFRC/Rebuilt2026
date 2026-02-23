@@ -186,7 +186,6 @@ public final class Constants {
                 Translation3d(1.05, 3.74, 1.6002);
         public static final AllianceUtils.AlliancePose BLUE_OUTPOST_POSE_CENTER = new
                 AllianceUtils.AlliancePose(0, 0.63,0);
-        public static final double SHOOTER_TO_TRENCH_LIMIT = 0.5;
         public static final AllianceUtils.AlliancePose BLUE_DOWN_FIELD_TRENCH_POSE = new
                 AllianceUtils.AlliancePose(4.62, 0.63,0);
         public static final AllianceUtils.AlliancePose BLUE_UP_FIELD_TRENCH_POSE = new
@@ -195,14 +194,10 @@ public final class Constants {
                 AllianceUtils.AlliancePose(0.39, 6.06,0);
 
         public static final double FUEL_DIAMETER = 0.15;
-        public static final Translation2d BLUE_SOTER_LIMET_OTASE = new
-                Translation2d(3, 0);
-        public static final Translation2d BLUE_SOTER_LIMET_INER = new
-                Translation2d(5, 0);
-        public static final Translation2d REED_SOTER_LIMET_OTASE = new
-                Translation2d(10, 0);
-        public static final Translation2d REED_SOTER_LIMET_INER = new
-                Translation2d(13, 0);
+
+        public static double FRONT_TRENCH_SIDEX_LINE_DIST_METERS = 3.9624;
+        public static double BACK_TRENCH_SIDEX_LINE_DIST_METERS = 5.1;
+        public static double TRENCH_SIDEY_LINE_DIST_METERS = 1.5;
 
     }
 

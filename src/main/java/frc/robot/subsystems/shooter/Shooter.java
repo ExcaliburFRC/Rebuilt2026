@@ -7,12 +7,14 @@ import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
 import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.excalib.additional_utilities.AllianceUtils;
 import frc.excalib.control.limits.SoftLimit;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
 import frc.excalib.control.motor.motor_specs.DirectionState;
 import frc.excalib.control.motor.motor_specs.IdleState;
 import frc.excalib.mechanisms.Mechanism;
 import frc.excalib.mechanisms.fly_wheel.FlyWheel;
+import frc.robot.Constants;
 import frc.robot.util.Target;
 import monologue.Annotations.Log;
 import monologue.Logged;
@@ -20,6 +22,9 @@ import monologue.Logged;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
+import static frc.excalib.additional_utilities.AllianceUtils.FIELD_LENGTH_METERS;
+import static frc.excalib.additional_utilities.AllianceUtils.FIELD_WIDTH_METERS;
+import static frc.robot.Constants.FieldConstants.*;
 import static frc.robot.Constants.SUBSYSTEMS_CANBUS;
 import static frc.robot.subsystems.shooter.ShooterConstants.*;
 
@@ -47,6 +52,8 @@ public class Shooter extends SubsystemBase implements Logged {
     public final InterpolatingDoubleTreeMap angleDistanceMap;
     public final InterpolatingDoubleTreeMap velocityDistanceMap;
 
+    public final Trigger volitileTrenchHoodTrigger;
+
     public Target shooterTarget = Target.IDLE;
 
     public Shooter(DoubleSupplier turretRelativeDistanceFromTarget, Supplier<Pose2d> poseSupplier) {
@@ -66,7 +73,6 @@ public class Shooter extends SubsystemBase implements Logged {
         hoodAngleSupplier = () -> (hoodEncoder.getPosition().getValueAsDouble() * POSITION_CONVERSION_FACTOR) + 0.69;
 
         hoodMotor.setPositionConversionFactor(0.048869);
-//        hoodMotor.setMotorPosition(hoodAngleSupplier.getAsDouble());
         hoodMotor.setMotorPosition(1.348);
 
         flyWheelMechanism = new FlyWheel(flyWheelMotor, FLY_WHEEL_MAX_ACCELERATION, FLY_WHEEL_MAX_JERK, FLYWHEEL_GAINS);
@@ -78,6 +84,7 @@ public class Shooter extends SubsystemBase implements Logged {
         );
 
         transportMechanism = new Mechanism(transportMotor);
+
         hoodMechanism = new Mechanism(hoodMotor);
 
         robotPositionSupplier = poseSupplier;
@@ -88,7 +95,30 @@ public class Shooter extends SubsystemBase implements Logged {
         velocityDistanceMap = new InterpolatingDoubleTreeMap();
         initVelocityMap(velocityDistanceMap);
 
-        hoodSoftLimit = new SoftLimit(() -> HOOD_MIN_ANGLE_LIMIT, () -> HOOD_MAX_ANGLE_LIMIT);
+        volitileTrenchHoodTrigger = new Trigger(
+                () -> {
+                    Pose2d pose = poseSupplier.get();
+                    if (AllianceUtils.isBlueAlliance()) {
+                        return (pose.getX() > FRONT_TRENCH_SIDEX_LINE_DIST_METERS &&
+                                pose.getY() < TRENCH_SIDEY_LINE_DIST_METERS) &&
+                                (pose.getX() < BACK_TRENCH_SIDEX_LINE_DIST_METERS);
+                    } else {
+                        return (pose.getX() < FIELD_LENGTH_METERS - FRONT_TRENCH_SIDEX_LINE_DIST_METERS &&
+                                pose.getY() > FIELD_WIDTH_METERS - TRENCH_SIDEY_LINE_DIST_METERS) &&
+                                (pose.getX() > FIELD_LENGTH_METERS - BACK_TRENCH_SIDEX_LINE_DIST_METERS);
+                    }
+                }
+        );
+
+        hoodSoftLimit = new SoftLimit(
+                () -> HOOD_MIN_ANGLE_LIMIT,
+                () -> {
+                    if (volitileTrenchHoodTrigger.getAsBoolean()) {
+                        return HOOD_MAX_ANGLE_LIMIT_IN_TRENCH;
+                    }
+                    return HOOD_MAX_ANGLE_LIMIT;
+                }
+        );
     }
 
 
@@ -116,8 +146,10 @@ public class Shooter extends SubsystemBase implements Logged {
 
     public Command setHoodAngleCommand(DoubleSupplier angleSetpoint) {
         return new RunCommand(
-                () -> hoodMechanism.setVoltage(getPIDForAngle(() -> hoodSoftLimit.limit(
-                        angleSetpoint.getAsDouble()))), this);
+                () -> hoodMechanism.setVoltage(
+                        getPIDForAngle(
+                                () -> hoodSoftLimit.limit(
+                                        angleSetpoint.getAsDouble()))), this);
     }
 
     public Command setAdjustedFlyWheelVelocity() {

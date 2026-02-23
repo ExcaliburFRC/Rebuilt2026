@@ -14,7 +14,7 @@ public class ShooterConstants {
 
     public static final double DEFAULT_FLYWHEEL_VELOCITY = 3;
 
-    public static final double HOOD_MAX_ANGLE_LIMIT_IN_TRENCH = 0.8;
+    public static final double HOOD_MAX_ANGLE_LIMIT_IN_TRENCH = 0.85;
     public static final double HOOD_MIN_ANGLE_LIMIT = 0.830093;
     public static final double HOOD_MAX_ANGLE_LIMIT = 1.320525;
     public static final double FLY_WHEEL_MAX_JERK = 0;

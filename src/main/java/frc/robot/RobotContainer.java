@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
+import frc.excalib.additional_utilities.LEDs;
 import frc.excalib.additional_utilities.LoggablePS5Controller;
 import frc.excalib.swerve.Swerve;
 import frc.excalib.control.math.Vector2D;
@@ -38,6 +39,8 @@ public class RobotContainer implements Logged {
 
     private final SendableChooser<String> autoChooser = new SendableChooser<>();
     private final HubTimerSubsystem hubTimer = new HubTimerSubsystem();
+
+    private final LEDs leds = LEDs.getInstance();
 
     public RobotContainer() {
         swerve.resetOdometry(AuroraPoseGetter.getPose2d());
@@ -89,7 +92,7 @@ public class RobotContainer implements Logged {
         SmartDashboard.putData("Auto Chooser", autoChooser);
     }
 
-    public void perodic() {
+    public void periodic() {
         if (!AuroraPoseGetter.getPose2d().equals(new Pose2d())) {
             swerve.m_odometry.addVisionMeasurement(AuroraPoseGetter.getPose2d(), Timer.getFPGATimestamp());
         }

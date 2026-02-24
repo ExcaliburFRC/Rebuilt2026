@@ -39,13 +39,16 @@ public class LEDs extends SubsystemBase {
 
         Arrays.fill(orange, ORANGE.color);
         Arrays.fill(black, OFF.color);
+    }
 
-        setDefaultCommand(setPattern(LEDPattern.EXPAND, BLUE.color, WHITE.color));
+    private void initializeDefaultCommand() {
+        setDefaultCommand(setPattern(LEDPattern.EXPAND, BLUE.color, YELLOW.color));
     }
 
     public static LEDs getInstance() {
         if (instance == null) {
             instance = new LEDs();
+            instance.initializeDefaultCommand();
         }
         return instance;
     }

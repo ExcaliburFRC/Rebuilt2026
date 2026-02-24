@@ -7,6 +7,8 @@ import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.excalib.additional_utilities.AllianceUtils;
+import frc.excalib.additional_utilities.Color;
+import frc.excalib.additional_utilities.LEDs;
 import frc.excalib.control.limits.SoftLimit;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
 import frc.excalib.control.motor.motor_specs.DirectionState;
@@ -55,6 +57,8 @@ public class Shooter extends SubsystemBase implements Logged {
     private Target shooterTarget = IDLE;
     private BooleanSupplier shootingMode = () -> false;
 
+    private final Trigger isShootingModeOnTrigger = new Trigger(() -> shootingMode.getAsBoolean());
+
     public Shooter(DoubleSupplier turretRelativeDistanceFromTarget, Supplier<Pose2d> poseSupplier) {
         hoodMotor = new TalonFXMotor(HOOD_MOTOR_ID, SUBSYSTEMS_CANBUS);
         flyWheelMotor = new TalonFXMotor(FLYWHEEL_MOTOR_ID, SUBSYSTEMS_CANBUS);
@@ -88,6 +92,23 @@ public class Shooter extends SubsystemBase implements Logged {
 
         velocityDistanceMap = new InterpolatingDoubleTreeMap();
         initVelocityMap();
+
+
+        isShootingModeOnTrigger.onTrue(
+                LEDs.getInstance().setPattern(
+                        LEDs.LEDPattern.TRAIN_CIRCLE,
+                        Color.Colors.PURPLE.color,
+                        Color.Colors.OFF.color
+                ).andThen(new WaitCommand(0.5)).andThen(
+                       LEDs.getInstance().setPattern(
+                        LEDs.LEDPattern.SOLID,
+                        Color.Colors.GREEN.color
+                )));
+
+        isShootingModeOnTrigger.onFalse(LEDs.getInstance().setPattern(
+                        LEDs.LEDPattern.EXPAND,
+                        Color.Colors.TEAM_BLUE.color,
+                        Color.Colors.TEAM_GOLD.color));
 
         volitileTrenchHoodTrigger = new Trigger(
                 () -> {

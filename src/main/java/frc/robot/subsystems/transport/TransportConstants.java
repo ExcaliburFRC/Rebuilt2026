@@ -8,5 +8,4 @@ public class TransportConstants {
     public static final double TRANSPORT_VOLTAGE = 0;
     public static final double MAX_ACCELERATION = 0;
     public static final double MAX_JERK = 0;
-    public static final Gains gains = new Gains();
 }

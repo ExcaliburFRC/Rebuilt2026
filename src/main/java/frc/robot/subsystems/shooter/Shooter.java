@@ -16,7 +16,6 @@ import frc.excalib.mechanisms.fly_wheel.FlyWheel;
 import frc.robot.util.Target;
 import monologue.Logged;
 
-import javax.swing.text.StyledEditorKit;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
@@ -164,7 +163,11 @@ public class Shooter extends SubsystemBase implements Logged {
         return new RunCommand(
                 () -> {
                     double distance = turretRelativeDistanceFromTarget.getAsDouble();
-                    setHoodAngleCommand(() -> angleDistanceMap.get(distance)); // DIRECT motor control
+                    hoodMechanism.setVoltage(
+                            getPIDForAngle(
+                                    () -> hoodSoftLimit.limit(angleDistanceMap.get(distance))
+                            )
+                    );
                 }
         );
     }
@@ -209,22 +212,22 @@ public class Shooter extends SubsystemBase implements Logged {
 
     public Command shootToHubCommand() {
         return new StartEndCommand(
-                () -> setTargetCommand(HUB).andThen(turnOnShootingCommand()),
-                () -> setTargetCommand(IDLE).andThen(turnOffShootingCommand())
-        );
+                () -> CommandScheduler.getInstance().schedule(setTargetCommand(HUB).andThen(turnOnShootingCommand())),
+                () -> CommandScheduler.getInstance().schedule(setTargetCommand(IDLE).andThen(turnOffShootingCommand())
+        ));
     }
 
     public Command trackHubCommand() {
         return new StartEndCommand(
-                () -> setTargetCommand(HUB),
-                () -> setTargetCommand(IDLE)
+                () -> CommandScheduler.getInstance().schedule(setTargetCommand(HUB)),
+                () -> CommandScheduler.getInstance().schedule(setTargetCommand(IDLE))
         );
     }
 
     public Command shootToDeliveryCommand() {
         return new StartEndCommand(
-                () -> setTargetCommand(DELIVERY).andThen(turnOnShootingCommand()),
-                () -> setTargetCommand(IDLE).andThen(turnOffShootingCommand())
+                () -> CommandScheduler.getInstance().schedule(setTargetCommand(DELIVERY).andThen(turnOnShootingCommand())),
+                () -> CommandScheduler.getInstance().schedule(setTargetCommand(IDLE).andThen(turnOffShootingCommand()))
         );
     }
 

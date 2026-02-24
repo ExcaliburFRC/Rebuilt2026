@@ -17,7 +17,7 @@ public class Transport extends SubsystemBase {
 
     public Transport() {
         drumMotor = new TalonFXMotor(DRUM_MOTOR_ID, SUBSYSTEMS_CANBUS);
-        drumMechanism = new FlyWheel(drumMotor, MAX_ACCELERATION, MAX_JERK, gains);
+        drumMechanism = new FlyWheel(drumMotor, MAX_ACCELERATION, MAX_JERK, GAINS);
     }
 
     public Command manualCommand(DoubleSupplier output) {

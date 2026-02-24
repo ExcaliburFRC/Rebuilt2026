@@ -22,17 +22,17 @@ public class Turret extends SubsystemBase implements Logged {
     public final frc.excalib.mechanisms.turret.Turret turretMechanism;
     public final DoubleSupplier turretAngleSupplier;
     public final CANcoder turretEncoder;
-    public final DoubleSupplier turretRelativeAngleToHub;
+    public final DoubleSupplier turretRelativeAngleToTarget;
     public Target turretTarget;
 
-    public Turret(DoubleSupplier turretRelativeAngleToHub) {
+    public Turret(DoubleSupplier turretRelativeAngleToTarget) {
         turretMotor = new TalonFXMotor(TURRET_MOTOR_ID, SUBSYSTEMS_CANBUS);
         turretEncoder = new CANcoder(TURRET_ENCODER_ID, SUBSYSTEMS_CANBUS);
         turretEncoder.setPosition(turretEncoder.getAbsolutePosition().getValueAsDouble());
         turretAngleSupplier = () -> turretEncoder.getPosition().getValueAsDouble() * ENCODER_POSITION_CONVERSION_FACTOR;
         turretMotor.setMotorPosition(turretEncoder.getPosition().getValueAsDouble());
 
-        this.turretRelativeAngleToHub = turretRelativeAngleToHub;
+        this.turretRelativeAngleToTarget = turretRelativeAngleToTarget;
         turretMotor.setInverted(DirectionState.FORWARD);
         turretTarget = Target.IDLE;
 
@@ -58,16 +58,10 @@ public class Turret extends SubsystemBase implements Logged {
     }
 
 
-    public Command speedRelativeFollowHubCommand() {
-        return turretMechanism.setPositionCommand(
-                () -> Rotation2d.fromRadians(turretRelativeAngleToHub.getAsDouble())
-        );
-    }
-
     public Command defaultCommand() {
         Command c = new ConditionalCommand(
                 Commands.none(),
-                setPositionCommand(() -> Rotation2d.fromRadians(turretRelativeAngleToHub.getAsDouble())),
+                setPositionCommand(() -> Rotation2d.fromRadians(turretRelativeAngleToTarget.getAsDouble())),
                 () -> turretTarget.equals(Target.IDLE)
         );
         c.addRequirements(this);
@@ -79,26 +73,23 @@ public class Turret extends SubsystemBase implements Logged {
         return turretMechanism.setPositionCommand(position, this);
     }
 
-    @Log.NT
+    public Command targetHubCommand() {
+        return new InstantCommand(() -> turretTarget = Target.HUB);
+    }
+
+    public Command targetDeliveryCommand() {return new InstantCommand(() -> turretTarget = Target.DELIVERY);}
+
+    public Command idleCommand() {
+        return new InstantCommand(() -> turretTarget = Target.IDLE);
+    }
+
+        @Log.NT
     public double getEncoderPosition() {
         return turretAngleSupplier.getAsDouble();
     }
 
     @Log.NT
-    public double getTurretRelativeAngleToHub() {
-        return turretRelativeAngleToHub.getAsDouble();
+    public double getTurretRelativeAngleToTarget() {
+        return turretRelativeAngleToTarget.getAsDouble();
     }
-
-    public Command targetHubCommand() {
-        return new InstantCommand(() -> turretTarget = Target.HUB);
-    }
-
-    public Command targetDeliveryCommand(Target targetToSet) {
-        return new InstantCommand(() -> turretTarget = Target.DELIVERY);
-    }
-
-    public Command idleCommand(Target targetToSet) {
-        return new InstantCommand(() -> turretTarget = Target.IDLE);
-    }
-
 }

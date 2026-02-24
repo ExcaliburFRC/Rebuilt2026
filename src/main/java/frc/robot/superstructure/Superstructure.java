@@ -117,7 +117,7 @@ public class Superstructure implements Logged {
     }
 
     @Log.NT
-    public double getTurretToHubVectorAngle() {
+    public double getTurretToTargetVectorAngle() {
         return Units.radiansToDegrees(getTurretToTargetVector(() -> currentTarget).get().getAngle().getRadians());
     }
 
@@ -127,7 +127,7 @@ public class Superstructure implements Logged {
     }
 
     @Log.NT
-    public double getTurretToHubVectorDist() {
+    public double getTurretToTargetVectorDist() {
         return getTurretToTargetVector(() -> currentTarget).get().getNorm();
     }
 }

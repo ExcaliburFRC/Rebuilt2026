@@ -8,7 +8,7 @@ public enum Target {
     HUB(Constants.FieldConstants.BLUE_HUB_CENTER_POSE.get().getTranslation()),
     DELIVERY(Constants.FieldConstants.DELIVERY_LEFT_POSE.get().getTranslation());
 
-    public Translation2d targetTranslation;
+    public final Translation2d targetTranslation;
 
     Target(Translation2d targetTranslation) {
         this.targetTranslation = targetTranslation;

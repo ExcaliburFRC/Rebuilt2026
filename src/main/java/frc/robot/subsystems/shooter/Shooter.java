@@ -26,6 +26,7 @@ import static frc.excalib.additional_utilities.AllianceUtils.FIELD_WIDTH_METERS;
 import static frc.robot.Constants.FieldConstants.*;
 import static frc.robot.Constants.SUBSYSTEMS_CANBUS;
 import static frc.robot.subsystems.shooter.ShooterConstants.*;
+import static frc.robot.util.Target.*;
 import static monologue.Annotations.Log.*;
 
 public class Shooter extends SubsystemBase implements Logged {
@@ -52,7 +53,7 @@ public class Shooter extends SubsystemBase implements Logged {
 
     private final Trigger volitileTrenchHoodTrigger;
 
-    private Target shooterTarget = Target.IDLE;
+    private Target shooterTarget = IDLE;
     private BooleanSupplier shootingMode = () -> false;
 
     public Shooter(DoubleSupplier turretRelativeDistanceFromTarget, Supplier<Pose2d> poseSupplier) {
@@ -168,6 +169,13 @@ public class Shooter extends SubsystemBase implements Logged {
         );
     }
 
+    public Command setAdjustedTransportBehavior() {
+        return new ConditionalCommand(
+                transportMechanism.manualCommand(() -> TRANSPORT_VOLTAGE),
+                transportMechanism.manualCommand(() -> 0),
+                shootingMode
+        );
+    }
 
     public Command defaultCommand() {
         Command c = new ConditionalCommand(
@@ -175,8 +183,8 @@ public class Shooter extends SubsystemBase implements Logged {
                 new ParallelCommandGroup(
                         setAdjustedFlyWheelVelocity(),
                         setAdjustedHoodAngle(),
-                        transportMechanism.manualCommand(() -> TRANSPORT_VOLTAGE).onlyIf(shootingMode)),
-                () -> shooterTarget.equals(Target.IDLE)
+                        setAdjustedTransportBehavior()),
+                () -> shooterTarget.equals(IDLE)
         );
         c.addRequirements(this);
         return c;
@@ -186,43 +194,53 @@ public class Shooter extends SubsystemBase implements Logged {
         return angleController.calculate(hoodMotor.getMotorPosition(), angleSetpoint.getAsDouble());
     }
 
-    @NT
-    public double getEncoderAngle() {
-        return hoodEncoder.getAbsolutePosition().getValueAsDouble();
-    }
 
     public Command setTargetCommand(Target targetToSet) {
-        return new InstantCommand(() -> shooterTarget = targetToSet);
+        return new InstantCommand(() -> shooterTarget = targetToSet, this);
+    }
+
+    public Command turnOnShootingCommand() {
+        return new InstantCommand(() -> shootingMode = () -> true);
+    }
+
+    public Command turnOffShootingCommand() {
+        return new InstantCommand(() -> shootingMode = () -> false);
     }
 
     public Command shootToHubCommand() {
         return new StartEndCommand(
-                () -> new InstantCommand(() -> shooterTarget = Target.HUB).andThen(new InstantCommand(() -> shootingMode = () -> true)),
-                () -> new InstantCommand(() -> shooterTarget = Target.IDLE).andThen(new InstantCommand(() -> shootingMode = () -> false))
+                () -> setTargetCommand(HUB).andThen(turnOnShootingCommand()),
+                () -> setTargetCommand(IDLE).andThen(turnOffShootingCommand())
         );
     }
 
-    public Command trackHubCommand(){
+    public Command trackHubCommand() {
         return new StartEndCommand(
-                () -> new InstantCommand(() -> shooterTarget = Target.HUB).andThen(new InstantCommand(() -> shootingMode = () -> false)),
-                () -> new InstantCommand(() -> shooterTarget = Target.IDLE).andThen(new InstantCommand(() -> shootingMode = () -> false))
+                () -> setTargetCommand(HUB),
+                () -> setTargetCommand(IDLE)
         );
     }
 
     public Command shootToDeliveryCommand() {
         return new StartEndCommand(
-                () -> new InstantCommand(() -> shooterTarget = Target.DELIVERY).andThen(new InstantCommand(() -> shootingMode = () -> true)),
-                () -> new InstantCommand(() -> shooterTarget = Target.IDLE).andThen(new InstantCommand(() -> shootingMode = () -> false))
+                () -> setTargetCommand(DELIVERY).andThen(turnOnShootingCommand()),
+                () -> setTargetCommand(IDLE).andThen(turnOffShootingCommand())
         );
     }
 
     @NT
-    public double getFlyWheelVelocitySetpoint(){
+    public double getFlyWheelVelocitySetpoint() {
         return flywheelVelocitySetpoint.getAsDouble();
     }
 
     @NT
-    public double getFlyWheelVelocity(){
+    public double getFlyWheelVelocity() {
         return flyWheelMechanism.getVelocity();
     }
+
+    @NT
+    public double getEncoderAngle() {
+        return hoodEncoder.getAbsolutePosition().getValueAsDouble();
+    }
+
 }

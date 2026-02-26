@@ -26,7 +26,7 @@ import java.util.function.Supplier;
  */
 public final class Turret extends Mechanism implements Logged {
     private final ContinuousSoftLimit m_rotationLimit;
-    public final ProfiledPIDController m_anglePIDcontroller;
+    public final PIDController m_anglePIDcontroller;
     private final SimpleMotorFeedforward m_angleFFcontroller;
     private final DoubleSupplier m_POSITION_SUPPLIER;
     private double smartSetpoint = 0;
@@ -43,7 +43,7 @@ public final class Turret extends Mechanism implements Logged {
         super(motor);
         m_rotationLimit = rotationLimit;
 
-        m_anglePIDcontroller = new ProfiledPIDController(angleGains.kp, angleGains.ki, angleGains.kd, new TrapezoidProfile.Constraints(Double.MAX_VALUE, Double.MAX_VALUE));
+        m_anglePIDcontroller = new PIDController(angleGains.kp, angleGains.ki, angleGains.kd);
         m_angleFFcontroller = new SimpleMotorFeedforward(angleGains.ks, angleGains.kv, angleGains.ka);
 
         m_anglePIDcontroller.setTolerance(PIDtolerance);
@@ -56,7 +56,7 @@ public final class Turret extends Mechanism implements Logged {
         super(motor);
         m_rotationLimit = rotationLimit;
 
-        m_anglePIDcontroller = new ProfiledPIDController(angleGains.kp, angleGains.ki, angleGains.kd, constraints);
+        m_anglePIDcontroller = new PIDController(angleGains.kp, angleGains.ki, angleGains.kd);
         m_angleFFcontroller = new SimpleMotorFeedforward(angleGains.ks, angleGains.kv, angleGains.ka);
 
         m_anglePIDcontroller.setTolerance(PIDtolerance);

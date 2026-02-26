@@ -5,19 +5,22 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
 import frc.excalib.mechanisms.Mechanism;
 import frc.excalib.mechanisms.fly_wheel.FlyWheel;
+import monologue.Logged;
 
 import java.util.function.DoubleSupplier;
 
 import static frc.robot.Constants.SUBSYSTEMS_CANBUS;
 import static frc.robot.subsystems.transport.TransportConstants.*;
 
-public class Transport extends SubsystemBase {
+public class Transport extends SubsystemBase implements Logged {
     private final TalonFXMotor drumMotor;
-    public Mechanism drumMechanism;
+    public FlyWheel drumMechanism;
 
     public Transport() {
         drumMotor = new TalonFXMotor(DRUM_MOTOR_ID, SUBSYSTEMS_CANBUS);
         drumMechanism = new FlyWheel(drumMotor, MAX_ACCELERATION, MAX_JERK, GAINS);
+
+        setDefaultCommand(transportFuelCommand());
     }
 
     public Command manualCommand(DoubleSupplier output) {
@@ -25,6 +28,6 @@ public class Transport extends SubsystemBase {
     }
 
     public Command transportFuelCommand() {
-        return manualCommand(() -> TRANSPORT_VOLTAGE);
+        return drumMechanism.setDynamicVelocityCommand(()-> 0, this);
     }
 }

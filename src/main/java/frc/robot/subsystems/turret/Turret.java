@@ -51,17 +51,25 @@ public class Turret extends SubsystemBase implements Logged {
                 TURRET_GAINS,
                 PID_TOLERANCE,
                 this::getEncoderPosition,
-                new TrapezoidProfile.Constraints(Math.PI * 12, Math.PI * 50)
+                new TrapezoidProfile.Constraints(Math.PI * 2, Math.PI * 100)
         );
 
-        setDefaultCommand(defaultCommand());
+//        setDefaultCommand(defaultCommand());
     }
 
 
     public Command defaultCommand() {
         Command c = new ConditionalCommand(
                 Commands.none(),
-                setPositionCommand(() -> Rotation2d.fromRadians(turretRelativeAngleToTarget.getAsDouble())),
+                setPositionCommand(
+                        () -> Rotation2d.fromRadians(
+                                SOFT_LIMIT.limit(
+                                        TURRET_CONTINUOUS_SOFTLIMIT.getSetpoint(
+                                                turretAngleSupplier.getAsDouble(),
+                                                turretRelativeAngleToTarget.getAsDouble())
+                                )
+                        )
+                ),
                 () -> turretTarget.equals(Target.IDLE)
         );
         c.addRequirements(this);
@@ -77,7 +85,9 @@ public class Turret extends SubsystemBase implements Logged {
         return new InstantCommand(() -> turretTarget = Target.HUB, this);
     }
 
-    public Command targetDeliveryCommand() {return new InstantCommand(() -> turretTarget = Target.DELIVERY, this);}
+    public Command targetDeliveryCommand() {
+        return new InstantCommand(() -> turretTarget = Target.DELIVERY, this);
+    }
 
     public Command idleCommand() {
         return new InstantCommand(() -> turretTarget = Target.IDLE, this);

@@ -30,7 +30,7 @@ public final class Constants {
 
     public static final double CONTROLLER_DEADBAND = 0.09;
 
-    public static final CANBus SUBSYSTEMS_CANBUS = new CANBus("Subsystems");
+    public static final CANBus SUBSYSTEMS_CANBUS = new CANBus("");
 
     public static class SwerveConstants {
         public static final int FRONT_RIGHT_DRIVE_ID = 10;

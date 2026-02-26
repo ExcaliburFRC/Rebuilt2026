@@ -21,6 +21,7 @@ import frc.excalib.swerve.Swerve;
 import frc.excalib.control.math.Vector2D;
 
 import frc.robot.subsystems.TestSS;
+import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.transport.Transport;
 import frc.robot.subsystems.turret.Turret;
 import frc.robot.util.AuroraPoseGetter;
@@ -43,7 +44,7 @@ public class RobotContainer implements Logged {
 
     private final SendableChooser<String> autoChooser = new SendableChooser<>();
     private final HubTimerSubsystem hubTimer = new HubTimerSubsystem();
-    private final Turret turret = new Turret(()-> 0);
+    private final Shooter shooter = new Shooter(()-> 0, Pose2d::new);
 
     private final LEDs leds = LEDs.getInstance();
 
@@ -56,23 +57,11 @@ public class RobotContainer implements Logged {
     }
 
     private void configureBindings() {
-//        swerve.setDefaultCommand(
-//                swerve.driveCommand(() -> new Vector2D(
-//                                applyDeadband(-primary.getLeftY()) * MAX_VEL,
-//                                applyDeadband(-primary.getLeftX()) * MAX_VEL),
-//                        () -> -applyDeadband(primary.getRightX()) * MAX_OMEGA_RAD_PER_SEC,
-//                        () -> true
-//                )
-//        );
 
-//        superstructure.shooter.setDefaultCommand(superstructure.autoHoodAndTurretAim());
-
-//        primary.options().onTrue(new RunCommand(() -> swerve.resetOdometry(new Pose2d())));
-
-
-        primary.triangle().onTrue(turret.setPositionCommand(()-> new Rotation2d(-Math.PI/2)));
-        primary.cross().onTrue(turret.setPositionCommand(()-> new Rotation2d(-Math.PI)));
-        primary.circle().onTrue(turret.setPositionCommand(()-> new Rotation2d(0)));
+        primary.cross().onTrue(shooter.setHoodAngleCommand(()-> 0.5));
+        primary.triangle().onTrue(shooter.setHoodAngleCommand(()-> 0.3));
+        primary.square().onTrue(shooter.setHoodAngleCommand(()-> 0.8));
+        primary.circle().onTrue(shooter.setHoodAngleCommand(()-> 0));
 
     }
 

@@ -75,12 +75,14 @@ public class Shooter extends SubsystemBase implements Logged {
         angleController.setTolerance(0.01);
 
         hoodMotor.setIdleState(IdleState.COAST);
-        hoodMotor.setInverted(DirectionState.REVERSE);
-        hoodAngleSupplier = () -> (hoodEncoder.getPosition().getValueAsDouble() * POSITION_CONVERSION_FACTOR) + 0.69;
+        hoodMotor.setInverted(DirectionState.FORWARD);
+        hoodAngleSupplier = () -> (hoodEncoder.getPosition().getValueAsDouble() * POSITION_CONVERSION_FACTOR);
 
-        hoodMotor.setPositionConversionFactor(0.048869);
-        hoodMotor.setMotorPosition(1.348);
+        hoodMotor.setPositionConversionFactor(POSITION_CONVERSION_FACTOR * ((double) -0.208 / 1.497) * 1.0231);
+        hoodMotor.setMotorPosition(hoodAngleSupplier.getAsDouble());
+
         flywheelVelocitySetpoint = () -> 0;
+        hoodMotor.setIdleState(IdleState.COAST);
 
         flyWheelMechanism = new FlyWheel(shooterMotorGroup, FLY_WHEEL_MAX_ACCELERATION, FLY_WHEEL_MAX_JERK, FLYWHEEL_GAINS);
 
@@ -103,15 +105,15 @@ public class Shooter extends SubsystemBase implements Logged {
                         Color.Colors.PURPLE.color,
                         Color.Colors.OFF.color
                 ).andThen(new WaitCommand(0.5)).andThen(
-                       LEDs.getInstance().setPattern(
-                        LEDs.LEDPattern.SOLID,
-                        Color.Colors.GREEN.color
-                )));
+                        LEDs.getInstance().setPattern(
+                                LEDs.LEDPattern.SOLID,
+                                Color.Colors.GREEN.color
+                        )));
 
         isShootingModeOnTrigger.onFalse(LEDs.getInstance().setPattern(
-                        LEDs.LEDPattern.EXPAND,
-                        Color.Colors.TEAM_BLUE.color,
-                        Color.Colors.TEAM_GOLD.color));
+                LEDs.LEDPattern.EXPAND,
+                Color.Colors.TEAM_BLUE.color,
+                Color.Colors.TEAM_GOLD.color));
 
         volitileTrenchHoodTrigger = new Trigger(
                 () -> {
@@ -138,7 +140,7 @@ public class Shooter extends SubsystemBase implements Logged {
                 }
         );
 
-        setDefaultCommand(defaultCommand());
+//        setDefaultCommand(defaultCommand());
     }
 
 
@@ -238,7 +240,7 @@ public class Shooter extends SubsystemBase implements Logged {
         return new StartEndCommand(
                 () -> CommandScheduler.getInstance().schedule(setTargetCommand(HUB).andThen(turnOnShootingCommand())),
                 () -> CommandScheduler.getInstance().schedule(setTargetCommand(IDLE).andThen(turnOffShootingCommand())
-        ));
+                ));
     }
 
     public Command trackHubCommand() {
@@ -266,8 +268,8 @@ public class Shooter extends SubsystemBase implements Logged {
     }
 
     @NT
-    public double getEncoderAngle() {
-        return hoodEncoder.getAbsolutePosition().getValueAsDouble();
+    public double getHoodAngleSupplier() {
+        return hoodAngleSupplier.getAsDouble();
     }
 
 }

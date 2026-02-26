@@ -5,7 +5,8 @@ import frc.excalib.control.gains.Gains;
 
 public class ShooterConstants {
     public static final int HOOD_MOTOR_ID = 30;
-    public static final int FLYWHEEL_MOTOR_ID = 31;
+    public static final int FLYWHEEL_MOTOR_LOW_ID = 31;
+    public static final int FLYWHEEL_MOTOR_TOP_ID = 32;
     public static final int TRANSPORT_MOTOR_ID = 33;
     public static final int HOOD_ENCODER_ID = 34;
 

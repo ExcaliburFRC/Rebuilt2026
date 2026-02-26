@@ -19,6 +19,7 @@ import frc.excalib.additional_utilities.LoggablePS5Controller;
 import frc.excalib.swerve.Swerve;
 import frc.excalib.control.math.Vector2D;
 
+import frc.robot.subsystems.TestSS;
 import frc.robot.util.AuroraPoseGetter;
 import frc.robot.util.HubTimerSubsystem;
 import monologue.Annotations.Log;
@@ -34,16 +35,17 @@ public class RobotContainer implements Logged {
 
     private final LoggablePS5Controller primary = new LoggablePS5Controller(PRIMARY_CONTROLLER_PORT);
 
-    private final Swerve swerve = Constants.SwerveConstants.configureSwerve(Constants.INITIAL_POSE);
+  private final Swerve swerve = Constants.SwerveConstants.configureSwerve(Constants.INITIAL_POSE);
 //    public final Superstructure superstructure = new Superstructure(primary, swerve);
 
     private final SendableChooser<String> autoChooser = new SendableChooser<>();
     private final HubTimerSubsystem hubTimer = new HubTimerSubsystem();
+    // private final TestSS testSS = new TestSS();
 
     private final LEDs leds = LEDs.getInstance();
 
     public RobotContainer() {
-        swerve.resetOdometry(AuroraPoseGetter.getPose2d());
+//        swerve.resetOdometry(AuroraPoseGetter.getPose2d());
 
         setAutoChooser();
         configureBindings();
@@ -52,18 +54,17 @@ public class RobotContainer implements Logged {
 
     private void configureBindings() {
         swerve.setDefaultCommand(
-                swerve.driveCommand(
-                        () -> new Vector2D(
+                swerve.driveCommand(() -> new Vector2D(
                                 applyDeadband(-primary.getLeftY()) * MAX_VEL,
                                 applyDeadband(-primary.getLeftX()) * MAX_VEL),
-                        () -> applyDeadband(primary.getRightX()) * MAX_OMEGA_RAD_PER_SEC,
+                        () -> -applyDeadband(primary.getRightX()) * MAX_OMEGA_RAD_PER_SEC,
                         () -> true
                 )
         );
 
 //        superstructure.shooter.setDefaultCommand(superstructure.autoHoodAndTurretAim());
 
-        primary.options().onTrue(new RunCommand(() -> swerve.resetOdometry(new Pose2d())));
+//        primary.options().onTrue(new RunCommand(() -> swerve.resetOdometry(new Pose2d())));
 
     }
 
@@ -93,9 +94,9 @@ public class RobotContainer implements Logged {
     }
 
     public void periodic() {
-        if (!AuroraPoseGetter.getPose2d().equals(new Pose2d())) {
-            swerve.m_odometry.addVisionMeasurement(AuroraPoseGetter.getPose2d(), Timer.getFPGATimestamp());
-        }
+//        if (!AuroraPoseGetter.getPose2d().equals(new Pose2d())) {
+//            swerve.m_odometry.addVisionMeasurement(AuroraPoseGetter.getPose2d(), Timer.getFPGATimestamp());
+//        }
     }
 
 }

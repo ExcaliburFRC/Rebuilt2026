@@ -10,6 +10,7 @@ import frc.excalib.additional_utilities.AllianceUtils;
 import frc.excalib.additional_utilities.Color;
 import frc.excalib.additional_utilities.LEDs;
 import frc.excalib.control.limits.SoftLimit;
+import frc.excalib.control.motor.controllers.MotorGroup;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
 import frc.excalib.control.motor.motor_specs.DirectionState;
 import frc.excalib.control.motor.motor_specs.IdleState;
@@ -32,7 +33,8 @@ import static monologue.Annotations.Log.*;
 
 public class Shooter extends SubsystemBase implements Logged {
 
-    private final TalonFXMotor hoodMotor, flyWheelMotor;
+    private final TalonFXMotor hoodMotor, flyWheelMotorTop, flyWheelMotorLow, transportMotor;
+    private final MotorGroup shooterMotorGroup;
     private final CANcoder hoodEncoder;
     private final PIDController angleController;
 
@@ -40,7 +42,6 @@ public class Shooter extends SubsystemBase implements Logged {
     private final Mechanism hoodMechanism;
     private final Mechanism transportMechanism;
 
-    private final TalonFXMotor transportMotor;
     private DoubleSupplier hoodAngleSupplier;
     private final SoftLimit hoodSoftLimit;
 
@@ -61,10 +62,12 @@ public class Shooter extends SubsystemBase implements Logged {
 
     public Shooter(DoubleSupplier turretRelativeDistanceFromTarget, Supplier<Pose2d> poseSupplier) {
         hoodMotor = new TalonFXMotor(HOOD_MOTOR_ID, SUBSYSTEMS_CANBUS);
-        flyWheelMotor = new TalonFXMotor(FLYWHEEL_MOTOR_ID, SUBSYSTEMS_CANBUS);
+        flyWheelMotorLow = new TalonFXMotor(FLYWHEEL_MOTOR_LOW_ID, SUBSYSTEMS_CANBUS);
+        flyWheelMotorTop = new TalonFXMotor(FLYWHEEL_MOTOR_TOP_ID, SUBSYSTEMS_CANBUS);
         transportMotor = new TalonFXMotor(TRANSPORT_MOTOR_ID, SUBSYSTEMS_CANBUS);
         hoodEncoder = new CANcoder(HOOD_ENCODER_ID, SUBSYSTEMS_CANBUS);
 
+        shooterMotorGroup = new MotorGroup(flyWheelMotorLow, flyWheelMotorTop);
         hoodEncoder.setPosition(hoodEncoder.getAbsolutePosition().getValueAsDouble());
         this.turretRelativeDistanceFromTarget = turretRelativeDistanceFromTarget;
 
@@ -79,7 +82,7 @@ public class Shooter extends SubsystemBase implements Logged {
         hoodMotor.setMotorPosition(1.348);
         flywheelVelocitySetpoint = () -> 0;
 
-        flyWheelMechanism = new FlyWheel(flyWheelMotor, FLY_WHEEL_MAX_ACCELERATION, FLY_WHEEL_MAX_JERK, FLYWHEEL_GAINS);
+        flyWheelMechanism = new FlyWheel(shooterMotorGroup, FLY_WHEEL_MAX_ACCELERATION, FLY_WHEEL_MAX_JERK, FLYWHEEL_GAINS);
 
         transportMechanism = new Mechanism(transportMotor);
 

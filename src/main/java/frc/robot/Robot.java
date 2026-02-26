@@ -30,7 +30,7 @@ public class Robot extends TimedRobot {
     public void robotPeriodic() {
         AuroraPoseGetter.periodic();
         GameDataClient.updateGameData();
-        robotContainer.perodic();
+        robotContainer.periodic();
 
         Threads.setCurrentThreadPriority(true, 99);
 

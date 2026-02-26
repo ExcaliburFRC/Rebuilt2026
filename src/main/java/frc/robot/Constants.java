@@ -33,18 +33,18 @@ public final class Constants {
     public static final CANBus SUBSYSTEMS_CANBUS = new CANBus("Subsystems");
 
     public static class SwerveConstants {
-        public static final int FRONT_LEFT_DRIVE_ID = 20;
         public static final int FRONT_RIGHT_DRIVE_ID = 10;
-        public static final int BACK_RIGHT_DRIVE_ID = 40;
+        public static final int FRONT_LEFT_DRIVE_ID = 20;
         public static final int BACK_LEFT_DRIVE_ID = 30;
+        public static final int BACK_RIGHT_DRIVE_ID = 40;
 
-        public static final int FRONT_LEFT_ROTATION_ID = 22;
         public static final int FRONT_RIGHT_ROTATION_ID = 12;
-        public static final int BACK_RIGHT_ROTATION_ID = 42;
+        public static final int FRONT_LEFT_ROTATION_ID = 22;
         public static final int BACK_LEFT_ROTATION_ID = 32;
+        public static final int BACK_RIGHT_ROTATION_ID = 42;
 
-        public static final int GYRO_ID = 1;
-        public static final CANBus SWERVE_CANBUS = new CANBus(""); // todo
+        public static final int GYRO_ID = 2;
+        public static final CANBus SWERVE_CANBUS = new CANBus("SwerveCANivore");
 
         private static final double PID_TOLERANCE = 0.01;
 
@@ -67,13 +67,13 @@ public final class Constants {
                         -TRACK_WIDTH / 2, -TRACK_WIDTH / 2
                 );
 
-        public static final double MAX_MODULE_VEL = 2.5;
-        public static final double MAX_VEL = 2.5;
+        public static final double MAX_MODULE_VEL = 0.5;
+        public static final double MAX_VEL = 0.5;
 
-        public static final double MAX_FRONT_ACC = 10;
-        public static final double MAX_SIDE_ACC = 10;
-        public static final double MAX_SKID_ACC = 10;
-        public static final double MAX_FORWARD_ACC = 10;
+        public static final double MAX_FRONT_ACC = 1;
+        public static final double MAX_SIDE_ACC = 1;
+        public static final double MAX_SKID_ACC = 1;
+        public static final double MAX_FORWARD_ACC = 1;
         public static final double MAX_OMEGA_RAD_PER_SEC = 1.5;
         public static final double MAX_OMEGA_RAD_PER_SEC_SQUARE = 1;
 
@@ -88,8 +88,6 @@ public final class Constants {
 
         public static final CANcoder FRONT_RIGHT_ABS_ENCODER = new CANcoder(11, SWERVE_CANBUS);
         private static final CANcoder FRONT_LEFT_ABS_ENCODER = new CANcoder(21, SWERVE_CANBUS);
-
-
         private static final CANcoder BACK_LEFT_ABS_ENCODER = new CANcoder(31, SWERVE_CANBUS);
         private static final CANcoder BACK_RIGHT_ABS_ENCODER = new CANcoder(41, SWERVE_CANBUS);
 

@@ -58,11 +58,10 @@ public class RobotContainer implements Logged {
 
     private void configureBindings() {
 
-        primary.cross().onTrue(shooter.setHoodAngleCommand(()-> 0.5));
-        primary.triangle().onTrue(shooter.setHoodAngleCommand(()-> 0.3));
-        primary.square().onTrue(shooter.setHoodAngleCommand(()-> 0.8));
-        primary.circle().onTrue(shooter.setHoodAngleCommand(()-> 0));
 
+        primary.circle().onTrue(shooter.setFlyWheelDynamicVelocity(()-> 5));
+        primary.cross().onTrue(shooter.setFlyWheelDynamicVelocity(()-> 10));
+        primary.triangle().onTrue(shooter.setFlyWheelDynamicVelocity(()-> 15));
     }
 
 

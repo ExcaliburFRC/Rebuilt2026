@@ -68,6 +68,10 @@ public class Shooter extends SubsystemBase implements Logged {
         hoodEncoder = new CANcoder(HOOD_ENCODER_ID, SUBSYSTEMS_CANBUS);
 
         shooterMotorGroup = new MotorGroup(flyWheelMotorLow, flyWheelMotorTop);
+
+        flyWheelMotorLow.setInverted(DirectionState.REVERSE);
+        flyWheelMotorTop.setInverted(DirectionState.REVERSE);
+
         hoodEncoder.setPosition(hoodEncoder.getAbsolutePosition().getValueAsDouble());
         this.turretRelativeDistanceFromTarget = turretRelativeDistanceFromTarget;
 
@@ -172,6 +176,10 @@ public class Shooter extends SubsystemBase implements Logged {
                         getPIDForAngle(
                                 () -> hoodSoftLimit.limit(
                                         angleSetpoint.getAsDouble()))), this);
+    }
+
+    public Command setFlyWheelDynamicVelocity(DoubleSupplier vel){
+        return flyWheelMechanism.setDynamicVelocityCommand(vel, this);
     }
 
     public Command setAdjustedFlyWheelVelocity() {

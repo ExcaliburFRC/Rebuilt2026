@@ -44,7 +44,7 @@ public class RobotContainer implements Logged {
 
     private final SendableChooser<String> autoChooser = new SendableChooser<>();
     private final HubTimerSubsystem hubTimer = new HubTimerSubsystem();
-    private final Shooter shooter = new Shooter(()-> 0, Pose2d::new);
+    private final Transport transport = new Transport();
 
     private final LEDs leds = LEDs.getInstance();
 
@@ -58,10 +58,7 @@ public class RobotContainer implements Logged {
 
     private void configureBindings() {
 
-
-        primary.circle().onTrue(shooter.setFlyWheelDynamicVelocity(()-> 5));
-        primary.cross().onTrue(shooter.setFlyWheelDynamicVelocity(()-> 10));
-        primary.triangle().onTrue(shooter.setFlyWheelDynamicVelocity(()-> 15));
+        primary.cross().onTrue(transport.transportFuelCommand());
     }
 
 

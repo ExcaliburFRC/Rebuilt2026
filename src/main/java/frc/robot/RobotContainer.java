@@ -59,10 +59,9 @@ public class RobotContainer implements Logged {
 
     private void configureBindings() {
 
-        primary.triangle().onTrue(intake.setPositionCommand(1));
+        primary.cross().onTrue(intake.setPositionCommand(1));
         primary.circle().onTrue(intake.setPositionCommand(0.5));
-        primary.cross().onTrue(intake.setPositionCommand(0));
-
+        primary.triangle().onTrue(intake.setPositionCommand(0));
 
     }
 

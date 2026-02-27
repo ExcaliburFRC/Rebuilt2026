@@ -27,6 +27,7 @@ public final class Constants {
 
     public static final double PHYSICS_PERIODIC_TIME = 0.02;
     public static final int PRIMARY_CONTROLLER_PORT = 0;
+    public static final int PDH_PORT = 1;
 
     public static final double CONTROLLER_DEADBAND = 0.09;
 

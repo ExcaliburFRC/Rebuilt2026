@@ -3,9 +3,11 @@ package frc.robot.subsystems.intake;
 import com.ctre.phoenix6.hardware.CANcoder;
 import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.excalib.control.gains.Gains;
 import frc.excalib.control.limits.SoftLimit;
 import frc.excalib.control.math.physics.Mass;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
+import frc.excalib.control.motor.motor_specs.DirectionState;
 import frc.excalib.mechanisms.Arm.Arm;
 import frc.excalib.mechanisms.Mechanism;
 import monologue.Annotations.Log;
@@ -23,6 +25,7 @@ public class Intake extends SubsystemBase implements Logged {
     public final TalonFXMotor fourBarMotor;
     public final TalonFXMotor rollerMotor;
 
+
     public final Mechanism rollerMotorMechanism;
     public final Arm fourBarMechanism;
 
@@ -39,23 +42,34 @@ public class Intake extends SubsystemBase implements Logged {
 
         angleEncoder = new CANcoder(ANGLE_ENCODER_ID, SUBSYSTEMS_CANBUS);
         fourBarMotor = new TalonFXMotor(FOUR_BAR_MOTOR_ID, SUBSYSTEMS_CANBUS);
+         fourBarMotor.setInverted(DirectionState.REVERSE);
         rollerMotor = new TalonFXMotor(ROLLER_MOTOR_ID, SUBSYSTEMS_CANBUS);
 
         rollerMotorMechanism = new Mechanism(rollerMotor);
 
-        angleSupplier = () -> (angleEncoder.getPosition().getValueAsDouble() * ROTATION_TO_RAD);
+        angleSupplier = () -> (angleEncoder.getAbsolutePosition().getValueAsDouble() * (1 / 0.29));
 
         intakeAngleLimit = new SoftLimit(() -> INTAKE_MIN_ANGLE, () -> INTAKE_MAX_ANGLE);
 
         atPositionTrigger = new Trigger(() -> (Math.abs(currentState.radPosition - angleSupplier.getAsDouble()) < INTAKE_ANGLE_TOLERANCE));
 
+        Gains ARM_POSITION_GAINS = new Gains(3, 0, 0, 0.45, 0, 0,0.82);
         fourBarMechanism = new Arm(fourBarMotor, angleSupplier, ARM_VELOCITY_LIMIT, ARM_POSITION_GAINS, new Mass(() -> Math.cos(angleSupplier.getAsDouble()), () -> Math.sin(angleSupplier.getAsDouble()), ARM_MASS));
 
-        setDefaultCommand(defaultCommand());
+//        setDefaultCommand(defaultCommand());
     }
 
     public Command setAnglePosition(IntakeState targetPosition) {
         return new InstantCommand(() -> this.currentState = targetPosition);
+    }
+
+    public Command setPositionCommand(double angle) {
+        return fourBarMechanism.goToAngleCommand(
+                intakeAngleLimit.limit(angle),
+                (at) -> at = false,
+                0,
+                this
+        );
     }
 
     @Log.NT
@@ -66,7 +80,6 @@ public class Intake extends SubsystemBase implements Logged {
     public Command rollerManualCommand(double voltage) {
         return rollerMotorMechanism.manualCommand(() -> voltage);
     }
-
 
     public Command defaultCommand() {
         Command c = new ConditionalCommand(
@@ -93,5 +106,10 @@ public class Intake extends SubsystemBase implements Logged {
         IntakeState(double radPosition) {
             this.radPosition = radPosition;
         }
+    }
+
+    @Log.NT
+    public double getIntakeAngleSupplier() {
+        return angleSupplier.getAsDouble();
     }
 }

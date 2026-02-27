@@ -21,6 +21,7 @@ import frc.excalib.swerve.Swerve;
 import frc.excalib.control.math.Vector2D;
 
 import frc.robot.subsystems.TestSS;
+import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.transport.Transport;
 import frc.robot.subsystems.turret.Turret;
@@ -39,9 +40,9 @@ public class RobotContainer implements Logged {
 
     private final LoggablePS5Controller primary = new LoggablePS5Controller(PRIMARY_CONTROLLER_PORT);
 
-//    private final Swerve swerve = Constants.SwerveConstants.configureSwerve(Constants.INITIAL_POSE);
+    //    private final Swerve swerve = Constants.SwerveConstants.configureSwerve(Constants.INITIAL_POSE);
 //    public final Superstructure superstructure = new Superstructure(primary, swerve);
-
+    Intake intake = new Intake();
     private final SendableChooser<String> autoChooser = new SendableChooser<>();
     private final HubTimerSubsystem hubTimer = new HubTimerSubsystem();
     private final Transport transport = new Transport();
@@ -58,7 +59,11 @@ public class RobotContainer implements Logged {
 
     private void configureBindings() {
 
-        primary.cross().onTrue(transport.transportFuelCommand());
+        primary.triangle().onTrue(intake.setPositionCommand(1));
+        primary.circle().onTrue(intake.setPositionCommand(0.5));
+        primary.cross().onTrue(intake.setPositionCommand(0));
+
+
     }
 
 

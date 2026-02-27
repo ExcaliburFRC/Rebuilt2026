@@ -12,15 +12,15 @@ public class IntakeConstants {
 
 
     // ==== Arm Initialization Constants ==== //
-    public static final int ARM_MIN_VELOCITY_LIMIT = 0;
-    public static final int ARM_MAX_VELOCITY_LIMIT = 0;
-    public static final int ARM_MASS = 0;
+    public static final int ARM_MIN_VELOCITY_LIMIT = -4;
+    public static final int ARM_MAX_VELOCITY_LIMIT = 4;
+    public static final int ARM_MASS = 1;
     public static final double MAX_OFFSET = 0;
-    public static final double INTAKE_MAX_ANGLE = 0;
+    public static final double INTAKE_MAX_ANGLE = 1;
     public static final double INTAKE_MIN_ANGLE = 0;
 
     // ==== Intake Angles and Tolerances ==== //
-    public static final int INTAKE_ANGLE_TOLERANCE = 0;
+    public static final double INTAKE_ANGLE_TOLERANCE = 0.05;
 
     // ==== Other ====//
     public static final double ROTATION_TO_RAD = 2 * Math.PI;
@@ -28,5 +28,7 @@ public class IntakeConstants {
             () -> ARM_MIN_VELOCITY_LIMIT,
             () -> ARM_MAX_VELOCITY_LIMIT
     );
-    public static final Gains ARM_POSITION_GAINS = new Gains();
+
+
+
 }

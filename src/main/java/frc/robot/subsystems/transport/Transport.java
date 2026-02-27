@@ -28,6 +28,6 @@ public class Transport extends SubsystemBase implements Logged {
     }
 
     public Command transportFuelCommand() {
-        return drumMechanism.setDynamicVelocityCommand(()-> 50, this);
+        return drumMechanism.setDynamicVelocityCommand(()-> 0, this);
     }
 }

@@ -47,8 +47,8 @@ public class LoggablePS5Controller extends CommandPS5Controller implements Logge
 
     public Command vibrateControllerCommand(double secondsDuration, double intesity, GenericHID.RumbleType rumbleType) {
         return Commands.runEnd(
-                () -> simulatedController.setRumble(rumbleType, intesity),
-                () -> simulatedController.setRumble(rumbleType, 0)
+                () -> getHID().setRumble(rumbleType, intesity),
+                () -> getHID().setRumble(rumbleType, 0)
         ).withTimeout(secondsDuration).ignoringDisable(true);
     }
 

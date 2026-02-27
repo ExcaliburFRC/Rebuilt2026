@@ -13,9 +13,11 @@ public class GameDataClient {
         if (!gameData.isEmpty()) {
             switch (gameData.charAt(0)) {
                 case 'B':
-                    OPEN_HUB =  Alliance.BLUE;
+                    OPEN_HUB = Alliance.BLUE;
+                    break;
                 case 'R':
-                    OPEN_HUB =  Alliance.RED;
+                    OPEN_HUB = Alliance.RED;
+                    break;
                 default:
                     OPEN_HUB = Alliance.BOTH;
             }

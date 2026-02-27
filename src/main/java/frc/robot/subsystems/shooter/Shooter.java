@@ -140,7 +140,7 @@ public class Shooter extends SubsystemBase implements Logged {
                 }
         );
 
-//        setDefaultCommand(defaultCommand());
+        setDefaultCommand(defaultCommand());
     }
 
 

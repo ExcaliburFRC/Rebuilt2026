@@ -54,7 +54,7 @@ public class Turret extends SubsystemBase implements Logged {
                 new TrapezoidProfile.Constraints(Math.PI * 2, Math.PI * 100)
         );
 
-//        setDefaultCommand(defaultCommand());
+        setDefaultCommand(defaultCommand());
     }
 
 

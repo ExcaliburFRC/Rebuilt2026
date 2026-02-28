@@ -57,43 +57,76 @@ public class RobotContainer implements Logged {
     private final Alert lowBatteryAlert = new Alert("Battery voltage is low", Alert.AlertType.kWarning);
     private final Alert endgameAlert = new Alert("Endgame approaching! < 30 seconds left.", Alert.AlertType.kInfo);
 
+    // ── Triggers ──────────────────────────────────────────────────────────────
     private final Trigger lowBatteryTrigger = new Trigger(lowBatteryAlert::get);
+
     private final Trigger endgameTrigger = new Trigger(
             () -> DriverStation.isTeleopEnabled()
                     && DriverStation.getMatchTime() > 0
                     && DriverStation.getMatchTime() <= 30
     );
+
+    /** Fires when flywheel is at speed AND turret is on target — the moment it's safe to feed. */
+    private final Trigger readyToShootTrigger = new Trigger(superstructure::isReadyToShoot);
+
+    /** Fires when flywheel is spinning but not yet on target (pre-spin feedback). */
     private final Trigger flywheelReadyTrigger = new Trigger(
             () -> superstructure.shooter.getFlyWheelVelocitySetpoint() > 0
                     && Math.abs(superstructure.shooter.getFlyWheelVelocity()
                     - superstructure.shooter.getFlyWheelVelocitySetpoint()) < 1.0
     );
 
+    /**
+     * Auto pre-spin: true when robot is within PRE_SPIN_ZONE_METERS of the hub.
+     * The scheduled command uses kCancelSelf so L2/L1 override it immediately.
+     */
+    private final Trigger nearHubTrigger = new Trigger(
+            () -> swerve.getPose2D().getTranslation()
+                    .getDistance(BLUE_HUB_CENTER_POSE.get().getTranslation())
+                    < Superstructure.PRE_SPIN_ZONE_METERS
+    );
+
 
     public RobotContainer() {
         configureDrive();
 
+        // ── LED feedback ──────────────────────────────────────────────────────
         lowBatteryTrigger.onTrue(leds.setPattern(BLINKING, ORANGE.color).withInterruptBehavior(kCancelIncoming));
         endgameTrigger.onTrue(
                 leds.setPattern(BLINKING, RED.color, PURPLE.color)
                         .withTimeout(3)
                         .withInterruptBehavior(kCancelIncoming)
         );
+        // Solid green = shooter + turret both on target → safe to release transport
+        readyToShootTrigger.onTrue(leds.setPattern(SOLID, GREEN.color));
+        readyToShootTrigger.onFalse(leds.setPattern(EXPAND, TEAM_BLUE.color, TEAM_GOLD.color));
+
+        // ── Haptic feedback ───────────────────────────────────────────────────
         flywheelReadyTrigger.onTrue(
                 primary.vibrateControllerCommand(0.3, 0.5, GenericHID.RumbleType.kBothRumble)
         );
+
+        // ── Auto pre-spin ─────────────────────────────────────────────────────
+        // Spins flywheel up and aims turret automatically when near hub.
+        // kCancelSelf means L2/L1 take over instantly.
+        nearHubTrigger.whileTrue(superstructure.autoPreSpinCommand());
 
         setAutoChooser();
         configureBindings();
         registerCommands();
     }
 
+    /**
+     * Sets up the field-relative swerve drive default command.
+     * Speed is scaled to 45 % while any shoot/track command is active to
+     * prevent drivetrain skid from disturbing aiming.
+     */
     private void configureDrive() {
         swerve.setDefaultCommand(
                 swerve.driveCommand(
                         () -> new Vector2D(
-                                -applyDeadband(primary.getLeftY()) * MAX_VEL,
-                                -applyDeadband(primary.getLeftX()) * MAX_VEL
+                                -applyDeadband(primary.getLeftY()) * MAX_VEL * superstructure.getDriveSpeedScale(),
+                                -applyDeadband(primary.getLeftX()) * MAX_VEL * superstructure.getDriveSpeedScale()
                         ),
                         () -> -applyDeadband(primary.getRightX()) * MAX_OMEGA_RAD_PER_SEC,
                         () -> true
@@ -102,14 +135,16 @@ public class RobotContainer implements Logged {
     }
 
     private void configureBindings() {
-        // === Shooter bindings ===
-        // L2: Shoot to hub (aims turret, spins flywheel, feeds transport)
+        // ── Shooter ───────────────────────────────────────────────────────────
+        // L2: Full hub shoot — turret tracks, flywheel spins, transport gates on ready
         primary.L2().whileTrue(superstructure.shootToHubCommand());
-        // L1: Pre-track hub without feeding (spin up flywheel, aim turret)
+        // L1: Pre-spin + aim without feeding (prepare while driving to shot position)
         primary.L1().whileTrue(superstructure.trackHubCommand());
+        // D-pad down: Shoot to nearest delivery station
+        primary.povDown().whileTrue(superstructure.shootToDeliveryCommand());
 
-        // === Intake bindings ===
-        // R2 hold: Deploy intake arm and run rollers
+        // ── Intake ────────────────────────────────────────────────────────────
+        // R2 hold: Deploy intake arm + run rollers
         primary.R2().whileTrue(
                 new ParallelCommandGroup(
                         superstructure.intake.setAnglePosition(Intake.IntakeState.OPEN),
@@ -119,13 +154,17 @@ public class RobotContainer implements Logged {
         // R2 release: Retract intake arm
         primary.R2().onFalse(superstructure.intake.setAnglePosition(Intake.IntakeState.CLOSE));
 
-        // === Robot heading auto-aim toward hub while driving ===
-        // R1 hold: Auto-rotate robot to face hub while driver controls translation
+        // ── Unjam ─────────────────────────────────────────────────────────────
+        // Triangle: Reverse both transport motors briefly to clear fuel jams
+        primary.triangle().onTrue(superstructure.unjamCommand());
+
+        // ── Heading auto-aim ──────────────────────────────────────────────────
+        // R1 hold: Robot auto-rotates to face hub while driver controls translation
         primary.R1().whileTrue(
                 swerve.turnToAngleCommand(
                         () -> new Vector2D(
-                                -applyDeadband(primary.getLeftY()) * MAX_VEL,
-                                -applyDeadband(primary.getLeftX()) * MAX_VEL
+                                -applyDeadband(primary.getLeftY()) * MAX_VEL * superstructure.getDriveSpeedScale(),
+                                -applyDeadband(primary.getLeftX()) * MAX_VEL * superstructure.getDriveSpeedScale()
                         ),
                         () -> {
                             Translation2d hub = BLUE_HUB_CENTER_POSE.get().getTranslation();
@@ -137,10 +176,10 @@ public class RobotContainer implements Logged {
                 )
         );
 
-        // === Utility bindings ===
+        // ── Utility ───────────────────────────────────────────────────────────
         // Options: Reset gyro heading to field-forward
         primary.options().onTrue(swerve.resetAngleCommand());
-        // PS: Coast drivetrain (for being pushed or end-of-match)
+        // PS: Coast drivetrain (end-of-match or pushed)
         primary.PS().whileTrue(swerve.coastCommand());
     }
 

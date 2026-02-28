@@ -1,12 +1,15 @@
 package frc.robot.subsystems.transport;
 
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
 import frc.excalib.mechanisms.Mechanism;
 import frc.excalib.mechanisms.fly_wheel.FlyWheel;
 import monologue.Logged;
 
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
 import static frc.robot.Constants.SUBSYSTEMS_CANBUS;
@@ -28,6 +31,26 @@ public class Transport extends SubsystemBase implements Logged {
     }
 
     public Command transportFuelCommand() {
-        return drumMechanism.setDynamicVelocityCommand(()-> 0, this);
+        return drumMechanism.setDynamicVelocityCommand(() -> 0, this);
+    }
+
+    /**
+     * Runs the drum at TRANSPORT_VELOCITY while the gate supplier returns true,
+     * otherwise holds at 0.  Used so the drum only feeds when the shooter is ready.
+     */
+    public Command gatedTransportCommand(BooleanSupplier gate) {
+        return new RunCommand(
+                () -> drumMechanism.setDynamicVelocity(gate.getAsBoolean() ? TRANSPORT_VELOCITY : 0),
+                this);
+    }
+
+    /**
+     * Brief reverse pulse followed by a short forward burst to clear jams in the drum.
+     */
+    public Command unjamCommand() {
+        return new SequentialCommandGroup(
+                drumMechanism.manualCommand(() -> -TRANSPORT_VOLTAGE, this).withTimeout(0.35),
+                drumMechanism.manualCommand(() -> TRANSPORT_VOLTAGE, this).withTimeout(0.25)
+        );
     }
 }

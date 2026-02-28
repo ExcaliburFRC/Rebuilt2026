@@ -202,7 +202,7 @@ public class Shooter extends SubsystemBase implements Logged {
         return new ConditionalCommand(
                 transportMechanism.manualCommand(() -> TRANSPORT_VOLTAGE),
                 transportMechanism.manualCommand(() -> 0),
-                shootingMode
+                () -> shootingMode.getAsBoolean() && isFlywheelAtSpeed()
         );
     }
 
@@ -270,6 +270,35 @@ public class Shooter extends SubsystemBase implements Logged {
     @NT
     public double getHoodAngleSupplier() {
         return hoodAngleSupplier.getAsDouble();
+    }
+
+    /** True when the flywheel is spinning and within FLY_WHEEL_TOLERANCE of the velocity setpoint. */
+    @NT
+    public boolean isFlywheelAtSpeed() {
+        double setpoint = flywheelVelocitySetpoint.getAsDouble();
+        return setpoint > 0.5 && Math.abs(getFlyWheelVelocity() - setpoint) < FLY_WHEEL_TOLERANCE;
+    }
+
+    /** True when the hood PID error is within its configured tolerance. */
+    @NT
+    public boolean isHoodAtAngle() {
+        return angleController.atSetpoint();
+    }
+
+    /** Returns the active shooter target (IDLE / HUB / DELIVERY). */
+    public Target getShooterTarget() {
+        return shooterTarget;
+    }
+
+    /**
+     * Briefly reverses the shooter transport motor to clear a jam, then re-feeds.
+     * Use Triangle button in teleop.
+     */
+    public Command unjamTransportCommand() {
+        return new SequentialCommandGroup(
+                transportMechanism.manualCommand(() -> -TRANSPORT_VOLTAGE / 2).withTimeout(0.35),
+                transportMechanism.manualCommand(() -> TRANSPORT_VOLTAGE).withTimeout(0.25)
+        );
     }
 
 }

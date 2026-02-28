@@ -102,4 +102,16 @@ public class Turret extends SubsystemBase implements Logged {
     public double getTurretRelativeAngleToTarget() {
         return turretRelativeAngleToTarget.getAsDouble();
     }
+
+    /** Returns true when the turret angle error is within the configured PID tolerance. */
+    @Log.NT
+    public boolean isOnTarget() {
+        return Math.abs(turretRelativeAngleToTarget.getAsDouble() - turretAngleSupplier.getAsDouble()) < PID_TOLERANCE;
+    }
+
+    /** Current turret angle error in radians: how far the turret is from the target angle. */
+    @Log.NT
+    public double getAngleError() {
+        return turretRelativeAngleToTarget.getAsDouble() - turretAngleSupplier.getAsDouble();
+    }
 }

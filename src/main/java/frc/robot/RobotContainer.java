@@ -7,50 +7,60 @@ package frc.robot;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.excalib.additional_utilities.Color;
 import frc.excalib.additional_utilities.LEDs;
 import frc.excalib.additional_utilities.LoggablePS5Controller;
 import frc.excalib.swerve.Swerve;
-import frc.excalib.control.math.Vector2D;
 
-import frc.robot.subsystems.TestSS;
-import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
-import frc.robot.subsystems.transport.Transport;
-import frc.robot.subsystems.turret.Turret;
 import frc.robot.util.AuroraPoseGetter;
 import frc.robot.util.HubTimerSubsystem;
-import monologue.Annotations.Log;
 import monologue.Logged;
 
-import static frc.robot.Constants.CONTROLLER_DEADBAND;
-import static frc.robot.Constants.PRIMARY_CONTROLLER_PORT;
-import static frc.robot.Constants.SwerveConstants.MAX_OMEGA_RAD_PER_SEC;
-import static frc.robot.Constants.SwerveConstants.MAX_VEL;
+import static edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior.*;
+import static frc.excalib.additional_utilities.Color.Colors.*;
+import static frc.excalib.additional_utilities.LEDs.LEDPattern.*;
+import static frc.robot.Constants.*;
 
 
 public class RobotContainer implements Logged {
 
     private final LoggablePS5Controller primary = new LoggablePS5Controller(PRIMARY_CONTROLLER_PORT);
 
+    private final Swerve swerve = Constants.SwerveConstants.configureSwerve(Constants.INITIAL_POSE);
+    private final PowerDistribution PowerDistributionHub = new PowerDistribution(PDH_PORT, PowerDistribution.ModuleType.kRev);
+//    public final Superstrcture superstructure = new Superstructure(primary, swerve);
+
     //    private final Swerve swerve = Constants.SwerveConstants.configureSwerve(Constants.INITIAL_POSE);
 //    public final Superstructure superstructure = new Superstructure(primary, swerve);
-    Intake intake = new Intake();
     private final SendableChooser<String> autoChooser = new SendableChooser<>();
     private final HubTimerSubsystem hubTimer = new HubTimerSubsystem();
-    private final Transport transport = new Transport();
+    private final Shooter shooter = new Shooter(() -> 0, Pose2d::new);
 
     private final LEDs leds = LEDs.getInstance();
 
+    private final Alert primaryDisconnected = new Alert("Primary controller disconnected (port 0).", Alert.AlertType.kWarning);
+    private final Alert autoNotChosen = new Alert("!!! AUTO NOT SET !!!", Alert.AlertType.kError);
+
+    private final Alert lowBatteryAlert = new Alert("Battery voltage is low", Alert.AlertType.kWarning);
+    private final Trigger lowBatteryTrigger = new Trigger(lowBatteryAlert::get);
+
+
     public RobotContainer() {
 //        swerve.resetOdometry(AuroraPoseGetter.getPose2d());
+
+        lowBatteryTrigger.onTrue(leds.setPattern(BLINKING, ORANGE.color).withInterruptBehavior(kCancelIncoming));
 
         setAutoChooser();
         configureBindings();
@@ -59,15 +69,11 @@ public class RobotContainer implements Logged {
 
     private void configureBindings() {
 
-        primary.cross().onTrue(intake.setPositionCommand(1));
-        primary.circle().onTrue(intake.setPositionCommand(0.5));
-        primary.triangle().onTrue(intake.setPositionCommand(0));
-
     }
 
 
     public Command getAutonomousCommand() {
-        return AutoBuilder.buildAuto("Auto #1");
+        return AutoBuilder.buildAuto(autoChooser.getSelected());
     }
 
     public double applyDeadband(double val) {
@@ -91,9 +97,13 @@ public class RobotContainer implements Logged {
     }
 
     public void periodic() {
-//        if (!AuroraPoseGetter.getPose2d().equals(new Pose2d())) {
-//            swerve.m_odometry.addVisionMeasurement(AuroraPoseGetter.getPose2d(), Timer.getFPGATimestamp());
-//        }
+        if (!AuroraPoseGetter.getPose2d().equals(new Pose2d())) {
+            swerve.m_odometry.addVisionMeasurement(AuroraPoseGetter.getPose2d(), Timer.getFPGATimestamp());
+        }
+
+        primaryDisconnected.set(!DriverStation.isJoystickConnected(primary.getHID().getPort()));
+        autoNotChosen.set(autoChooser.getSelected().equals("/ null Auto"));
+        lowBatteryAlert.set(PowerDistributionHub.getVoltage() < 12.0);
     }
 
 }

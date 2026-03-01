@@ -42,11 +42,8 @@ public class RobotContainer implements Logged {
     private final PowerDistribution PowerDistributionHub = new PowerDistribution(PDH_PORT, PowerDistribution.ModuleType.kRev);
 //    public final Superstrcture superstructure = new Superstructure(primary, swerve);
 
-    //    private final Swerve swerve = Constants.SwerveConstants.configureSwerve(Constants.INITIAL_POSE);
-//    public final Superstructure superstructure = new Superstructure(primary, swerve);
     private final SendableChooser<String> autoChooser = new SendableChooser<>();
     private final HubTimerSubsystem hubTimer = new HubTimerSubsystem();
-    private final Shooter shooter = new Shooter(() -> 0, Pose2d::new);
 
     private final LEDs leds = LEDs.getInstance();
 
@@ -58,8 +55,6 @@ public class RobotContainer implements Logged {
 
 
     public RobotContainer() {
-//        swerve.resetOdometry(AuroraPoseGetter.getPose2d());
-
         lowBatteryTrigger.onTrue(leds.setPattern(BLINKING, ORANGE.color).withInterruptBehavior(kCancelIncoming));
 
         setAutoChooser();

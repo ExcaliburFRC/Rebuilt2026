@@ -5,7 +5,7 @@
 
 ## 📌 About This Repository
 
-This is the official public codebase for our **FRC 2025 Reefscape Season** robot — *Galahad*.  
+This is the official public codebase for our **FRC 2026 Rebuilt Season** robot — *Galahad*.  
 It includes complete logic for:
 
 - ✅ Robot movement  

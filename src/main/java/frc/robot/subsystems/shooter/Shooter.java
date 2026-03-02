@@ -10,6 +10,8 @@ import frc.excalib.additional_utilities.AllianceUtils;
 import frc.excalib.additional_utilities.Color;
 import frc.excalib.additional_utilities.LEDs;
 import frc.excalib.control.limits.SoftLimit;
+import frc.excalib.control.math.EMAFilter;
+import frc.excalib.control.math.periodics.PeriodicScheduler;
 import frc.excalib.control.motor.controllers.MotorGroup;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
 import frc.excalib.control.motor.motor_specs.DirectionState;
@@ -50,6 +52,8 @@ public class Shooter extends SubsystemBase implements Logged {
     private final DoubleSupplier turretRelativeDistanceFromTarget;
     private DoubleSupplier flywheelVelocitySetpoint;
 
+    private final EMAFilter flywheelVelocityFilter;
+
     private final InterpolatingDoubleTreeMap angleDistanceMap;
     private final InterpolatingDoubleTreeMap velocityDistanceMap;
 
@@ -68,9 +72,13 @@ public class Shooter extends SubsystemBase implements Logged {
         hoodEncoder = new CANcoder(HOOD_ENCODER_ID, SUBSYSTEMS_CANBUS);
 
         shooterMotorGroup = new MotorGroup(flyWheelMotorLow, flyWheelMotorTop);
+        shooterMotorGroup.setIdleState(IdleState.BRAKE);
 
-        flyWheelMotorLow.setInverted(DirectionState.REVERSE);
-        flyWheelMotorTop.setInverted(DirectionState.REVERSE);
+        flyWheelMotorLow.setInverted(DirectionState.FORWARD);
+        flyWheelMotorTop.setInverted(DirectionState.FORWARD);
+
+        flyWheelMotorTop.setCurrentLimit(80, 40);
+        flyWheelMotorLow.setCurrentLimit(80, 40);
 
         hoodEncoder.setPosition(hoodEncoder.getAbsolutePosition().getValueAsDouble());
         this.turretRelativeDistanceFromTarget = turretRelativeDistanceFromTarget;
@@ -91,6 +99,14 @@ public class Shooter extends SubsystemBase implements Logged {
         flyWheelMechanism = new FlyWheel(shooterMotorGroup, FLY_WHEEL_MAX_ACCELERATION, FLY_WHEEL_MAX_JERK, FLYWHEEL_GAINS);
 
         transportMechanism = new Mechanism(transportMotor);
+
+        flywheelVelocityFilter = new EMAFilter(
+                flyWheelMechanism::getVelocity,
+                0.05,
+                PeriodicScheduler.PERIOD.MILLISECONDS_20
+        );
+
+        PeriodicScheduler.PERIOD.MILLISECONDS_20.add(flywheelVelocityFilter);
 
         hoodMechanism = new Mechanism(hoodMotor);
 
@@ -178,7 +194,7 @@ public class Shooter extends SubsystemBase implements Logged {
                                         angleSetpoint.getAsDouble()))), this);
     }
 
-    public Command setFlyWheelDynamicVelocity(DoubleSupplier vel){
+    public Command setFlyWheelDynamicVelocity(DoubleSupplier vel) {
         return flyWheelMechanism.setDynamicVelocityCommand(vel, this);
     }
 
@@ -267,17 +283,18 @@ public class Shooter extends SubsystemBase implements Logged {
 
     @NT
     public double getFlyWheelVelocitySetpoint() {
-        return flywheelVelocitySetpoint.getAsDouble();
+        return flywheelVelocitySetpoint.getAsDouble() < 0.01 ? 0 : flywheelVelocitySetpoint.getAsDouble();
     }
 
     @NT
     public double getFlyWheelVelocity() {
-        return flyWheelMechanism.getVelocity();
+        return flywheelVelocityFilter.getValue();
     }
 
     @NT
     public double getHoodAngleSupplier() {
         return hoodAngleSupplier.getAsDouble();
     }
+
 
 }

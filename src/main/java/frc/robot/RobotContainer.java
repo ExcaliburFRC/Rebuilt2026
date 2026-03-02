@@ -7,7 +7,6 @@ package frc.robot;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.PowerDistribution;
@@ -15,10 +14,8 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.excalib.additional_utilities.Color;
 import frc.excalib.additional_utilities.LEDs;
 import frc.excalib.additional_utilities.LoggablePS5Controller;
 import frc.excalib.swerve.Swerve;
@@ -38,9 +35,11 @@ public class RobotContainer implements Logged {
 
     private final LoggablePS5Controller primary = new LoggablePS5Controller(PRIMARY_CONTROLLER_PORT);
 
-    private final Swerve swerve = Constants.SwerveConstants.configureSwerve(Constants.INITIAL_POSE);
+    //    private final Swerve swerve = Constants.SwerveConstants.configureSwerve(Constants.INITIAL_POSE);
     private final PowerDistribution PowerDistributionHub = new PowerDistribution(PDH_PORT, PowerDistribution.ModuleType.kRev);
 //    public final Superstrcture superstructure = new Superstructure(primary, swerve);
+
+    private final Shooter shooter = new Shooter(() -> 0, Pose2d::new);
 
     private final SendableChooser<String> autoChooser = new SendableChooser<>();
     private final HubTimerSubsystem hubTimer = new HubTimerSubsystem();
@@ -64,6 +63,9 @@ public class RobotContainer implements Logged {
 
     private void configureBindings() {
 
+        primary.cross().onTrue(shooter.setFlyWheelDynamicVelocity(() -> 30));
+        primary.square().onTrue(shooter.setFlyWheelDynamicVelocity(() -> 50));
+        primary.triangle().onTrue(shooter.setFlyWheelDynamicVelocity(() -> 0));
     }
 
 
@@ -92,9 +94,9 @@ public class RobotContainer implements Logged {
     }
 
     public void periodic() {
-        if (!AuroraPoseGetter.getPose2d().equals(new Pose2d())) {
-            swerve.m_odometry.addVisionMeasurement(AuroraPoseGetter.getPose2d(), Timer.getFPGATimestamp());
-        }
+//        if (!AuroraPoseGetter.getPose2d().equals(new Pose2d())) {
+//            swerve.m_odometry.addVisionMeasurement(AuroraPoseGetter.getPose2d(), Timer.getFPGATimestamp());
+//        }
 
         primaryDisconnected.set(!DriverStation.isJoystickConnected(primary.getHID().getPort()));
         autoNotChosen.set(autoChooser.getSelected().equals("/ null Auto"));

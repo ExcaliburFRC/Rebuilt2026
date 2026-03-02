@@ -36,7 +36,7 @@ public interface Motor {
 
     void setVelocityConversionFactor(double conversionFactor);
 
-    void setCurrentLimit(int stallLimit, int freeLimit);
+    void setCurrentLimit(int supply, int stator);
 
     void setMotorPosition(double position);
 }

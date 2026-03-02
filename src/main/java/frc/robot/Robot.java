@@ -8,6 +8,7 @@ import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.excalib.control.math.periodics.PeriodicScheduler;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
 import frc.robot.util.AuroraPoseGetter;
 import frc.robot.util.GameDataClient;
@@ -31,6 +32,7 @@ public class Robot extends TimedRobot {
         AuroraPoseGetter.periodic();
         GameDataClient.updateGameData();
         robotContainer.periodic();
+        PeriodicScheduler.PERIOD.MILLISECONDS_20.run();
 
         Threads.setCurrentThreadPriority(true, 99);
 

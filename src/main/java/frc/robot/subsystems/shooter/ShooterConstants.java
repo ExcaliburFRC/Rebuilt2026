@@ -22,9 +22,9 @@ public class ShooterConstants {
 
     public static final double POSITION_CONVERSION_FACTOR = -0.590137;
 
-    public static final Gains HOOD_PID_GAINS = new Gains(13.1, 0, 0,0.425,0,0,0);
+    public static final Gains HOOD_PID_GAINS = new Gains(13.1, 0, 0, 0.425, 0, 0, 0);
 
-    public static final Gains FLYWHEEL_GAINS = new Gains(0.01,0,0,0.3, 0, 0, 0);
+    public static final Gains FLYWHEEL_GAINS = new Gains(0.1, 0, 0, 0.2, 0.12, 0, 0);
 
     public static final int FINAL_VEL = 0;
     public static final double TRANSPORT_VOLTAGE = 2;

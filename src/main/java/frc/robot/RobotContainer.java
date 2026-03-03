@@ -16,13 +16,13 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.excalib.additional_utilities.LEDs;
-import frc.excalib.additional_utilities.LoggablePS5Controller;
+import frc.excalib.additional_utilities.*;
 import frc.excalib.swerve.Swerve;
 
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.util.AuroraPoseGetter;
 import frc.robot.util.HubTimerSubsystem;
+import frc.excalib.slam.mapper.VisionMeasurementValidator;
 import monologue.Logged;
 
 import static edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior.*;
@@ -30,30 +30,47 @@ import static frc.excalib.additional_utilities.Color.Colors.*;
 import static frc.excalib.additional_utilities.LEDs.LEDPattern.*;
 import static frc.robot.Constants.*;
 
-
 public class RobotContainer implements Logged {
+
+    // ===== System Constants =====
+    private static final double BATTERY_VOLTAGE_WARNING_THRESHOLD = 12.0; // Volts
+    private static final double BATTERY_VOLTAGE_HYSTERESIS = 0.5; // Volts (to prevent alert flickering)
 
     private final LoggablePS5Controller primary = new LoggablePS5Controller(PRIMARY_CONTROLLER_PORT);
 
-    //    private final Swerve swerve = Constants.SwerveConstants.configureSwerve(Constants.INITIAL_POSE);
+    private final Swerve swerve = Constants.SwerveConstants.configureSwerve(Constants.INITIAL_POSE);
     private final PowerDistribution PowerDistributionHub = new PowerDistribution(PDH_PORT, PowerDistribution.ModuleType.kRev);
-//    public final Superstrcture superstructure = new Superstructure(primary, swerve);
-
-    private final Shooter shooter = new Shooter(() -> 0, Pose2d::new);
 
     private final SendableChooser<String> autoChooser = new SendableChooser<>();
     private final HubTimerSubsystem hubTimer = new HubTimerSubsystem();
 
+    // Initialize Shooter with actual swerve pose supplier instead of hardcoded Pose2d::new
+    private final Shooter shooter = new Shooter(() -> 0, swerve::getPose2D);
+
     private final LEDs leds = LEDs.getInstance();
 
+    // ===== Alerts =====
     private final Alert primaryDisconnected = new Alert("Primary controller disconnected (port 0).", Alert.AlertType.kWarning);
     private final Alert autoNotChosen = new Alert("!!! AUTO NOT SET !!!", Alert.AlertType.kError);
-
     private final Alert lowBatteryAlert = new Alert("Battery voltage is low", Alert.AlertType.kWarning);
     private final Trigger lowBatteryTrigger = new Trigger(lowBatteryAlert::get);
 
+    // ===== Vision System State =====
+    private Pose2d lastValidVisionPose = null;
+    private boolean batteryLow = false;
+
+    // ===== Diagnostic & Monitoring Systems =====
+    private final RobotDiagnostics robotDiagnostics = new RobotDiagnostics(PowerDistributionHub);
+    private final CANHealthMonitor canHealthMonitor = new CANHealthMonitor();
+    private final ControllerStateTracker primaryControllerTracker =
+        new ControllerStateTracker(primary.getHID(), "Primary Controller");
+    private final PerformanceMetricsTracker performanceMetricsTracker =
+            new PerformanceMetricsTracker();
+
 
     public RobotContainer() {
+//        swerve.resetOdometry(AuroraPoseGetter.getPose2d());
+
         lowBatteryTrigger.onTrue(leds.setPattern(BLINKING, ORANGE.color).withInterruptBehavior(kCancelIncoming));
 
         setAutoChooser();
@@ -62,10 +79,6 @@ public class RobotContainer implements Logged {
     }
 
     private void configureBindings() {
-
-        primary.cross().onTrue(shooter.setFlyWheelDynamicVelocity(() -> 30));
-        primary.square().onTrue(shooter.setFlyWheelDynamicVelocity(() -> 50));
-        primary.triangle().onTrue(shooter.setFlyWheelDynamicVelocity(() -> 0));
     }
 
 
@@ -94,13 +107,50 @@ public class RobotContainer implements Logged {
     }
 
     public void periodic() {
-//        if (!AuroraPoseGetter.getPose2d().equals(new Pose2d())) {
-//            swerve.m_odometry.addVisionMeasurement(AuroraPoseGetter.getPose2d(), Timer.getFPGATimestamp());
-//        }
+        // ===== Vision System Updates =====
+        Pose2d visionPose = AuroraPoseGetter.getPose2d();
+        if (VisionMeasurementValidator.isValidVisionMeasurement(visionPose, lastValidVisionPose)) {
+            swerve.m_odometry.addVisionMeasurement(visionPose, Timer.getFPGATimestamp());
+            lastValidVisionPose = visionPose;
+        }
 
+        // ===== System Health Monitoring =====
+        // Update diagnostic metrics for power analysis
+        robotDiagnostics.update();
+
+        // Monitor CAN bus for communication errors
+        canHealthMonitor.update();
+
+        // Track controller connection state
+        primaryControllerTracker.update();
+
+        // ===== Alert Management =====
+        // Monitor controller connection status
         primaryDisconnected.set(!DriverStation.isJoystickConnected(primary.getHID().getPort()));
-        autoNotChosen.set(autoChooser.getSelected().equals("/ null Auto"));
-        lowBatteryAlert.set(PowerDistributionHub.getVoltage() < 12.0);
+
+        // Warn if no auto is selected
+        autoNotChosen.set(autoChooser.getSelected() == null ||
+                         autoChooser.getSelected().equals("/ null Auto"));
+
+        // Monitor battery voltage with hysteresis to prevent alert flickering
+        double voltage = PowerDistributionHub.getVoltage();
+        if (voltage < BATTERY_VOLTAGE_WARNING_THRESHOLD - BATTERY_VOLTAGE_HYSTERESIS) {
+            batteryLow = true;
+        } else if (voltage > BATTERY_VOLTAGE_WARNING_THRESHOLD + BATTERY_VOLTAGE_HYSTERESIS) {
+            batteryLow = false;
+        }
+        lowBatteryAlert.set(batteryLow);
+
+        // ===== Performance Tracking =====
+        // Record power consumption for performance analysis
+        performanceMetricsTracker.recordPowerConsumption(PowerDistributionHub.getTotalPower());
+    }
+
+    /**
+     * Gets the performance metrics tracker for monitoring robot performance
+     */
+    public PerformanceMetricsTracker getPerformanceMetricsTracker() {
+        return performanceMetricsTracker;
     }
 
 }

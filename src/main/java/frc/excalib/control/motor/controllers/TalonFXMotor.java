@@ -88,8 +88,7 @@ public class TalonFXMotor extends TalonFX implements Motor {
     }
 
     public static void refreshAll() {
-        for (TalonFXMotor motor : motors) motor.refresh();
-        for (ArrayList<BaseStatusSignal> signals : canMap.values()){
+        for (ArrayList<BaseStatusSignal> signals : canMap.values()) {
             BaseStatusSignal.refreshAll(signals.toArray(new BaseStatusSignal[0]));
         }
     }
@@ -165,7 +164,7 @@ public class TalonFXMotor extends TalonFX implements Motor {
         m_velocityConversionFactor = conversionFactor;
     }
 
-
+    @Override
     public void setCurrentLimit(int statorLimit, int supplyLimit) {
         var talonFXConfigurator = super.getConfigurator();
         var limitConfigs = new CurrentLimitsConfigs();

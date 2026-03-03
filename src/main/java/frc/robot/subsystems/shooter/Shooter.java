@@ -77,8 +77,8 @@ public class Shooter extends SubsystemBase implements Logged {
         flyWheelMotorLow.setInverted(DirectionState.FORWARD);
         flyWheelMotorTop.setInverted(DirectionState.FORWARD);
 
-        flyWheelMotorTop.setCurrentLimit(80, 40);
-        flyWheelMotorLow.setCurrentLimit(80, 40);
+        flyWheelMotorTop.setCurrentLimit(120, 70);
+        flyWheelMotorLow.setCurrentLimit(120, 70);
 
         hoodEncoder.setPosition(hoodEncoder.getAbsolutePosition().getValueAsDouble());
         this.turretRelativeDistanceFromTarget = turretRelativeDistanceFromTarget;

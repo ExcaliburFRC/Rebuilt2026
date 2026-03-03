@@ -131,9 +131,9 @@ public class MotorGroup implements Motor {
     }
 
     @Override
-    public void setCurrentLimit(int stallLimit, int freeLimit) {
+    public void setCurrentLimit(int stator, int supply) {
         for (Motor motor : m_motors) {
-            motor.setCurrentLimit(stallLimit, freeLimit);
+            motor.setCurrentLimit(stator, supply);
         }
     }
 

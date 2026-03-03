@@ -19,7 +19,6 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.excalib.additional_utilities.*;
 import frc.excalib.swerve.Swerve;
 
-import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.util.AuroraPoseGetter;
 import frc.robot.util.HubTimerSubsystem;
 import frc.excalib.slam.mapper.VisionMeasurementValidator;
@@ -43,9 +42,6 @@ public class RobotContainer implements Logged {
 
     private final SendableChooser<String> autoChooser = new SendableChooser<>();
     private final HubTimerSubsystem hubTimer = new HubTimerSubsystem();
-
-    // Initialize Shooter with actual swerve pose supplier instead of hardcoded Pose2d::new
-    private final Shooter shooter = new Shooter(() -> 0, swerve::getPose2D);
 
     private final LEDs leds = LEDs.getInstance();
 
@@ -79,6 +75,7 @@ public class RobotContainer implements Logged {
     }
 
     private void configureBindings() {
+
     }
 
 
@@ -115,24 +112,16 @@ public class RobotContainer implements Logged {
         }
 
         // ===== System Health Monitoring =====
-        // Update diagnostic metrics for power analysis
         robotDiagnostics.update();
-
-        // Monitor CAN bus for communication errors
         canHealthMonitor.update();
-
-        // Track controller connection state
         primaryControllerTracker.update();
 
         // ===== Alert Management =====
-        // Monitor controller connection status
         primaryDisconnected.set(!DriverStation.isJoystickConnected(primary.getHID().getPort()));
 
-        // Warn if no auto is selected
         autoNotChosen.set(autoChooser.getSelected() == null ||
                          autoChooser.getSelected().equals("/ null Auto"));
 
-        // Monitor battery voltage with hysteresis to prevent alert flickering
         double voltage = PowerDistributionHub.getVoltage();
         if (voltage < BATTERY_VOLTAGE_WARNING_THRESHOLD - BATTERY_VOLTAGE_HYSTERESIS) {
             batteryLow = true;
@@ -142,7 +131,6 @@ public class RobotContainer implements Logged {
         lowBatteryAlert.set(batteryLow);
 
         // ===== Performance Tracking =====
-        // Record power consumption for performance analysis
         performanceMetricsTracker.recordPowerConsumption(PowerDistributionHub.getTotalPower());
     }
 

@@ -110,8 +110,8 @@ public class Swerve extends SubsystemBase implements Logged {
 
         // Precompute values to avoid redundant calculations
         Supplier<Vector2D> adjustedVelocitySupplier = () -> {
-            Vector2D velocity = velocityMPS.get();
-//            Vector2D velocity = SwerveAccUtils.getSmartTranslationalVelocitySetpoint(getVelocity(), velocityMPS.get());
+//            Vector2D velocity = velocityMPS.get();
+            Vector2D velocity = SwerveAccUtils.getSmartTranslationalVelocitySetpoint(getVelocity(), velocityMPS.get());
             if (fieldOriented.getAsBoolean()) {
                 Rotation2d yaw = getRotation2D().unaryMinus();
                 if (!AllianceUtils.isBlueAlliance()) yaw = yaw.plus(pi);
@@ -164,6 +164,22 @@ public class Swerve extends SubsystemBase implements Logged {
                 )
         ).withName("Turn To Angle");
     }
+
+    public Command driveWithAngleLockCommand(
+            Supplier<Vector2D> velocityMPS,
+            DoubleSupplier omegaRadPerSec,
+            Supplier<Rotation2d> targetAngle,
+            BooleanSupplier angleLockActive) {
+
+        return driveCommand(
+                velocityMPS,
+                () -> angleLockActive.getAsBoolean()
+                        ? angleController.calculate(getRotation2D().getRadians(), targetAngle.get().getRadians())
+                        : omegaRadPerSec.getAsDouble(),
+                () -> true
+        );
+    }
+
 
     public Command pidToPoseCommand(Supplier<Pose2d> poseSetpoint) {
         return new SequentialCommandGroup(

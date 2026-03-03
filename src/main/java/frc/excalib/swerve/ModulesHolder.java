@@ -1,5 +1,6 @@
 package frc.excalib.swerve;
 
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
@@ -131,26 +132,47 @@ public class ModulesHolder implements Logged {
      * @return A command to set the velocities.
      */
     public Command setVelocitiesCommand(Supplier<Vector2D> translationalVel, DoubleSupplier omega) {
+        // Discretize corrects for the arc the robot travels during one loop cycle,
+        // reducing drift during combined translation + rotation.
+        Supplier<Vector2D> correctedVel = () -> {
+            ChassisSpeeds raw = new ChassisSpeeds(
+                    translationalVel.get().getX(),
+                    translationalVel.get().getY(),
+                    omega.getAsDouble()
+            );
+            ChassisSpeeds corrected = ChassisSpeeds.discretize(raw, 0.02);
+            return new Vector2D(corrected.vxMetersPerSecond, corrected.vyMetersPerSecond);
+        };
+
+        DoubleSupplier correctedOmega = () -> {
+            ChassisSpeeds raw = new ChassisSpeeds(
+                    translationalVel.get().getX(),
+                    translationalVel.get().getY(),
+                    omega.getAsDouble()
+            );
+            return ChassisSpeeds.discretize(raw, 0.02).omegaRadiansPerSecond;
+        };
+
         return new ParallelCommandGroup(
                 m_frontLeft.setVelocityCommand(
-                        translationalVel,
-                        omega,
-                        () -> calcVelocityRatioLimit(translationalVel.get(), omega.getAsDouble())
+                        correctedVel,
+                        correctedOmega,
+                        () -> calcVelocityRatioLimit(correctedVel.get(), correctedOmega.getAsDouble())
                 ),
                 m_frontRight.setVelocityCommand(
-                        translationalVel,
-                        omega,
-                        () -> calcVelocityRatioLimit(translationalVel.get(), omega.getAsDouble())
+                        correctedVel,
+                        correctedOmega,
+                        () -> calcVelocityRatioLimit(correctedVel.get(), correctedOmega.getAsDouble())
                 ),
                 m_backLeft.setVelocityCommand(
-                        translationalVel,
-                        omega,
-                        () -> calcVelocityRatioLimit(translationalVel.get(), omega.getAsDouble())
+                        correctedVel,
+                        correctedOmega,
+                        () -> calcVelocityRatioLimit(correctedVel.get(), correctedOmega.getAsDouble())
                 ),
                 m_backRight.setVelocityCommand(
-                        translationalVel,
-                        omega,
-                        () -> calcVelocityRatioLimit(translationalVel.get(), omega.getAsDouble())
+                        correctedVel,
+                        correctedOmega,
+                        () -> calcVelocityRatioLimit(correctedVel.get(), correctedOmega.getAsDouble())
                 )
         );
     }
@@ -212,6 +234,10 @@ public class ModulesHolder implements Logged {
      * @return An array of SwerveModulePosition representing the positions of the modules.
      */
     public SwerveModulePosition[] getModulesPositions() {
+        m_modulePositions[0] = m_frontLeft.getModulePosition();
+        m_modulePositions[1] = m_frontRight.getModulePosition();
+        m_modulePositions[2] = m_backLeft.getModulePosition();
+        m_modulePositions[3] = m_backRight.getModulePosition();
         return m_modulePositions;
     }
 

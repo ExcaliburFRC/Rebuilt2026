@@ -26,8 +26,6 @@ import static frc.excalib.control.motor.motor_specs.IdleState.BRAKE;
 
 /**
  * A class representing a swerve module
- *
- * @author Yoav Cohen & Itay Keller
  */
 public class SwerveModule implements Logged {
     public final FlyWheel m_driveWheel;

@@ -22,7 +22,7 @@ public class TurretConstants {
 
     public static final SoftLimit SOFT_LIMIT = new SoftLimit(() -> MIN_LIMIT, () -> MAX_LIMIT);
 //    public static final Gains TURRET_GAINS = new Gains(10, 0, 0, 0.485, 0, 0, 0);
-    public static final Gains TURRET_GAINS = new Gains(0.9, 0, 0.1, 0.49, 0, 0, 0);
+    public static final Gains TURRET_GAINS = new Gains(0.6, 0, 0, 0.49, 0, 0, 0);
     public static final Translation2d TURRET_OFFSET_RELATIVE_ROBOT = new Translation2d();
     public static final double ENCODER_POSITION_CONVERSION_FACTOR = 0.2 * 2 * Math.PI;
     public static final double MOTOR_POSITION_CONVERSION_FACTOR = 0.102434 * 2 * Math.PI; //

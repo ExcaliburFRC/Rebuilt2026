@@ -11,6 +11,7 @@ import frc.robot.util.Target;
 import monologue.Annotations.Log;
 import monologue.Logged;
 
+import javax.xml.crypto.dsig.spec.XSLTTransformParameterSpec;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
@@ -32,6 +33,7 @@ public class Turret extends SubsystemBase implements Logged {
         turretAngleSupplier = () -> turretEncoder.getPosition().getValueAsDouble() * ENCODER_POSITION_CONVERSION_FACTOR;
         turretMotor.setMotorPosition(turretEncoder.getPosition().getValueAsDouble());
 
+        turretMotor.setCurrentLimit(60, 60);
         this.turretRelativeAngleToTarget = turretRelativeAngleToTarget;
         turretMotor.setInverted(DirectionState.FORWARD);
         turretTarget = Target.IDLE;
@@ -54,7 +56,7 @@ public class Turret extends SubsystemBase implements Logged {
                 new TrapezoidProfile.Constraints(Math.PI * 2, Math.PI * 100)
         );
 
-//        setDefaultCommand(defaultCommand());
+        setDefaultCommand(defaultCommand());
     }
 
 
@@ -69,6 +71,20 @@ public class Turret extends SubsystemBase implements Logged {
                                                 turretRelativeAngleToTarget.getAsDouble())
                                 )
                         )
+                ).alongWith(new PrintCommand("" +
+                        Rotation2d.fromRadians(
+                                SOFT_LIMIT.limit(
+                                        TURRET_CONTINUOUS_SOFTLIMIT.getSetpoint(
+                                                turretAngleSupplier.getAsDouble(),
+                                                turretRelativeAngleToTarget.getAsDouble())
+
+                                )))).alongWith(
+                        new PrintCommand(
+                                "measurment" + turretAngleSupplier.getAsDouble()
+                        ).alongWith(
+                                new PrintCommand(
+                                        "setpoint" + turretRelativeAngleToTarget.getAsDouble()
+                                ))
                 ),
                 () -> turretTarget.equals(Target.IDLE)
         );
@@ -82,7 +98,7 @@ public class Turret extends SubsystemBase implements Logged {
     }
 
     public Command targetHubCommand() {
-        return new InstantCommand(() -> turretTarget = Target.HUB, this);
+        return new RunCommand(() -> turretTarget = Target.HUB, this).withTimeout(0.1);
     }
 
     public Command targetDeliveryCommand() {
@@ -102,4 +118,10 @@ public class Turret extends SubsystemBase implements Logged {
     public double getTurretRelativeAngleToTarget() {
         return turretRelativeAngleToTarget.getAsDouble();
     }
+
+    @Log.NT
+    public String getTarget() {
+        return turretTarget.name();
+    }
+
 }

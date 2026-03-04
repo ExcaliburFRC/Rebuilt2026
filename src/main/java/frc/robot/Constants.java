@@ -71,10 +71,10 @@ public final class Constants {
         public static final double MAX_MODULE_VEL = 0.5;
         public static final double MAX_VEL = 0.5;
 
-        public static final double MAX_FRONT_ACC = 1;
-        public static final double MAX_SIDE_ACC = 1;
-        public static final double MAX_SKID_ACC = 1;
-        public static final double MAX_FORWARD_ACC = 1;
+        public static final double MAX_FRONT_ACC = 10;
+        public static final double MAX_SIDE_ACC = 10;
+        public static final double MAX_SKID_ACC = 10;
+        public static final double MAX_FORWARD_ACC = 3;
         public static final double MAX_OMEGA_RAD_PER_SEC = 1.5;
         public static final double MAX_OMEGA_RAD_PER_SEC_SQUARE = 1;
 
@@ -201,6 +201,6 @@ public final class Constants {
     }
 
     public static class PhysicalConstants {
-        public static final Translation2d TURRET_OFFSET_TRANSLATION = new Translation2d(-0.16011, 0); //todo robot to turret
+        public static final Translation2d TURRET_OFFSET_TRANSLATION = new Translation2d(-0.2286, 0); //todo robot to turret
     }
 }

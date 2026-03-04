@@ -77,8 +77,8 @@ public class Shooter extends SubsystemBase implements Logged {
         flyWheelMotorLow.setInverted(DirectionState.FORWARD);
         flyWheelMotorTop.setInverted(DirectionState.FORWARD);
 
-        flyWheelMotorTop.setCurrentLimit(120, 70);
-        flyWheelMotorLow.setCurrentLimit(120, 70);
+        flyWheelMotorTop.setCurrentLimit(100, 70);
+        flyWheelMotorLow.setCurrentLimit(100, 70);
 
         hoodEncoder.setPosition(hoodEncoder.getAbsolutePosition().getValueAsDouble());
         this.turretRelativeDistanceFromTarget = turretRelativeDistanceFromTarget;
@@ -195,7 +195,7 @@ public class Shooter extends SubsystemBase implements Logged {
     }
 
     public Command setFlyWheelDynamicVelocity(DoubleSupplier vel) {
-        return flyWheelMechanism.setDynamicVelocityCommand(vel, this);
+        return flyWheelMechanism.setDynamicVelocityCommand(vel);
     }
 
     public Command setAdjustedFlyWheelVelocity() {

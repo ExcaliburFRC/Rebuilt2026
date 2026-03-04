@@ -26,8 +26,8 @@ public class LEDs extends SubsystemBase {
     private int tailIndex = 0;
     private double offset = 0;
 
-    public static final int LEDS_PORT = 8; // pwm
-    public static final int LENGTH = 14;
+    public static final int LEDS_PORT = 1; // pwm
+    public static final int LENGTH = 19;
 
     Color[] orange = new Color[LENGTH];
     Color[] black = new Color[LENGTH];

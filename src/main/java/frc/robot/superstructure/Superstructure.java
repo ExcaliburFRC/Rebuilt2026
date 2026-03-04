@@ -38,14 +38,15 @@ public class Superstructure implements Logged {
         intake = new Intake();
         transport = new Transport();
 
+        this.swerve = swerve;
+        distanceTimeOfFlightMap = new InterpolatingDoubleTreeMap();
+        initDistanceTimeOfFlightMap();
+
         turret = new Turret(() -> getTurretToTargetVector(() -> currentTarget).get().getAngle().getRadians());
         shooter = new Shooter(() -> getTurretToTargetVector(() -> currentTarget).get().getNorm(), swerve::getPose2D);
 
-        this.swerve = swerve;
         this.controller = controller;
 
-        distanceTimeOfFlightMap = new InterpolatingDoubleTreeMap();
-        initDistanceTimeOfFlightMap();
     }
 
     private void initDistanceTimeOfFlightMap() {
@@ -59,10 +60,12 @@ public class Superstructure implements Logged {
         Translation2d fieldToTargetTranslation = target.get().targetTranslation;
         Translation2d fieldToRobot = swerve.getPose2D().getTranslation();
 
-        Translation2d robotToTarget = (fieldToTargetTranslation.minus(fieldToRobot)).rotateBy(swerve.getRotation2D().unaryMinus()); //maybe revese (unary minus) todo
+        ChassisSpeeds robotSpeeds = swerve.getRobotRelativeSpeeds();
+
+//        Translation2d robotToTarget = (fieldToTargetTranslation.minus(fieldToRobot)).rotateBy(swerve.getRotation2D().unaryMinus()); //maybe revese (unary minus) todo
+        Translation2d robotToTarget = (fieldToTargetTranslation.minus(fieldToRobot)).rotateBy(swerve.getRotation2D().plus(Rotation2d.fromRadians(robotSpeeds.omegaRadiansPerSecond*-0.02))); //maybe revese (unary minus) todo
         Translation2d turretToTarget = robotToTarget.minus(TURRET_OFFSET_TRANSLATION);
 
-        ChassisSpeeds robotSpeeds = swerve.getRobotRelativeSpeeds();
 
         return () -> {
             Translation2d virtualTargetOffset = new Translation2d(
@@ -75,7 +78,8 @@ public class Superstructure implements Logged {
                             * robotSpeeds.omegaRadiansPerSecond
             ).times(distanceTimeOfFlightMap.get(turretToTarget.getNorm()));
 
-            return turretToTarget.minus(virtualTargetOffset);
+
+            return turretToTarget.minus(virtualTargetOffset).rotateBy(Rotation2d.kPi);
         };
 //        return () -> turretToHub;
     }
@@ -98,7 +102,7 @@ public class Superstructure implements Logged {
     }
 
 
-    public Command shootToHubCommand(){
+    public Command shootToHubCommand() {
         return new ParallelCommandGroup(
                 shooter.shootToHubCommand(),
                 turret.targetHubCommand(),
@@ -106,7 +110,7 @@ public class Superstructure implements Logged {
         );
     }
 
-    public Command trackHubCommand(){
+    public Command trackHubCommand() {
         return new ParallelCommandGroup(
                 shooter.trackHubCommand(),
                 turret.targetHubCommand()
@@ -115,6 +119,10 @@ public class Superstructure implements Logged {
 
     public Command intakeRollerActivationCommand(double voltage) {
         return intake.rollerManualCommand(voltage);
+    }
+
+    public Command setSuperstructureTarget(Target targetToSet) {
+        return new InstantCommand(() -> currentTarget = targetToSet);
     }
 
     @Log.NT

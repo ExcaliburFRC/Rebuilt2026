@@ -110,8 +110,8 @@ public class Swerve extends SubsystemBase implements Logged {
 
         // Precompute values to avoid redundant calculations
         Supplier<Vector2D> adjustedVelocitySupplier = () -> {
-            Vector2D velocity = velocityMPS.get();
-//            Vector2D velocity = SwerveAccUtils.getSmartTranslationalVelocitySetpoint(getVelocity(), velocityMPS.get());
+//            Vector2D velocity = velocityMPS.get();
+            Vector2D velocity = SwerveAccUtils.getSmartTranslationalVelocitySetpoint(getVelocity(), velocityMPS.get());
             if (fieldOriented.getAsBoolean()) {
                 Rotation2d yaw = getRotation2D().unaryMinus();
                 if (!AllianceUtils.isBlueAlliance()) yaw = yaw.plus(pi);
@@ -537,7 +537,7 @@ public class Swerve extends SubsystemBase implements Logged {
         return angleController.atSetpoint();
     }
 
-    public Pose2d getApproximatedFuturePose2D() {
-        return new Pose2d();
+    public Command reserOdometryCommand(Pose2d newPose){
+        return new InstantCommand(()-> resetOdometry(newPose));
     }
 }

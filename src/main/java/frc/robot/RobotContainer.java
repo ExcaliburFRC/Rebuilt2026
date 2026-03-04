@@ -7,6 +7,8 @@ package frc.robot;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.PowerDistribution;
@@ -15,19 +17,26 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.excalib.additional_utilities.*;
+import frc.excalib.control.math.Vector2D;
 import frc.excalib.swerve.Swerve;
 
+import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.superstructure.Superstructure;
 import frc.robot.util.AuroraPoseGetter;
 import frc.robot.util.HubTimerSubsystem;
 import frc.excalib.slam.mapper.VisionMeasurementValidator;
+import frc.robot.util.Target;
 import monologue.Logged;
 
 import static edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior.*;
 import static frc.excalib.additional_utilities.Color.Colors.*;
 import static frc.excalib.additional_utilities.LEDs.LEDPattern.*;
 import static frc.robot.Constants.*;
+import static frc.robot.Constants.SwerveConstants.MAX_OMEGA_RAD_PER_SEC;
+import static frc.robot.Constants.SwerveConstants.MAX_VEL;
 
 public class RobotContainer implements Logged {
 
@@ -45,6 +54,8 @@ public class RobotContainer implements Logged {
 
     private final LEDs leds = LEDs.getInstance();
 
+    private final Superstructure superstructure = new Superstructure(primary, swerve);
+
     // ===== Alerts =====
     private final Alert primaryDisconnected = new Alert("Primary controller disconnected (port 0).", Alert.AlertType.kWarning);
     private final Alert autoNotChosen = new Alert("!!! AUTO NOT SET !!!", Alert.AlertType.kError);
@@ -59,14 +70,12 @@ public class RobotContainer implements Logged {
     private final RobotDiagnostics robotDiagnostics = new RobotDiagnostics(PowerDistributionHub);
     private final CANHealthMonitor canHealthMonitor = new CANHealthMonitor();
     private final ControllerStateTracker primaryControllerTracker =
-        new ControllerStateTracker(primary.getHID(), "Primary Controller");
+            new ControllerStateTracker(primary.getHID(), "Primary Controller");
     private final PerformanceMetricsTracker performanceMetricsTracker =
             new PerformanceMetricsTracker();
 
 
     public RobotContainer() {
-//        swerve.resetOdometry(AuroraPoseGetter.getPose2d());
-
         lowBatteryTrigger.onTrue(leds.setPattern(BLINKING, ORANGE.color).withInterruptBehavior(kCancelIncoming));
 
         setAutoChooser();
@@ -75,6 +84,26 @@ public class RobotContainer implements Logged {
     }
 
     private void configureBindings() {
+
+        primary.triangle().onTrue(superstructure.turret.targetHubCommand().alongWith(superstructure.setSuperstructureTarget(Target.HUB)));
+        primary.cross().onTrue(superstructure.turret.idleCommand().alongWith(superstructure.setSuperstructureTarget(Target.IDLE)));
+
+        primary.povDown().onTrue(superstructure.intake.setPositionCommand(0));
+        primary.povUp().onTrue(superstructure.intake.setPositionCommand(1));
+
+        primary.povLeft().onTrue(superstructure.transport.manualCommand(() -> -1));
+
+        swerve.setDefaultCommand(
+                swerve.driveCommand(
+                        () -> new Vector2D(
+                                applyDeadband(-primary.getLeftY()) * MAX_VEL,
+                                applyDeadband(-primary.getLeftX()) * MAX_VEL),
+                        () -> applyDeadband(primary.getRightX()) * MAX_OMEGA_RAD_PER_SEC,
+                        () -> true
+                )
+        );
+
+        primary.options().onTrue(swerve.reserOdometryCommand(new Pose2d(new Translation2d(0, AllianceUtils.FIELD_WIDTH_METERS/2), new Rotation2d())));
 
     }
 
@@ -120,7 +149,7 @@ public class RobotContainer implements Logged {
         primaryDisconnected.set(!DriverStation.isJoystickConnected(primary.getHID().getPort()));
 
         autoNotChosen.set(autoChooser.getSelected() == null ||
-                         autoChooser.getSelected().equals("/ null Auto"));
+                autoChooser.getSelected().equals("/ null Auto"));
 
         double voltage = PowerDistributionHub.getVoltage();
         if (voltage < BATTERY_VOLTAGE_WARNING_THRESHOLD - BATTERY_VOLTAGE_HYSTERESIS) {

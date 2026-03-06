@@ -15,11 +15,11 @@ public class ShooterConstants {
     public static final int HOOD_ENCODER_ID = 34;
 
     // ===== Flywheel Constants =====
-    public static final double FLY_WHEEL_MAX_ACCELERATION = 3;
+    public static final double FLY_WHEEL_MAX_ACCELERATION = 30;
     public static final double FLY_WHEEL_TOLERANCE = 1;
     public static final double DEFAULT_FLYWHEEL_VELOCITY = 3;
     public static final double FLY_WHEEL_MAX_JERK = 0;
-    public static final Gains FLYWHEEL_GAINS = new Gains(0.1, 0, 0, 0.2, 0.12, 0, 0);
+    public static final Gains FLYWHEEL_GAINS = new Gains(0.1, 0, 0, 0.3, 0.1581, 0, 0);
 
     // ===== Hood Angle Constants =====
     public static final double HOOD_MAX_ANGLE_LIMIT_IN_TRENCH = 0.2;
@@ -29,5 +29,5 @@ public class ShooterConstants {
     public static final Gains HOOD_PID_GAINS = new Gains(13.1, 0, 0, 0.425, 0, 0, 0);
 
     // ===== Transport Constants =====
-    public static final double TRANSPORT_VOLTAGE = 2;
+    public static final double TRANSPORT_VOLTAGE = -6;
 }

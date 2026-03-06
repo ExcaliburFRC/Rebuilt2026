@@ -4,6 +4,7 @@ import com.ctre.phoenix6.hardware.CANcoder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.excalib.additional_utilities.AllianceUtils;
@@ -50,7 +51,9 @@ public class Shooter extends SubsystemBase implements Logged {
     private final Supplier<Pose2d> robotPositionSupplier;
 
     private final DoubleSupplier turretRelativeDistanceFromTarget;
+
     private DoubleSupplier flywheelVelocitySetpoint;
+    private DoubleSupplier hoodAngleSetpoint;
 
     private final EMAFilter flywheelVelocityFilter;
 
@@ -73,12 +76,15 @@ public class Shooter extends SubsystemBase implements Logged {
 
         shooterMotorGroup = new MotorGroup(flyWheelMotorLow, flyWheelMotorTop);
         shooterMotorGroup.setIdleState(IdleState.BRAKE);
+        shooterMotorGroup.setMotorPosition(0);
+        shooterMotorGroup.setVelocityConversionFactor((double) 40 / 46);
+        shooterMotorGroup.setPositionConversionFactor((double) 40 / 46);
 
         flyWheelMotorLow.setInverted(DirectionState.FORWARD);
         flyWheelMotorTop.setInverted(DirectionState.FORWARD);
 
-        flyWheelMotorTop.setCurrentLimit(100, 70);
-        flyWheelMotorLow.setCurrentLimit(100, 70);
+        flyWheelMotorTop.setCurrentLimit(120, 80);
+        flyWheelMotorLow.setCurrentLimit(120, 80);
 
         hoodEncoder.setPosition(hoodEncoder.getAbsolutePosition().getValueAsDouble());
         this.turretRelativeDistanceFromTarget = turretRelativeDistanceFromTarget;
@@ -86,7 +92,7 @@ public class Shooter extends SubsystemBase implements Logged {
         angleController = new PIDController(HOOD_PID_GAINS.kp, HOOD_PID_GAINS.ki, HOOD_PID_GAINS.kd);
         angleController.setTolerance(0.01);
 
-        hoodMotor.setIdleState(IdleState.COAST);
+        hoodMotor.setIdleState(IdleState.BRAKE);
         hoodMotor.setInverted(DirectionState.FORWARD);
         hoodAngleSupplier = () -> (hoodEncoder.getPosition().getValueAsDouble() * POSITION_CONVERSION_FACTOR);
 
@@ -94,6 +100,7 @@ public class Shooter extends SubsystemBase implements Logged {
         hoodMotor.setMotorPosition(hoodAngleSupplier.getAsDouble());
 
         flywheelVelocitySetpoint = () -> 0;
+        hoodAngleSetpoint = () -> 0;
         hoodMotor.setIdleState(IdleState.COAST);
 
         flyWheelMechanism = new FlyWheel(shooterMotorGroup, FLY_WHEEL_MAX_ACCELERATION, FLY_WHEEL_MAX_JERK, FLYWHEEL_GAINS);
@@ -160,30 +167,29 @@ public class Shooter extends SubsystemBase implements Logged {
                 }
         );
 
-//        setDefaultCommand(defaultCommand());
+        setDefaultCommand(defaultCommand());
     }
 
 
     public void initAngleMap() {
 //        angleDistanceMapTable.put(distance[meters], hood angle);
-        angleDistanceMap.put(2.16, 1.348);
-        angleDistanceMap.put(3.29, 1.248);
-        angleDistanceMap.put(4.39, 1.177);
-        angleDistanceMap.put(4.67, 1.429);
-        angleDistanceMap.put(2.49, 1.347);
-        angleDistanceMap.put(2.98, 1.346);
-        angleDistanceMap.put(4.08, 1.344);
+        angleDistanceMap.put(0.215 + Units.inchesToMeters(22.5) + (0.345 - 0.1875), 0.0);
+        angleDistanceMap.put(0.38 + Units.inchesToMeters(22.5) + (0.345 - 0.1875), 0.1);
+        angleDistanceMap.put(0.555 + Units.inchesToMeters(22.5) + (0.345 - 0.1875), 0.2);
+        angleDistanceMap.put(1.14 + Units.inchesToMeters(22.5) + (0.345 - 0.1875), 0.2);
+        angleDistanceMap.put(1.5 + Units.inchesToMeters(22.5) + (0.345 - 0.1875), 0.27);
+        angleDistanceMap.put(1.74 + Units.inchesToMeters(22.5) + (0.345 - 0.1875), 0.3);
     }
 
     public void initVelocityMap() {
 //          velocityDistanceMapTable.put(distance[meters], flywheel velocity);
-        velocityDistanceMap.put(2.16, 21.0);
-        velocityDistanceMap.put(3.29, 24.0);
-        velocityDistanceMap.put(4.39, 26.0);
-        velocityDistanceMap.put(4.67, 26.0);
-        velocityDistanceMap.put(2.49, 22.0);
-        velocityDistanceMap.put(2.98, 23.0);
-        velocityDistanceMap.put(4.08, 25.0);
+        velocityDistanceMap.put(0.215 + Units.inchesToMeters(22.5) + (0.345 - 0.1875), 25.0);
+        velocityDistanceMap.put(0.38 + Units.inchesToMeters(22.5) + (0.345 - 0.1875), 27.0);
+        velocityDistanceMap.put(0.555 + Units.inchesToMeters(22.5) + (0.345 - 0.1875), 34.0);
+        velocityDistanceMap.put(1.14 + Units.inchesToMeters(22.5) + (0.345 - 0.1875), 27.0);
+        velocityDistanceMap.put(1.5 + Units.inchesToMeters(22.5) + (0.345 - 0.1875), 32.0);
+        velocityDistanceMap.put(1.74 + Units.inchesToMeters(22.5) + (0.345 - 0.1875), 29.0);
+        velocityDistanceMap.put(2.09 + Units.inchesToMeters(22.5) + (0.345 - 0.1875), 33.0);
     }
 
     public Command setHoodAngleCommand(DoubleSupplier angleSetpoint) {
@@ -194,8 +200,8 @@ public class Shooter extends SubsystemBase implements Logged {
                                         angleSetpoint.getAsDouble()))), this);
     }
 
-    public Command setFlyWheelDynamicVelocity(DoubleSupplier vel) {
-        return flyWheelMechanism.setDynamicVelocityCommand(vel);
+    public Command setFlyWheelDynamicVelocity(DoubleSupplier vel, SubsystemBase... req) {
+        return flyWheelMechanism.setDynamicVelocityCommand(vel, req);
     }
 
     public Command setAdjustedFlyWheelVelocity() {
@@ -204,7 +210,7 @@ public class Shooter extends SubsystemBase implements Logged {
                     double distance = turretRelativeDistanceFromTarget.getAsDouble();
                     double velocity = velocityDistanceMap.get(distance);
                     flywheelVelocitySetpoint = () -> velocity;
-                    flyWheelMechanism.setDynamicVelocity(velocity); // DIRECT motor control
+                    flyWheelMechanism.setDynamicVelocity(velocity);
                 }
         );
     }
@@ -213,6 +219,7 @@ public class Shooter extends SubsystemBase implements Logged {
         return new RunCommand(
                 () -> {
                     double distance = turretRelativeDistanceFromTarget.getAsDouble();
+                    hoodAngleSetpoint = () -> hoodSoftLimit.limit(angleDistanceMap.get(distance));
                     hoodMechanism.setVoltage(
                             getPIDForAngle(
                                     () -> hoodSoftLimit.limit(angleDistanceMap.get(distance))
@@ -223,11 +230,12 @@ public class Shooter extends SubsystemBase implements Logged {
     }
 
     public Command setAdjustedTransportBehavior() {
-        return new ConditionalCommand(
-                transportMechanism.manualCommand(() -> TRANSPORT_VOLTAGE),
-                transportMechanism.manualCommand(() -> 0),
-                shootingMode
-        );
+//        return new ConditionalCommand(
+//                transportMechanism.manualCommand(() -> TRANSPORT_VOLTAGE),
+//                transportMechanism.manualCommand(() -> 0),
+//                shootingMode
+//        );
+        return transportMechanism.manualCommand(() -> TRANSPORT_VOLTAGE);
     }
 
     public Command defaultCommand() {
@@ -281,6 +289,10 @@ public class Shooter extends SubsystemBase implements Logged {
         );
     }
 
+    public Command manualTransport() {
+        return transportMechanism.manualCommand(() -> TRANSPORT_VOLTAGE);
+    }
+
     @NT
     public double getFlyWheelVelocitySetpoint() {
         return flywheelVelocitySetpoint.getAsDouble() < 0.01 ? 0 : flywheelVelocitySetpoint.getAsDouble();
@@ -289,6 +301,11 @@ public class Shooter extends SubsystemBase implements Logged {
     @NT
     public double getFlyWheelVelocity() {
         return flywheelVelocityFilter.getValue();
+    }
+
+    @NT
+    public double getHoodAngleSetpoint(){
+        return hoodAngleSetpoint.getAsDouble();
     }
 
     @NT

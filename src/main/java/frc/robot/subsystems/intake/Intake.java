@@ -25,7 +25,6 @@ public class Intake extends SubsystemBase implements Logged {
     public final TalonFXMotor fourBarMotor;
     public final TalonFXMotor rollerMotor;
 
-
     public final Mechanism rollerMotorMechanism;
     public final Arm fourBarMechanism;
 
@@ -42,9 +41,10 @@ public class Intake extends SubsystemBase implements Logged {
 
         angleEncoder = new CANcoder(ANGLE_ENCODER_ID, SUBSYSTEMS_CANBUS);
         fourBarMotor = new TalonFXMotor(FOUR_BAR_MOTOR_ID, SUBSYSTEMS_CANBUS);
-         fourBarMotor.setInverted(DirectionState.REVERSE);
+        fourBarMotor.setInverted(DirectionState.REVERSE);
         rollerMotor = new TalonFXMotor(ROLLER_MOTOR_ID, SUBSYSTEMS_CANBUS);
 
+        rollerMotor.setCurrentLimit(80,80);
         rollerMotorMechanism = new Mechanism(rollerMotor);
 
         angleSupplier = () -> (angleEncoder.getAbsolutePosition().getValueAsDouble() * (1 / 0.29));
@@ -53,7 +53,7 @@ public class Intake extends SubsystemBase implements Logged {
 
         atPositionTrigger = new Trigger(() -> (Math.abs(currentState.radPosition - angleSupplier.getAsDouble()) < INTAKE_ANGLE_TOLERANCE));
 
-        Gains ARM_POSITION_GAINS = new Gains(3, 0, 0, 0.45, 0, 0,0.82);
+        Gains ARM_POSITION_GAINS = new Gains(3, 0, 0, 0.45, 0, 0, 0.82);
         fourBarMechanism = new Arm(fourBarMotor, angleSupplier, ARM_VELOCITY_LIMIT, ARM_POSITION_GAINS, new Mass(() -> Math.cos(angleSupplier.getAsDouble()), () -> Math.sin(angleSupplier.getAsDouble()), ARM_MASS));
 
 //        setDefaultCommand(defaultCommand());
@@ -67,9 +67,20 @@ public class Intake extends SubsystemBase implements Logged {
         return fourBarMechanism.goToAngleCommand(
                 intakeAngleLimit.limit(angle),
                 (at) -> at = false,
-                0,
-                this
+                0
         );
+    }
+
+    public Command intakeCommand() {
+        Command c = setPositionCommand(1).alongWith(rollerManualCommand(7));
+        c.addRequirements(this);
+        return c;
+    }
+
+    public Command closeCommand() {
+        Command c = setPositionCommand(0).alongWith(rollerManualCommand(0));
+        c.addRequirements(this);
+        return c;
     }
 
     @Log.NT

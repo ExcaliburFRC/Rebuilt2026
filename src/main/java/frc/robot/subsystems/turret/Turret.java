@@ -33,9 +33,9 @@ public class Turret extends SubsystemBase implements Logged {
         turretAngleSupplier = () -> turretEncoder.getPosition().getValueAsDouble() * ENCODER_POSITION_CONVERSION_FACTOR;
         turretMotor.setMotorPosition(turretEncoder.getPosition().getValueAsDouble());
 
-        turretMotor.setCurrentLimit(60, 60);
+        turretMotor.setCurrentLimit(120, 80);
         this.turretRelativeAngleToTarget = turretRelativeAngleToTarget;
-        turretMotor.setInverted(DirectionState.FORWARD);
+        turretMotor.setInverted(DirectionState.REVERSE);
         turretTarget = Target.IDLE;
 
 //      turretMotor.setMotorPosition(turretAngleSupplier.getAsDouble());
@@ -43,7 +43,7 @@ public class Turret extends SubsystemBase implements Logged {
         turretMotor.setVelocityConversionFactor(MOTOR_POSITION_CONVERSION_FACTOR);
 
 
-        turretMotor.setIdleState(IdleState.COAST);
+        turretMotor.setIdleState(IdleState.BRAKE);
         turretMotor.setMotorPosition(turretAngleSupplier.getAsDouble());
 
 
@@ -53,7 +53,7 @@ public class Turret extends SubsystemBase implements Logged {
                 TURRET_GAINS,
                 PID_TOLERANCE,
                 this::getEncoderPosition,
-                new TrapezoidProfile.Constraints(Math.PI * 2, Math.PI * 100)
+                new TrapezoidProfile.Constraints(Math.PI * 60, Math.PI * 100)
         );
 
         setDefaultCommand(defaultCommand());
@@ -98,7 +98,7 @@ public class Turret extends SubsystemBase implements Logged {
     }
 
     public Command targetHubCommand() {
-        return new RunCommand(() -> turretTarget = Target.HUB, this).withTimeout(0.1);
+        return new InstantCommand(() -> turretTarget = Target.HUB, this);
     }
 
     public Command targetDeliveryCommand() {

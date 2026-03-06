@@ -10,8 +10,8 @@ public class TurretConstants {
 
     public static final int TURRET_MOTOR_ID = 42;
     public static final int TURRET_ENCODER_ID = 41;
-    public static final double MIN_LIMIT = -4.6;
-    public static final double MAX_LIMIT = 1.25;
+    public static final double MAX_LIMIT = 4.6;
+    public static final double MIN_LIMIT = -1.25;
     public static final double PID_TOLERANCE = 0.02;
 
     public static final ContinuousSoftLimit TURRET_CONTINUOUS_SOFTLIMIT = new ContinuousSoftLimit(
@@ -22,8 +22,8 @@ public class TurretConstants {
 
     public static final SoftLimit SOFT_LIMIT = new SoftLimit(() -> MIN_LIMIT, () -> MAX_LIMIT);
 //    public static final Gains TURRET_GAINS = new Gains(10, 0, 0, 0.485, 0, 0, 0);
-    public static final Gains TURRET_GAINS = new Gains(0.6, 0, 0, 0.49, 0, 0, 0);
+    public static final Gains TURRET_GAINS = new Gains(0.35, 0, 0, 0.53, 0, 0, 0);
     public static final Translation2d TURRET_OFFSET_RELATIVE_ROBOT = new Translation2d();
-    public static final double ENCODER_POSITION_CONVERSION_FACTOR = 0.2 * 2 * Math.PI;
+    public static final double ENCODER_POSITION_CONVERSION_FACTOR = -0.2 * 2 * Math.PI;
     public static final double MOTOR_POSITION_CONVERSION_FACTOR = 0.102434 * 2 * Math.PI; //
 }

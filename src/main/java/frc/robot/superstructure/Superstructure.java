@@ -51,37 +51,42 @@ public class Superstructure implements Logged {
 
     private void initDistanceTimeOfFlightMap() {
 //        distanceFlightTimeTable.put(distance[meters], flight time);
-        distanceTimeOfFlightMap.put(2.99, 0.9);
         distanceTimeOfFlightMap.put(2.38, 0.7);
+        distanceTimeOfFlightMap.put(2.99, 0.9);
         distanceTimeOfFlightMap.put(3.88, 0.95);
     }
 
     public Supplier<Translation2d> getTurretToTargetVector(Supplier<Target> target) {
-        Translation2d fieldToTargetTranslation = target.get().targetTranslation;
-        Translation2d fieldToRobot = swerve.getPose2D().getTranslation();
 
-        ChassisSpeeds robotSpeeds = swerve.getRobotRelativeSpeeds();
 
-//        Translation2d robotToTarget = (fieldToTargetTranslation.minus(fieldToRobot)).rotateBy(swerve.getRotation2D().unaryMinus()); //maybe revese (unary minus) todo
-        Translation2d robotToTarget = (fieldToTargetTranslation.minus(fieldToRobot)).rotateBy(swerve.getRotation2D().plus(Rotation2d.fromRadians(robotSpeeds.omegaRadiansPerSecond*-0.02))); //maybe revese (unary minus) todo
-        Translation2d turretToTarget = robotToTarget.minus(TURRET_OFFSET_TRANSLATION);
-
+//        return () -> {
+//            Translation2d virtualTargetOffset = new Translation2d(
+//                    robotSpeeds.vxMetersPerSecond
+//                            + TURRET_OFFSET_TRANSLATION.getY()
+//                            * robotSpeeds.omegaRadiansPerSecond,
+//
+//                    robotSpeeds.vyMetersPerSecond
+//                            + TURRET_OFFSET_TRANSLATION.getX()
+//                            * robotSpeeds.omegaRadiansPerSecond
+//            ).times(distanceTimeOfFlightMap.get(turretToTarget.getNorm()));
+//
+//
+//            Translation2d virtualTurretToTarget = turretToTarget.minus(virtualTargetOffset);
+//            return virtualTurretToTarget;
+//        };
 
         return () -> {
-            Translation2d virtualTargetOffset = new Translation2d(
-                    robotSpeeds.vxMetersPerSecond
-                            + TURRET_OFFSET_TRANSLATION.getY()
-                            * robotSpeeds.omegaRadiansPerSecond,
+            Translation2d fieldToTargetTranslation = target.get().targetTranslation;
+            Translation2d fieldToRobot = swerve.getPose2D().getTranslation();
 
-                    robotSpeeds.vyMetersPerSecond
-                            + TURRET_OFFSET_TRANSLATION.getX()
-                            * robotSpeeds.omegaRadiansPerSecond
-            ).times(distanceTimeOfFlightMap.get(turretToTarget.getNorm()));
+            ChassisSpeeds robotSpeeds = swerve.getRobotRelativeSpeeds();
 
+            Translation2d robotToTarget = (fieldToTargetTranslation.minus(fieldToRobot)).rotateBy(swerve.getRotation2D().unaryMinus()); //maybe revese (unary minus) todo
 
-            return turretToTarget.minus(virtualTargetOffset).rotateBy(Rotation2d.kPi);
+            Translation2d turretToTarget = robotToTarget.rotateBy(Rotation2d.kPi);
+            turretToTarget = turretToTarget.plus(TURRET_OFFSET_TRANSLATION);
+            return turretToTarget;
         };
-//        return () -> turretToHub;
     }
 
 
@@ -107,14 +112,14 @@ public class Superstructure implements Logged {
                 shooter.shootToHubCommand(),
                 turret.targetHubCommand(),
                 transport.transportFuelCommand()
-        );
+        ).alongWith(setSuperstructureTarget(Target.HUB));
     }
 
     public Command trackHubCommand() {
         return new ParallelCommandGroup(
                 shooter.trackHubCommand(),
                 turret.targetHubCommand()
-        );
+        ).alongWith(setSuperstructureTarget(Target.HUB));
     }
 
     public Command intakeRollerActivationCommand(double voltage) {
@@ -136,7 +141,14 @@ public class Superstructure implements Logged {
     }
 
     @Log.NT
-    public double getTurretToTargetVectorDist() {
-        return getTurretToTargetVector(() -> currentTarget).get().getNorm();
+    public double getTurretToHubVectorDist() {
+        return getTurretToTargetVector(() -> Target.HUB).get().getNorm();
     }
+
+
+    @Log.NT
+    public Pose2d getVectorToHub() {
+        return new Pose2d(getTurretToTargetVector(() -> Target.HUB).get(), new Rotation2d());
+    }
+
 }

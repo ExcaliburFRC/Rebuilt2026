@@ -9,21 +9,19 @@ import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.excalib.additional_utilities.*;
 import frc.excalib.control.math.Vector2D;
 import frc.excalib.swerve.Swerve;
 
-import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.superstructure.Superstructure;
 import frc.robot.util.AuroraPoseGetter;
 import frc.robot.util.HubTimerSubsystem;
@@ -66,8 +64,7 @@ public class RobotContainer implements Logged {
     private Pose2d lastValidVisionPose = null;
     private boolean batteryLow = false;
 
-    // ===== Diagnostic & Monitoring Systems =====
-    private final RobotDiagnostics robotDiagnostics = new RobotDiagnostics(PowerDistributionHub);
+    //    private final RobotDiagnostics robotDiagnostics = new RobotDiagnostics(PowerDistributionHub);
     private final CANHealthMonitor canHealthMonitor = new CANHealthMonitor();
     private final ControllerStateTracker primaryControllerTracker =
             new ControllerStateTracker(primary.getHID(), "Primary Controller");
@@ -78,6 +75,7 @@ public class RobotContainer implements Logged {
     public RobotContainer() {
         lowBatteryTrigger.onTrue(leds.setPattern(BLINKING, ORANGE.color).withInterruptBehavior(kCancelIncoming));
 
+        leds.restoreLEDs();
         setAutoChooser();
         configureBindings();
         registerCommands();
@@ -85,25 +83,44 @@ public class RobotContainer implements Logged {
 
     private void configureBindings() {
 
+
         primary.triangle().onTrue(superstructure.turret.targetHubCommand().alongWith(superstructure.setSuperstructureTarget(Target.HUB)));
-        primary.cross().onTrue(superstructure.turret.idleCommand().alongWith(superstructure.setSuperstructureTarget(Target.IDLE)));
+//        primary.povUp().onTrue(swerve.resetOdometryCommand(new Pose2d(new Translation2d(4.62 - Units.inchesToMeters(22.5) - 1.75 - (0.345 + 0.18), 4.03), Rotation2d.kPi)));
 
-        primary.povDown().onTrue(superstructure.intake.setPositionCommand(0));
-        primary.povUp().onTrue(superstructure.intake.setPositionCommand(1));
+//        primary.triangle().onTrue(superstructure.turret.targetHubCommand().alongWith(superstructure.setSuperstructureTarget(Target.HUB)));
+//        primary.cross().onTrue(superstructure.turret.idleCommand().alongWith(superstructure.setSuperstructureTarget(Target.IDLE)));
 
-        primary.povLeft().onTrue(superstructure.transport.manualCommand(() -> -1));
+//        primary.povDown().onTrue(superstructure.intake.closeCommand());
+//        primary.povUp().onTrue(superstructure.intake.intakeCommand());
+
+//        Command c = superstructure.shooter.setFlyWheelDynamicVelocity(() -> 27)
+//                .alongWith(superstructure.shooter.manualTransport())
+//                .alongWith(superstructure.shooter.setHoodAngleCommand(() -> 0.2))
+//                .alongWith(superstructure.transport.transportFuelCommand());
+//                .alongWith(superstructure.turret.setPositionCommand(Rotation2d::new));
+//        c.addRequirements(superstructure.shooter);
+//        primary.povUp().onTrue(c);
+//
+//        Command c1 = superstructure.shooter.setFlyWheelDynamicVelocity(() -> 0)
+//                .alongWith(superstructure.shooter.setHoodAngleCommand(() -> 0))
+//                .alongWith(superstructure.transport.manualCommand(() -> 0));
+//        c1.addRequirements(superstructure.shooter);
+//
+//
+//        primary.square().onTrue(c1);
+
 
         swerve.setDefaultCommand(
                 swerve.driveCommand(
                         () -> new Vector2D(
                                 applyDeadband(-primary.getLeftY()) * MAX_VEL,
                                 applyDeadband(-primary.getLeftX()) * MAX_VEL),
-                        () -> applyDeadband(primary.getRightX()) * MAX_OMEGA_RAD_PER_SEC,
+                        () -> -applyDeadband(primary.getRightX()) * MAX_OMEGA_RAD_PER_SEC,
                         () -> true
                 )
         );
 
-        primary.options().onTrue(swerve.reserOdometryCommand(new Pose2d(new Translation2d(0, AllianceUtils.FIELD_WIDTH_METERS/2), new Rotation2d())));
+//        primary.options().onTrue(swerve.resetOdometryCommand(new Pose2d(new Translation2d(0, AllianceUtils.FIELD_WIDTH_METERS/2), new Rotation2d())));
 
     }
 
@@ -133,19 +150,14 @@ public class RobotContainer implements Logged {
     }
 
     public void periodic() {
-        // ===== Vision System Updates =====
         Pose2d visionPose = AuroraPoseGetter.getPose2d();
-        if (VisionMeasurementValidator.isValidVisionMeasurement(visionPose, lastValidVisionPose)) {
-            swerve.m_odometry.addVisionMeasurement(visionPose, Timer.getFPGATimestamp());
-            lastValidVisionPose = visionPose;
+        if (!visionPose.equals(new Pose2d())) {
+            swerve.resetOdometry(visionPose);
         }
 
-        // ===== System Health Monitoring =====
-        robotDiagnostics.update();
-        canHealthMonitor.update();
-        primaryControllerTracker.update();
-
-        // ===== Alert Management =====
+//        robotDiagnostics.update();
+//        canHealthMonitor.update();
+//        primaryControllerTracker.update();
         primaryDisconnected.set(!DriverStation.isJoystickConnected(primary.getHID().getPort()));
 
         autoNotChosen.set(autoChooser.getSelected() == null ||
@@ -159,13 +171,9 @@ public class RobotContainer implements Logged {
         }
         lowBatteryAlert.set(batteryLow);
 
-        // ===== Performance Tracking =====
         performanceMetricsTracker.recordPowerConsumption(PowerDistributionHub.getTotalPower());
     }
 
-    /**
-     * Gets the performance metrics tracker for monitoring robot performance
-     */
     public PerformanceMetricsTracker getPerformanceMetricsTracker() {
         return performanceMetricsTracker;
     }

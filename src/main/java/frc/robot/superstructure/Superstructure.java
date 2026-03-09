@@ -6,7 +6,10 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.excalib.swerve.Swerve;
+import frc.excalib.control.math.MathUtils;
+import frc.robot.Constants;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.transport.Transport;
@@ -33,6 +36,7 @@ public class Superstructure implements Logged {
     public final InterpolatingDoubleTreeMap distanceTimeOfFlightMap;
 
     public final CommandPS5Controller controller;
+    private final Trigger deliveryTrigger;
 
     public Superstructure(CommandPS5Controller controller, Swerve swerve) {
         intake = new Intake();
@@ -46,6 +50,30 @@ public class Superstructure implements Logged {
         shooter = new Shooter(() -> getTurretToTargetVector(() -> currentTarget).get().getNorm(), swerve::getPose2D);
 
         this.controller = controller;
+
+        deliveryTrigger = new Trigger(()-> {
+            Translation2d deliveryRightPose = DELIVERY_RIGHT_POSE.get().getTranslation();
+            Translation2d deliveryLeftPose = DELIVERY_LEFT_POSE.get().getTranslation();
+            Translation2d netEndRightPose = NET_END_RIGHT_POSE.get().getTranslation();
+            Translation2d netEndLeftPose = NET_END_LEFT_POSE.get().getTranslation();
+            Translation2d targetDeliveryPose = deliveryRightPose;
+            Translation2d targetNetEndPose = netEndRightPose;
+            if (swerve.getPose2D().getTranslation().getDistance(deliveryRightPose) >
+                    swerve.getPose2D().getTranslation().getDistance(deliveryLeftPose)){
+                targetDeliveryPose = deliveryLeftPose;
+                targetNetEndPose = netEndLeftPose;
+            } else {
+                targetDeliveryPose = deliveryRightPose;
+                targetNetEndPose = netEndRightPose;
+            }
+            if (Math.abs(MathUtils.getPosesTangentAngle(swerve.getPose2D().getTranslation(), targetDeliveryPose)) >
+                    Math.abs(MathUtils.getPosesTangentAngle(swerve.getPose2D().getTranslation(), targetNetEndPose))){
+                return true;
+            } else {
+                return false;
+            }
+        });
+
 
     }
 
@@ -105,12 +133,32 @@ public class Superstructure implements Logged {
 
         return () -> turretToDelivery;
     }
+    public Command shootToDeliveryCommand(){
+        Translation2d deliveryRightPose = DELIVERY_RIGHT_POSE.get().getTranslation();
+        Translation2d deliveryLeftPose = DELIVERY_LEFT_POSE.get().getTranslation();
+        Translation2d targetDeliveryPose = deliveryRightPose;
+        if (swerve.getPose2D().getTranslation().getDistance(deliveryRightPose) >
+                swerve.getPose2D().getTranslation().getDistance(deliveryLeftPose)){
+            targetDeliveryPose = deliveryLeftPose;
+        } else {
+            targetDeliveryPose = deliveryRightPose;
+        }
+        return new ConditionalCommand(
+                turret.targetDeliveryCommand(),
+                new ParallelCommandGroup(
+                shooter.shootToDeliveryCommand(),
+//              turret.targetDeliveryCommand(),
+                transport.transportFuelCommand()
+        ).alongWith(setSuperstructureTarget(Target.DELIVERY)),
+                deliveryTrigger
+        );
+    }
 
 
     public Command shootToHubCommand() {
         return new ParallelCommandGroup(
                 shooter.shootToHubCommand(),
-                turret.targetHubCommand(),
+//                turret.targetHubCommand(),
                 transport.transportFuelCommand()
         ).alongWith(setSuperstructureTarget(Target.HUB));
     }

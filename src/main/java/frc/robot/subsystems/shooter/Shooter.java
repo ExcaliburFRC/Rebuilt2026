@@ -65,7 +65,8 @@ public class Shooter extends SubsystemBase implements Logged {
     private Target shooterTarget = IDLE;
     private BooleanSupplier shootingMode = () -> false;
 
-    private final Trigger isShootingModeOnTrigger = new Trigger(() -> shootingMode.getAsBoolean());
+    private Trigger activateLedsTrigger;
+
 
     public Shooter(DoubleSupplier turretRelativeDistanceFromTarget, Supplier<Pose2d> poseSupplier) {
         hoodMotor = new TalonFXMotor(HOOD_MOTOR_ID, SUBSYSTEMS_CANBUS);
@@ -77,8 +78,8 @@ public class Shooter extends SubsystemBase implements Logged {
         shooterMotorGroup = new MotorGroup(flyWheelMotorLow, flyWheelMotorTop);
         shooterMotorGroup.setIdleState(IdleState.BRAKE);
         shooterMotorGroup.setMotorPosition(0);
-        shooterMotorGroup.setVelocityConversionFactor((double) 40 / 46);
-        shooterMotorGroup.setPositionConversionFactor((double) 40 / 46);
+        shooterMotorGroup.setVelocityConversionFactor((double) 40 / 48);
+        shooterMotorGroup.setPositionConversionFactor((double) 40 / 48);
 
         flyWheelMotorLow.setInverted(DirectionState.FORWARD);
         flyWheelMotorTop.setInverted(DirectionState.FORWARD);
@@ -126,22 +127,13 @@ public class Shooter extends SubsystemBase implements Logged {
         initVelocityMap();
 
 
-        isShootingModeOnTrigger.onTrue(
+        activateLedsTrigger = new Trigger(()-> flyWheelMechanism.getVelocity() > 3);
+        activateLedsTrigger.onTrue(
                 LEDs.getInstance().setPattern(
-                        LEDs.LEDPattern.TRAIN_CIRCLE,
-                        Color.Colors.PURPLE.color,
-                        Color.Colors.OFF.color
-                ).andThen(new WaitCommand(0.5)).andThen(
-                        LEDs.getInstance().setPattern(
-                                LEDs.LEDPattern.SOLID,
-                                Color.Colors.GREEN.color
-                        )));
-
-        isShootingModeOnTrigger.onFalse(LEDs.getInstance().setPattern(
-                LEDs.LEDPattern.EXPAND,
-                Color.Colors.TEAM_BLUE.color,
-                Color.Colors.TEAM_GOLD.color));
-
+                        LEDs.LEDPattern.BLINKING,
+                        Color.Colors.TEAM_BLUE.color
+                ).andThen(LEDs.getInstance().restoreLEDs())
+        );
         volitileTrenchHoodTrigger = new Trigger(
                 () -> {
                     Pose2d pose = poseSupplier.get();
@@ -173,23 +165,18 @@ public class Shooter extends SubsystemBase implements Logged {
 
     public void initAngleMap() {
 //        angleDistanceMapTable.put(distance[meters], hood angle);
-        angleDistanceMap.put(0.215 + Units.inchesToMeters(22.5) + (0.345 - 0.1875), 0.0);
-        angleDistanceMap.put(0.38 + Units.inchesToMeters(22.5) + (0.345 - 0.1875), 0.1);
-        angleDistanceMap.put(0.555 + Units.inchesToMeters(22.5) + (0.345 - 0.1875), 0.2);
-        angleDistanceMap.put(1.14 + Units.inchesToMeters(22.5) + (0.345 - 0.1875), 0.2);
-        angleDistanceMap.put(1.5 + Units.inchesToMeters(22.5) + (0.345 - 0.1875), 0.27);
-        angleDistanceMap.put(1.74 + Units.inchesToMeters(22.5) + (0.345 - 0.1875), 0.3);
+        angleDistanceMap.put(4.95, 0.6);
+        angleDistanceMap.put(3.2, 0.29);
+        angleDistanceMap.put(1.57, 0.0);
+
     }
 
     public void initVelocityMap() {
 //          velocityDistanceMapTable.put(distance[meters], flywheel velocity);
-        velocityDistanceMap.put(0.215 + Units.inchesToMeters(22.5) + (0.345 - 0.1875), 25.0);
-        velocityDistanceMap.put(0.38 + Units.inchesToMeters(22.5) + (0.345 - 0.1875), 27.0);
-        velocityDistanceMap.put(0.555 + Units.inchesToMeters(22.5) + (0.345 - 0.1875), 34.0);
-        velocityDistanceMap.put(1.14 + Units.inchesToMeters(22.5) + (0.345 - 0.1875), 27.0);
-        velocityDistanceMap.put(1.5 + Units.inchesToMeters(22.5) + (0.345 - 0.1875), 32.0);
-        velocityDistanceMap.put(1.74 + Units.inchesToMeters(22.5) + (0.345 - 0.1875), 29.0);
-        velocityDistanceMap.put(2.09 + Units.inchesToMeters(22.5) + (0.345 - 0.1875), 33.0);
+        velocityDistanceMap.put(4.95, 42.0);
+        velocityDistanceMap.put(3.2, 35.86);
+        velocityDistanceMap.put(1.57, 30.0);
+
     }
 
     public Command setHoodAngleCommand(DoubleSupplier angleSetpoint) {
@@ -304,7 +291,7 @@ public class Shooter extends SubsystemBase implements Logged {
     }
 
     @NT
-    public double getHoodAngleSetpoint(){
+    public double getHoodAngleSetpoint() {
         return hoodAngleSetpoint.getAsDouble();
     }
 

@@ -61,7 +61,6 @@ public class RobotContainer implements Logged {
     private final Trigger lowBatteryTrigger = new Trigger(lowBatteryAlert::get);
 
     // ===== Vision System State =====
-    private Pose2d lastValidVisionPose = null;
     private boolean batteryLow = false;
 
     //    private final RobotDiagnostics robotDiagnostics = new RobotDiagnostics(PowerDistributionHub);
@@ -73,9 +72,9 @@ public class RobotContainer implements Logged {
 
 
     public RobotContainer() {
-        lowBatteryTrigger.onTrue(leds.setPattern(BLINKING, ORANGE.color).withInterruptBehavior(kCancelIncoming));
 
-        leds.restoreLEDs();
+//        lowBatteryTrigger.onTrue(leds.setPattern(BLINKING, ORANGE.color).withInterruptBehavior(kCancelIncoming));
+
         setAutoChooser();
         configureBindings();
         registerCommands();
@@ -84,30 +83,15 @@ public class RobotContainer implements Logged {
     private void configureBindings() {
 
 
-        primary.triangle().onTrue(superstructure.turret.targetHubCommand().alongWith(superstructure.setSuperstructureTarget(Target.HUB)));
-//        primary.povUp().onTrue(swerve.resetOdometryCommand(new Pose2d(new Translation2d(4.62 - Units.inchesToMeters(22.5) - 1.75 - (0.345 + 0.18), 4.03), Rotation2d.kPi)));
+        primary.triangle().onTrue(superstructure.shootToHubCommand().alongWith(superstructure.setSuperstructureTarget(Target.HUB)));
 
-//        primary.triangle().onTrue(superstructure.turret.targetHubCommand().alongWith(superstructure.setSuperstructureTarget(Target.HUB)));
-//        primary.cross().onTrue(superstructure.turret.idleCommand().alongWith(superstructure.setSuperstructureTarget(Target.IDLE)));
-
-//        primary.povDown().onTrue(superstructure.intake.closeCommand());
-//        primary.povUp().onTrue(superstructure.intake.intakeCommand());
-
-//        Command c = superstructure.shooter.setFlyWheelDynamicVelocity(() -> 27)
-//                .alongWith(superstructure.shooter.manualTransport())
-//                .alongWith(superstructure.shooter.setHoodAngleCommand(() -> 0.2))
-//                .alongWith(superstructure.transport.transportFuelCommand());
+        Command c = superstructure.shooter.setFlyWheelDynamicVelocity(() -> 30)
+                .alongWith(superstructure.shooter.manualTransport())
+                .alongWith(superstructure.shooter.setHoodAngleCommand(() -> 0))
+                .alongWith(superstructure.transport.transportFuelCommand());
 //                .alongWith(superstructure.turret.setPositionCommand(Rotation2d::new));
-//        c.addRequirements(superstructure.shooter);
-//        primary.povUp().onTrue(c);
-//
-//        Command c1 = superstructure.shooter.setFlyWheelDynamicVelocity(() -> 0)
-//                .alongWith(superstructure.shooter.setHoodAngleCommand(() -> 0))
-//                .alongWith(superstructure.transport.manualCommand(() -> 0));
-//        c1.addRequirements(superstructure.shooter);
-//
-//
-//        primary.square().onTrue(c1);
+        c.addRequirements(superstructure.shooter);
+        primary.povUp().onTrue(c);
 
 
         swerve.setDefaultCommand(
@@ -120,7 +104,6 @@ public class RobotContainer implements Logged {
                 )
         );
 
-//        primary.options().onTrue(swerve.resetOdometryCommand(new Pose2d(new Translation2d(0, AllianceUtils.FIELD_WIDTH_METERS/2), new Rotation2d())));
 
     }
 

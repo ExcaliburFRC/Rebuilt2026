@@ -68,15 +68,15 @@ public final class Constants {
                         -TRACK_WIDTH / 2, -TRACK_WIDTH / 2
                 );
 
-        public static final double MAX_MODULE_VEL = 2.5;
-        public static final double MAX_VEL = 3.5;
+        public static final double MAX_MODULE_VEL = 3.5;
+        public static final double MAX_VEL = 2.5;
 
-        public static final double MAX_FRONT_ACC = 10;
-        public static final double MAX_SIDE_ACC = 10;
-        public static final double MAX_SKID_ACC = 10;
-        public static final double MAX_FORWARD_ACC = 3;
-        public static final double MAX_OMEGA_RAD_PER_SEC = 3.5;
-        public static final double MAX_OMEGA_RAD_PER_SEC_SQUARE = 2;
+        public static final double MAX_FRONT_ACC = 1;
+        public static final double MAX_SIDE_ACC = 1;
+        public static final double MAX_SKID_ACC = 1;
+        public static final double MAX_FORWARD_ACC = 1;
+        public static final double MAX_OMEGA_RAD_PER_SEC = 1.5;
+        public static final double MAX_OMEGA_RAD_PER_SEC_SQUARE = 1;
 
         public static final PathConstraints MAX_PATH_CONSTRAINTS = new PathConstraints(
                 MAX_VEL,
@@ -174,9 +174,13 @@ public final class Constants {
         public static final AllianceUtils.AlliancePose BLUE_HUB_CENTER_POSE = new
                 AllianceUtils.AlliancePose(4.62, 4.03, 0);
         public static final AllianceUtils.AlliancePose DELIVERY_RIGHT_POSE = new
-                AllianceUtils.AlliancePose(2, 6.523, 0);
+                AllianceUtils.AlliancePose(2, 7.41, 0);
         public static final AllianceUtils.AlliancePose DELIVERY_LEFT_POSE = new
-                AllianceUtils.AlliancePose(2, 2.172, 0);
+                AllianceUtils.AlliancePose(2, 0.63, 0);
+        public static final AllianceUtils.AlliancePose NET_END_RIGHT_POSE = new
+                AllianceUtils.AlliancePose(4.62, 3.29,0);
+        public static final AllianceUtils.AlliancePose NET_END_LEFT_POSE = new
+                AllianceUtils.AlliancePose(4.62, 4.77, 0);
         public static final Translation3d BLUE_CLIMB_TOWER_POSE_L1 = new
                 Translation3d(1.05, 3.74, 0.6858);
         public static final Translation3d BLUE_CLIMB_TOWER_POSE_L2 = new
@@ -201,6 +205,6 @@ public final class Constants {
     }
 
     public static class PhysicalConstants {
-        public static final Translation2d TURRET_OFFSET_TRANSLATION = new Translation2d(-0.18752, 0); //todo robot to turret
+        public static final Translation2d TURRET_OFFSET_TRANSLATION = new Translation2d(-0.16011, 0); //todo robot to turret
     }
 }

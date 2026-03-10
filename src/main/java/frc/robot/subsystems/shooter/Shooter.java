@@ -79,7 +79,26 @@ public class Shooter extends SubsystemBase implements Logged {
         shooterMotorGroup.setIdleState(IdleState.BRAKE);
         shooterMotorGroup.setMotorPosition(0);
         shooterMotorGroup.setVelocityConversionFactor((double) 40 / 48);
-        shooterMotorGroup.setPositionConversionFactor((double) 40 / 48);
+        shooterMotorGroup.setPositionConversionFactor((double) 40 / 48
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        );
 
         flyWheelMotorLow.setInverted(DirectionState.FORWARD);
         flyWheelMotorTop.setInverted(DirectionState.FORWARD);

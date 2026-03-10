@@ -104,7 +104,7 @@ public class Superstructure implements Logged {
 //        };
 
         return () -> {
-            Translation2d fieldToTargetTranslation = target.get().targetTranslation;
+            Translation2d fieldToTargetTranslation = target.get().getTargetTranslation();
             Translation2d fieldToRobot = swerve.getPose2D().getTranslation();
 
             ChassisSpeeds robotSpeeds = swerve.getRobotRelativeSpeeds();
@@ -133,6 +133,7 @@ public class Superstructure implements Logged {
 
         return () -> turretToDelivery;
     }
+
     public Command shootToDeliveryCommand(){
         Translation2d deliveryRightPose = DELIVERY_RIGHT_POSE.get().getTranslation();
         Translation2d deliveryLeftPose = DELIVERY_LEFT_POSE.get().getTranslation();
@@ -153,7 +154,6 @@ public class Superstructure implements Logged {
                 deliveryTrigger
         );
     }
-
 
     public Command shootToHubCommand() {
         return new ParallelCommandGroup(

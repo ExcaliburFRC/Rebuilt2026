@@ -29,6 +29,8 @@ import frc.excalib.slam.mapper.VisionMeasurementValidator;
 import frc.robot.util.Target;
 import monologue.Logged;
 
+import java.util.function.Supplier;
+
 import static edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior.*;
 import static frc.excalib.additional_utilities.Color.Colors.*;
 import static frc.excalib.additional_utilities.LEDs.LEDPattern.*;
@@ -82,8 +84,8 @@ public class RobotContainer implements Logged {
 
     private void configureBindings() {
 
-
-        primary.triangle().onTrue(superstructure.shootToHubCommand().alongWith(superstructure.setSuperstructureTarget(Target.HUB)));
+        primary.square().onTrue(superstructure.turret.setPositionCommand(() -> Rotation2d.fromRadians(1.51)));
+        primary.circle().onTrue(superstructure.turret.setPositionCommand(() -> Rotation2d.fromRadians(0)));
 
         Command c = superstructure.shooter.setFlyWheelDynamicVelocity(() -> 30)
                 .alongWith(superstructure.shooter.manualTransport())

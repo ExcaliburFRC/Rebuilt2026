@@ -152,7 +152,7 @@ public final class Constants {
                                     new TalonFXMotor(BACK_RIGHT_DRIVE_ID, SWERVE_CANBUS),
                                     new TalonFXMotor(BACK_RIGHT_ROTATION_ID, SWERVE_CANBUS),
                                     new Gains(5.2, 0, 0, 0, 0, 0, 0),
-                                    new Gains(0, 0, 0, 0.42, 2.065*0.976, 0, 0),
+                                    new Gains(0, 0, 0, 0.42, 2.065 * 0.976, 0, 0),
                                     PID_TOLERANCE,
                                     BACK_RIGHT_TRANSLATION,
                                     () -> BACK_RIGHT_ABS_ENCODER.getAbsolutePosition().getValueAsDouble() * 2 * Math.PI,
@@ -172,13 +172,13 @@ public final class Constants {
     public static class FieldConstants {
         // all the units of length are in meters
         public static final AllianceUtils.AlliancePose BLUE_HUB_CENTER_POSE = new
-                AllianceUtils.AlliancePose(4.62, 4.03, 0);
+                AllianceUtils.AlliancePose(4.0218614 + Units.inchesToMeters(22.5), 4.0346376, 0);
         public static final AllianceUtils.AlliancePose DELIVERY_RIGHT_POSE = new
                 AllianceUtils.AlliancePose(2, 7.41, 0);
         public static final AllianceUtils.AlliancePose DELIVERY_LEFT_POSE = new
                 AllianceUtils.AlliancePose(2, 0.63, 0);
         public static final AllianceUtils.AlliancePose NET_END_RIGHT_POSE = new
-                AllianceUtils.AlliancePose(4.62, 3.29,0);
+                AllianceUtils.AlliancePose(4.62, 3.29, 0);
         public static final AllianceUtils.AlliancePose NET_END_LEFT_POSE = new
                 AllianceUtils.AlliancePose(4.62, 4.77, 0);
         public static final Translation3d BLUE_CLIMB_TOWER_POSE_L1 = new
@@ -188,13 +188,13 @@ public final class Constants {
         public static final Translation3d BLUE_CLIMB_TOWER_POSE_L3 = new
                 Translation3d(1.05, 3.74, 1.6002);
         public static final AllianceUtils.AlliancePose BLUE_OUTPOST_POSE_CENTER = new
-                AllianceUtils.AlliancePose(0, 0.63,0);
+                AllianceUtils.AlliancePose(0, 0.63, 0);
         public static final AllianceUtils.AlliancePose BLUE_DOWN_FIELD_TRENCH_POSE = new
-                AllianceUtils.AlliancePose(4.62, 0.63,0);
+                AllianceUtils.AlliancePose(4.62, 0.63, 0);
         public static final AllianceUtils.AlliancePose BLUE_UP_FIELD_TRENCH_POSE = new
-                AllianceUtils.AlliancePose(4.62, 7.43,0);
+                AllianceUtils.AlliancePose(4.62, 7.43, 0);
         public static final AllianceUtils.AlliancePose BLUE_UP_FIELD_PICKUP_FUEL_PLACEMENT = new
-                AllianceUtils.AlliancePose(0.39, 6.06,0);
+                AllianceUtils.AlliancePose(0.39, 6.06, 0);
 
         public static final double FUEL_DIAMETER = 0.15;
 
@@ -205,6 +205,6 @@ public final class Constants {
     }
 
     public static class PhysicalConstants {
-        public static final Translation2d TURRET_OFFSET_TRANSLATION = new Translation2d(-0.16011, 0); //todo robot to turret
+        public static final Translation2d TURRET_OFFSET_TRANSLATION = new Translation2d(-0.19, 0); //todo robot to turret
     }
 }

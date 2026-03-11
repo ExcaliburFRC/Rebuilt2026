@@ -21,7 +21,7 @@ public class Transport extends SubsystemBase implements Logged {
         drumMechanism = new FlyWheel(drumMotor, MAX_ACCELERATION, MAX_JERK, GAINS);
 
         drumMotor.setCurrentLimit(120,70);
-//        setDefaultCommand(transportFuelCommand());
+        setDefaultCommand(transportFuelCommand());
     }
 
 
@@ -29,9 +29,7 @@ public class Transport extends SubsystemBase implements Logged {
         return drumMechanism.manualCommand(output, this);
     }
 
-    public Command
-
-    transportFuelCommand() {
-        return drumMechanism.manualCommand(()-> -5, this);
+    public Command transportFuelCommand() {
+        return drumMechanism.manualCommand(()-> 0, this);
     }
 }

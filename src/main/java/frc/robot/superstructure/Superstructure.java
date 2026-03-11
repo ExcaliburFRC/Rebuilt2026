@@ -31,7 +31,7 @@ public class Superstructure implements Logged {
     public final Turret turret;
     public final Swerve swerve;
 
-    public Target currentTarget = Target.IDLE;
+    public Target currentTarget = Target.HUB;
 
     public final InterpolatingDoubleTreeMap distanceTimeOfFlightMap;
 
@@ -51,7 +51,7 @@ public class Superstructure implements Logged {
 
         this.controller = controller;
 
-        deliveryTrigger = new Trigger(()-> {
+        deliveryTrigger = new Trigger(() -> {
             Translation2d deliveryRightPose = DELIVERY_RIGHT_POSE.get().getTranslation();
             Translation2d deliveryLeftPose = DELIVERY_LEFT_POSE.get().getTranslation();
             Translation2d netEndRightPose = NET_END_RIGHT_POSE.get().getTranslation();
@@ -59,7 +59,7 @@ public class Superstructure implements Logged {
             Translation2d targetDeliveryPose = deliveryRightPose;
             Translation2d targetNetEndPose = netEndRightPose;
             if (swerve.getPose2D().getTranslation().getDistance(deliveryRightPose) >
-                    swerve.getPose2D().getTranslation().getDistance(deliveryLeftPose)){
+                    swerve.getPose2D().getTranslation().getDistance(deliveryLeftPose)) {
                 targetDeliveryPose = deliveryLeftPose;
                 targetNetEndPose = netEndLeftPose;
             } else {
@@ -67,7 +67,7 @@ public class Superstructure implements Logged {
                 targetNetEndPose = netEndRightPose;
             }
             if (Math.abs(MathUtils.getPosesTangentAngle(swerve.getPose2D().getTranslation(), targetDeliveryPose)) >
-                    Math.abs(MathUtils.getPosesTangentAngle(swerve.getPose2D().getTranslation(), targetNetEndPose))){
+                    Math.abs(MathUtils.getPosesTangentAngle(swerve.getPose2D().getTranslation(), targetNetEndPose))) {
                 return true;
             } else {
                 return false;
@@ -104,16 +104,25 @@ public class Superstructure implements Logged {
 //        };
 
         return () -> {
-            Translation2d fieldToTargetTranslation = target.get().getTargetTranslation();
-            Translation2d fieldToRobot = swerve.getPose2D().getTranslation();
 
-            ChassisSpeeds robotSpeeds = swerve.getRobotRelativeSpeeds();
+            Pose2d robotPose = swerve.getPose2D();
+            Translation2d robotPos = robotPose.getTranslation();
+            Rotation2d robotRot = robotPose.getRotation();
 
-            Translation2d robotToTarget = (fieldToTargetTranslation.minus(fieldToRobot)).rotateBy(swerve.getRotation2D().unaryMinus()); //maybe revese (unary minus) todo
+            // turret position in field coordinates
+            Translation2d turretField =
+                    robotPos.plus(TURRET_OFFSET_TRANSLATION.rotateBy(robotRot));
 
-            Translation2d turretToTarget = robotToTarget.rotateBy(Rotation2d.kPi);
-            turretToTarget = turretToTarget.plus(TURRET_OFFSET_TRANSLATION);
-            return turretToTarget;
+            // vector from turret to target in field frame
+            Translation2d fieldVector =
+                    target.get().getTargetTranslation().minus(turretField);
+
+            // convert vector into robot frame
+            Translation2d robotVector =
+                    fieldVector.rotateBy(robotRot.unaryMinus());
+
+            // turret zero = robot 180°, rotate vector by -180°
+            return robotVector.rotateBy(Rotation2d.fromDegrees(-180));
         };
     }
 
@@ -134,12 +143,12 @@ public class Superstructure implements Logged {
         return () -> turretToDelivery;
     }
 
-    public Command shootToDeliveryCommand(){
+    public Command shootToDeliveryCommand() {
         Translation2d deliveryRightPose = DELIVERY_RIGHT_POSE.get().getTranslation();
         Translation2d deliveryLeftPose = DELIVERY_LEFT_POSE.get().getTranslation();
         Translation2d targetDeliveryPose = deliveryRightPose;
         if (swerve.getPose2D().getTranslation().getDistance(deliveryRightPose) >
-                swerve.getPose2D().getTranslation().getDistance(deliveryLeftPose)){
+                swerve.getPose2D().getTranslation().getDistance(deliveryLeftPose)) {
             targetDeliveryPose = deliveryLeftPose;
         } else {
             targetDeliveryPose = deliveryRightPose;
@@ -147,10 +156,10 @@ public class Superstructure implements Logged {
         return new ConditionalCommand(
                 turret.targetDeliveryCommand(),
                 new ParallelCommandGroup(
-                shooter.shootToDeliveryCommand(),
+                        shooter.shootToDeliveryCommand(),
 //              turret.targetDeliveryCommand(),
-                transport.transportFuelCommand()
-        ).alongWith(setSuperstructureTarget(Target.DELIVERY)),
+                        transport.transportFuelCommand()
+                ).alongWith(setSuperstructureTarget(Target.DELIVERY)),
                 deliveryTrigger
         );
     }
@@ -158,7 +167,7 @@ public class Superstructure implements Logged {
     public Command shootToHubCommand() {
         return new ParallelCommandGroup(
                 shooter.shootToHubCommand(),
-//                turret.targetHubCommand(),
+                turret.targetHubCommand(),
                 transport.transportFuelCommand()
         ).alongWith(setSuperstructureTarget(Target.HUB));
     }
@@ -197,6 +206,23 @@ public class Superstructure implements Logged {
     @Log.NT
     public Pose2d getVectorToHub() {
         return new Pose2d(getTurretToTargetVector(() -> Target.HUB).get(), new Rotation2d());
+    }
+
+    @Log.NT
+    public Pose2d getTurretOnField() {
+        Pose2d robotPose = swerve.getPose2D();
+        Translation2d robotPos = robotPose.getTranslation();
+        Rotation2d robotRot = robotPose.getRotation();
+
+        // turret position in field coordinates
+        Translation2d turretField =
+                robotPos.plus(TURRET_OFFSET_TRANSLATION.rotateBy(robotRot));
+
+        return new Pose2d(turretField, Rotation2d.fromRadians(
+                swerve.getPose2D().getRotation().getRadians() -
+                        Math.PI +
+                        turret.turretMechanism.getPosition().getRadians()
+        ));
     }
 
 }

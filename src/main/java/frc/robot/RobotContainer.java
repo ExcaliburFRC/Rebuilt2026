@@ -84,17 +84,9 @@ public class RobotContainer implements Logged {
 
     private void configureBindings() {
 
-        primary.square().onTrue(superstructure.turret.setPositionCommand(() -> Rotation2d.fromRadians(1.51)));
-        primary.circle().onTrue(superstructure.turret.setPositionCommand(() -> Rotation2d.fromRadians(0)));
 
-        Command c = superstructure.shooter.setFlyWheelDynamicVelocity(() -> 30)
-                .alongWith(superstructure.shooter.manualTransport())
-                .alongWith(superstructure.shooter.setHoodAngleCommand(() -> 0))
-                .alongWith(superstructure.transport.transportFuelCommand());
-//                .alongWith(superstructure.turret.setPositionCommand(Rotation2d::new));
-        c.addRequirements(superstructure.shooter);
-        primary.povUp().onTrue(c);
-
+        primary.square().onTrue(superstructure.shootToHubCommand());
+//
 
         swerve.setDefaultCommand(
                 swerve.driveCommand(

@@ -1,6 +1,9 @@
 package frc.robot.subsystems.shooter;
 
+import com.ctre.phoenix6.StatusCode;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.wpilibj.DriverStation;
+import frc.excalib.additional_utilities.Alliance;
 import frc.excalib.control.gains.Gains;
 
 /**
@@ -20,6 +23,8 @@ public class ShooterConstants {
     public static final double DEFAULT_FLYWHEEL_VELOCITY = 3;
     public static final double FLY_WHEEL_MAX_JERK = 0;
     public static final Gains FLYWHEEL_GAINS = new Gains(0.1, 0, 0, 0.3, 0.1581, 0, 0);
+//    public static final Gains FLYWHEEL_GAINS = new Gains(0, 0, 0, 0, 0, 0, 0);
+//    public static final Gains FLYWHEEL_GAINS = new Gains(0, 0, 0, 0, 0, 0, 0);
 
     // ===== Hood Angle Constants =====
     public static final double HOOD_MAX_ANGLE_LIMIT_IN_TRENCH = 0.2;
@@ -29,5 +34,7 @@ public class ShooterConstants {
     public static final Gains HOOD_PID_GAINS = new Gains(13.1, 0, 0, 0.425, 0, 0, 0);
 
     // ===== Transport Constants =====
-    public static final double TRANSPORT_VOLTAGE = -6;
+    public static final double TRANSPORT_VOLTAGE = -4;
 }
+
+

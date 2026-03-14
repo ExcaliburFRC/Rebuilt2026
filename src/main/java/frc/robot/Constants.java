@@ -33,7 +33,8 @@ public final class Constants {
 
     public static final CANBus SUBSYSTEMS_CANBUS = new CANBus("");
 
-    public static class SwerveConstants {
+    public static class SwerveConstants
+    {
         public static final int FRONT_RIGHT_DRIVE_ID = 10;
         public static final int FRONT_LEFT_DRIVE_ID = 20;
         public static final int BACK_LEFT_DRIVE_ID = 30;
@@ -172,7 +173,7 @@ public final class Constants {
     public static class FieldConstants {
         // all the units of length are in meters
         public static final AllianceUtils.AlliancePose BLUE_HUB_CENTER_POSE = new
-                AllianceUtils.AlliancePose(4.0218614 + Units.inchesToMeters(22.5), 4.0346376, 0);
+                AllianceUtils.AlliancePose(4.69115, 4.03, 0);
         public static final AllianceUtils.AlliancePose DELIVERY_RIGHT_POSE = new
                 AllianceUtils.AlliancePose(2, 7.41, 0);
         public static final AllianceUtils.AlliancePose DELIVERY_LEFT_POSE = new
@@ -205,6 +206,6 @@ public final class Constants {
     }
 
     public static class PhysicalConstants {
-        public static final Translation2d TURRET_OFFSET_TRANSLATION = new Translation2d(-0.19, 0); //todo robot to turret
+        public static final Translation2d TURRET_OFFSET_TRANSLATION = new Translation2d(-0.195, 0); //todo robot to turret
     }
 }

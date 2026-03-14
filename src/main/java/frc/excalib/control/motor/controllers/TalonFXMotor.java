@@ -80,7 +80,7 @@ public class TalonFXMotor extends TalonFX implements Motor {
         signals.add(velocitySignal);
         signals.add(currentSignal);
         signals.add(voltageSignal);
-        signals.add(temperatureSignal);
+//        signals.add(temperatureSignal);
 
 
         motors.add(this);

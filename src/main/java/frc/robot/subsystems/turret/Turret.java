@@ -3,6 +3,8 @@ package frc.robot.subsystems.turret;
 import com.ctre.phoenix6.hardware.CANcoder;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.Unit;
 import edu.wpi.first.wpilibj2.command.*;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
 import frc.excalib.control.motor.motor_specs.DirectionState;
@@ -24,9 +26,10 @@ public class Turret extends SubsystemBase implements Logged {
     public final DoubleSupplier turretAngleSupplier;
     public final CANcoder turretEncoder;
     public final DoubleSupplier turretRelativeAngleToTarget;
+    public final DoubleSupplier robotAngle;
     public Target turretTarget;
 
-    public Turret(DoubleSupplier turretRelativeAngleToTarget) {
+    public Turret(DoubleSupplier turretRelativeAngleToTarget, DoubleSupplier robotAngle) {
         turretMotor = new TalonFXMotor(TURRET_MOTOR_ID, SUBSYSTEMS_CANBUS);
         turretEncoder = new CANcoder(TURRET_ENCODER_ID, SUBSYSTEMS_CANBUS);
         turretEncoder.setPosition(turretEncoder.getAbsolutePosition().getValueAsDouble());
@@ -38,12 +41,13 @@ public class Turret extends SubsystemBase implements Logged {
         turretMotor.setInverted(DirectionState.REVERSE);
         turretTarget = Target.HUB;
 
+        this.robotAngle = robotAngle;
 //      turretMotor.setMotorPosition(turretAngleSupplier.getAsDouble());
         turretMotor.setPositionConversionFactor(MOTOR_POSITION_CONVERSION_FACTOR);
         turretMotor.setVelocityConversionFactor(MOTOR_POSITION_CONVERSION_FACTOR);
 
 
-        turretMotor.setIdleState(IdleState.COAST);
+        turretMotor.setIdleState(IdleState.BRAKE);
         turretMotor.setMotorPosition(turretAngleSupplier.getAsDouble());
 
 
@@ -56,7 +60,6 @@ public class Turret extends SubsystemBase implements Logged {
                 new TrapezoidProfile.Constraints(Math.PI * 60, Math.PI * 100)
         );
 
-        setDefaultCommand(defaultCommand());
     }
 
 
@@ -122,6 +125,25 @@ public class Turret extends SubsystemBase implements Logged {
     @Log.NT
     public String getTarget() {
         return turretTarget.name();
+    }
+
+    @Log.NT
+    public double getTurretOnFieldAngle() {
+        return Units.radiansToDegrees(robotAngle.getAsDouble() + (turretMechanism.getPosition().getRadians()) - Math.PI);
+    }
+
+    public Command setPositionFieldRelative(double angle) {
+        return setPositionCommand(
+                () -> new Rotation2d(
+                        (Math.PI - robotAngle.getAsDouble() + angle)
+                )
+        );
+    }
+
+    @Log.NT
+    public double getEitanChoenAngle(){
+        return Units.radiansToDegrees(Math.PI - robotAngle.getAsDouble())
+                ;
     }
 
 }

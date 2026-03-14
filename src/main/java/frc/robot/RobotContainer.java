@@ -85,7 +85,7 @@ public class RobotContainer implements Logged {
     private void configureBindings() {
 
 
-        primary.square().onTrue(superstructure.shootToHubCommand());
+        primary.square().onTrue(superstructure.trackHubCommand());
 //
 
         swerve.setDefaultCommand(

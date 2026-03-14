@@ -2,11 +2,11 @@ package frc.robot.superstructure;
 
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.excalib.slam.mapper.AuroraClient;
 import frc.excalib.swerve.Swerve;
 import frc.excalib.control.math.MathUtils;
 import frc.robot.Constants;
@@ -18,7 +18,6 @@ import frc.robot.util.Target;
 import monologue.Annotations.Log;
 import monologue.Logged;
 
-import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 import static frc.robot.Constants.FieldConstants.*;
@@ -46,8 +45,10 @@ public class Superstructure implements Logged {
         distanceTimeOfFlightMap = new InterpolatingDoubleTreeMap();
         initDistanceTimeOfFlightMap();
 
-        turret = new Turret(() -> getTurretToTargetVector(() -> currentTarget).get().getAngle().getRadians());
+        turret = new Turret(() -> getTurretToTargetVector(() -> currentTarget).get().getAngle().getRadians(), () -> swerve.getRotation2D().getRadians());
         shooter = new Shooter(() -> getTurretToTargetVector(() -> currentTarget).get().getNorm(), swerve::getPose2D);
+
+        turret.setDefaultCommand(turret.defaultCommand());
 
         this.controller = controller;
 
@@ -84,8 +85,6 @@ public class Superstructure implements Logged {
         distanceTimeOfFlightMap.put(3.88, 0.95);
     }
 
-    public Supplier<Translation2d> getTurretToTargetVector(Supplier<Target> target) {
-
 
 //        return () -> {
 //            Translation2d virtualTargetOffset = new Translation2d(
@@ -103,25 +102,22 @@ public class Superstructure implements Logged {
 //            return virtualTurretToTarget;
 //        };
 
+    public Supplier<Translation2d> getTurretToTargetVector(Supplier<Target> target) {
         return () -> {
 
             Pose2d robotPose = swerve.getPose2D();
-            Translation2d robotPos = robotPose.getTranslation();
             Rotation2d robotRot = robotPose.getRotation();
 
-            // turret position in field coordinates
-            Translation2d turretField =
-                    robotPos.plus(TURRET_OFFSET_TRANSLATION.rotateBy(robotRot));
 
-            // vector from turret to target in field frame
+            Translation2d turretField =
+                    getTurretOnField().getTranslation();
+
             Translation2d fieldVector =
                     target.get().getTargetTranslation().minus(turretField);
 
-            // convert vector into robot frame
             Translation2d robotVector =
                     fieldVector.rotateBy(robotRot.unaryMinus());
 
-            // turret zero = robot 180°, rotate vector by -180°
             return robotVector.rotateBy(Rotation2d.fromDegrees(-180));
         };
     }
@@ -218,11 +214,34 @@ public class Superstructure implements Logged {
         Translation2d turretField =
                 robotPos.plus(TURRET_OFFSET_TRANSLATION.rotateBy(robotRot));
 
-        return new Pose2d(turretField, Rotation2d.fromRadians(
-                swerve.getPose2D().getRotation().getRadians() -
-                        Math.PI +
-                        turret.turretMechanism.getPosition().getRadians()
-        ));
+
+//        Translation2d fieldVector =
+//                Target.HUB.getTargetTranslation().minus(turretField);
+//
+//        Translation2d robotVector =
+//                fieldVector.rotateBy(robotRot.unaryMinus());
+
+
+        return new Pose2d(turretField, swerve.getRotation2D().minus(turret.turretMechanism.getPosition().unaryMinus()).plus(Rotation2d.kPi));
     }
 
+    @Log.NT
+    public Translation2d turretField() {
+        return getTurretOnField().getTranslation();
+    }
+
+    @Log.NT
+    public Translation2d fieldVector() {
+        return Target.HUB.getTargetTranslation().minus(turretField());
+    }
+
+    @Log.NT
+    public Translation2d robotVector() {
+        return fieldVector().rotateBy(swerve.getRotation2D().unaryMinus());
+    }
+
+    @Log.NT
+    public Translation2d returnFinally() {
+        return robotVector().rotateBy(Rotation2d.fromDegrees(-180));
+    }
 }

@@ -19,8 +19,7 @@ public class ShooterConstants {
 
     // ===== Flywheel Constants =====
     public static final double FLY_WHEEL_MAX_ACCELERATION = 30;
-    public static final double FLY_WHEEL_TOLERANCE = 1;
-    public static final double DEFAULT_FLYWHEEL_VELOCITY = 3;
+    public static final double FLY_WHEEL_TOLERANCE = 0.1;
     public static final double FLY_WHEEL_MAX_JERK = 0;
 //    public static final Gains FLYWHEEL_GAINS = new Gains(0.1, 0, 0, 0.3, 0.1581, 0, 0);
     public static final Gains FLYWHEEL_GAINS = new Gains(0, 0, 0, 0, 0, 0, 0);

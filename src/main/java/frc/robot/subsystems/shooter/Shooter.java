@@ -4,7 +4,6 @@ import com.ctre.phoenix6.hardware.CANcoder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.excalib.additional_utilities.AllianceUtils;
@@ -66,6 +65,7 @@ public class Shooter extends SubsystemBase implements Logged {
     private BooleanSupplier shootingMode = () -> false;
 
     private Trigger activateLedsTrigger;
+    private Trigger flyWheelReadyTrigger;
 
 
     public Shooter(DoubleSupplier turretRelativeDistanceFromTarget, Supplier<Pose2d> poseSupplier) {
@@ -126,6 +126,8 @@ public class Shooter extends SubsystemBase implements Logged {
         velocityDistanceMap = new InterpolatingDoubleTreeMap();
         initVelocityMap();
 
+        flyWheelReadyTrigger = new Trigger(
+                ()->  Math.abs(flywheelVelocityFilter.getValue() - flywheelVelocitySetpoint.getAsDouble()) < FLY_WHEEL_TOLERANCE);
 
         activateLedsTrigger = new Trigger(()-> flyWheelMechanism.getVelocity() > 3);
         activateLedsTrigger.onTrue(
@@ -134,6 +136,7 @@ public class Shooter extends SubsystemBase implements Logged {
                         Color.Colors.TEAM_BLUE.color
                 ).andThen(LEDs.getInstance().restoreLEDs())
         );
+
         volitileTrenchHoodTrigger = new Trigger(
                 () -> {
                     Pose2d pose = poseSupplier.get();
@@ -223,12 +226,12 @@ public class Shooter extends SubsystemBase implements Logged {
     }
 
     public Command setAdjustedTransportBehavior() {
-//        return new ConditionalCommand(
-//                transportMechanism.manualCommand(() -> TRANSPORT_VOLTAGE),
-//                transportMechanism.manualCommand(() -> 0),
-//                shootingMode
-//        );
-        return transportMechanism.manualCommand(() -> TRANSPORT_VOLTAGE);
+        return new ConditionalCommand(
+                transportMechanism.manualCommand(() -> TRANSPORT_VOLTAGE),
+                transportMechanism.manualCommand(() -> 0),
+                shootingMode
+        );
+//        return transportMechanism.manualCommand(() -> TRANSPORT_VOLTAGE);
     }
 
     public Command defaultCommand() {
@@ -306,7 +309,9 @@ public class Shooter extends SubsystemBase implements Logged {
         return hoodAngleSupplier.getAsDouble();
     }
 
-
-
+    @NT
+    public boolean flyWheelReadyTrigger(){
+        return flyWheelReadyTrigger.getAsBoolean();
+    }
 
 }

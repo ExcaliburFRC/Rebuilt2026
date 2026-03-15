@@ -30,6 +30,6 @@ public class Transport extends SubsystemBase implements Logged {
     }
 
     public Command transportFuelCommand() {
-        return drumMechanism.manualCommand(()-> 0, this);
+        return drumMechanism.manualCommand(()-> -3, this);
     }
 }

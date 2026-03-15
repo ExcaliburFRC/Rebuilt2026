@@ -7,13 +7,9 @@ package frc.robot;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.PowerDistribution;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.*;
@@ -25,15 +21,8 @@ import frc.excalib.swerve.Swerve;
 import frc.robot.superstructure.Superstructure;
 import frc.robot.util.AuroraPoseGetter;
 import frc.robot.util.HubTimerSubsystem;
-import frc.excalib.slam.mapper.VisionMeasurementValidator;
-import frc.robot.util.Target;
 import monologue.Logged;
 
-import java.util.function.Supplier;
-
-import static edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior.*;
-import static frc.excalib.additional_utilities.Color.Colors.*;
-import static frc.excalib.additional_utilities.LEDs.LEDPattern.*;
 import static frc.robot.Constants.*;
 import static frc.robot.Constants.SwerveConstants.MAX_OMEGA_RAD_PER_SEC;
 import static frc.robot.Constants.SwerveConstants.MAX_VEL;
@@ -83,10 +72,16 @@ public class RobotContainer implements Logged {
     }
 
     private void configureBindings() {
-
-
         primary.square().onTrue(superstructure.trackHubCommand());
-//
+        primary.triangle().onTrue(superstructure.shootToHubCommand());
+
+        Command c = superstructure.shooter.setFlyWheelDynamicVelocity(() -> 44)
+                .alongWith(superstructure.shooter.manualTransport())
+                .alongWith(superstructure.shooter.setHoodAngleCommand(() -> 0.4))
+                .alongWith(superstructure.transport.transportFuelCommand()
+                .alongWith(superstructure.turret.targetHubCommand()));
+        c.addRequirements(superstructure.shooter);
+        primary.povUp().onTrue(c);
 
         swerve.setDefaultCommand(
                 swerve.driveCommand(
@@ -97,10 +92,7 @@ public class RobotContainer implements Logged {
                         () -> true
                 )
         );
-
-
     }
-
 
     public Command getAutonomousCommand() {
         return AutoBuilder.buildAuto(autoChooser.getSelected());
@@ -134,7 +126,7 @@ public class RobotContainer implements Logged {
 
 //        robotDiagnostics.update();
 //        canHealthMonitor.update();
-//        primaryControllerTracker.update();
+        primaryControllerTracker.update();
         primaryDisconnected.set(!DriverStation.isJoystickConnected(primary.getHID().getPort()));
 
         autoNotChosen.set(autoChooser.getSelected() == null ||

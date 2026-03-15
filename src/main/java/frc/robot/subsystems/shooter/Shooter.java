@@ -172,24 +172,27 @@ public class Shooter extends SubsystemBase implements Logged {
 
     public void initAngleMap() {
 //        angleDistanceMapTable.put(distance[meters], hood angle);
-        angleDistanceMap.put(4.95, 0.6);
-        angleDistanceMap.put(4.07, 0.42);
-        angleDistanceMap.put(3.2, 0.29);
-        angleDistanceMap.put(2.51, 0.15);
-        angleDistanceMap.put(2.02, 0.05);
-        angleDistanceMap.put(1.57, 0.0);
+        angleDistanceMap.put(1.947, 0.0);
+        angleDistanceMap.put(2.58, 0.08);
+        angleDistanceMap.put(3.96, 0.225);
+        angleDistanceMap.put(5.07, 0.4);
+        angleDistanceMap.put(3.48, 0.18);
+        angleDistanceMap.put(3.19, 0.13);
+        angleDistanceMap.put(4.0, 0.22);
+        angleDistanceMap.put(4.81,0.32);
 
     }
 
     public void initVelocityMap() {
 //          velocityDistanceMapTable.put(distance[meters], flywheel velocity);
-        velocityDistanceMap.put(4.95, 42.0);
-        velocityDistanceMap.put(4.07, 40.5);
-        velocityDistanceMap.put(3.2, 35.86);
-        velocityDistanceMap.put(2.51, 34.5);
-        velocityDistanceMap.put(2.02, 33.2);
-        velocityDistanceMap.put(1.57, 30.0);
-
+        velocityDistanceMap.put(1.948, 35.0);
+        velocityDistanceMap.put(2.58, 37.3);
+        velocityDistanceMap.put(3.96, 41.0);
+        velocityDistanceMap.put(5.07, 44.0);
+        velocityDistanceMap.put(3.48, 39.5);
+        velocityDistanceMap.put(3.19, 39.0);
+        velocityDistanceMap.put(4.0, 43.0);
+        velocityDistanceMap.put(4.81,44.0);
     }
 
     public Command setHoodAngleCommand(DoubleSupplier angleSetpoint) {
@@ -230,12 +233,12 @@ public class Shooter extends SubsystemBase implements Logged {
     }
 
     public Command setAdjustedTransportBehavior() {
-        return new ConditionalCommand(
-                transportMechanism.manualCommand(() -> TRANSPORT_VOLTAGE),
-                transportMechanism.manualCommand(() -> 0),
-                shootingMode
-        );
-//        return transportMechanism.manualCommand(() -> TRANSPORT_VOLTAGE);
+//        return new ConditionalCommand(
+//                transportMechanism.manualCommand(() -> TRANSPORT_VOLTAGE),
+//                transportMechanism.manualCommand(() -> 0),
+//                shootingMode
+//        );
+        return transportMechanism.manualCommand(() -> TRANSPORT_VOLTAGE);
     }
 
     public Command defaultCommand() {

@@ -1,9 +1,5 @@
 package frc.robot.subsystems.shooter;
 
-import com.ctre.phoenix6.StatusCode;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.wpilibj.DriverStation;
-import frc.excalib.additional_utilities.Alliance;
 import frc.excalib.control.gains.Gains;
 
 /**
@@ -18,9 +14,10 @@ public class ShooterConstants {
     public static final int HOOD_ENCODER_ID = 34;
 
     // ===== Flywheel Constants =====
-    public static final double FLY_WHEEL_MAX_ACCELERATION = 30;
-    public static final double FLY_WHEEL_TOLERANCE = 0.1;
-    public static final double FLY_WHEEL_MAX_JERK = 0;
+    public static final double FLYWHEEL_MAX_ACCELERATION = 30;
+    public static final double FLYWHEEL_TOLERANCE = 0.1;
+    public static final double HOOD_TOLERANCE = 0.1;
+    public static final double FLYWHEEL_MAX_JERK = 0;
 //    public static final Gains FLYWHEEL_GAINS = new Gains(0.1, 0, 0, 0.3, 0.1581, 0, 0);
     public static final Gains FLYWHEEL_GAINS = new Gains(0, 0, 0, 0, 0, 0, 0);
 

@@ -66,6 +66,7 @@ public class Shooter extends SubsystemBase implements Logged {
 
     private Trigger activateLedsTrigger;
     private Trigger flyWheelReadyTrigger;
+    private Trigger hoodAdjustedTrigger;
 
 
     public Shooter(DoubleSupplier turretRelativeDistanceFromTarget, Supplier<Pose2d> poseSupplier) {
@@ -104,7 +105,7 @@ public class Shooter extends SubsystemBase implements Logged {
         hoodAngleSetpoint = () -> 0;
         hoodMotor.setIdleState(IdleState.COAST);
 
-        flyWheelMechanism = new FlyWheel(shooterMotorGroup, FLY_WHEEL_MAX_ACCELERATION, FLY_WHEEL_MAX_JERK, FLYWHEEL_GAINS);
+        flyWheelMechanism = new FlyWheel(shooterMotorGroup, FLYWHEEL_MAX_ACCELERATION, FLYWHEEL_MAX_JERK, FLYWHEEL_GAINS);
 
         transportMechanism = new Mechanism(transportMotor);
 
@@ -127,9 +128,12 @@ public class Shooter extends SubsystemBase implements Logged {
         initVelocityMap();
 
         flyWheelReadyTrigger = new Trigger(
-                ()->  Math.abs(flywheelVelocityFilter.getValue() - flywheelVelocitySetpoint.getAsDouble()) < FLY_WHEEL_TOLERANCE);
+                () -> Math.abs(flywheelVelocityFilter.getValue() - flywheelVelocitySetpoint.getAsDouble()) < FLYWHEEL_TOLERANCE);
 
-        activateLedsTrigger = new Trigger(()-> flyWheelMechanism.getVelocity() > 3);
+        hoodAdjustedTrigger = new Trigger(
+                () -> Math.abs(hoodAngleSupplier.getAsDouble() - hoodAngleSetpoint.getAsDouble()) < HOOD_TOLERANCE);
+
+        activateLedsTrigger = new Trigger(() -> flyWheelMechanism.getVelocity() > 3);
         activateLedsTrigger.onTrue(
                 LEDs.getInstance().setPattern(
                         LEDs.LEDPattern.BLINKING,
@@ -169,10 +173,10 @@ public class Shooter extends SubsystemBase implements Logged {
     public void initAngleMap() {
 //        angleDistanceMapTable.put(distance[meters], hood angle);
         angleDistanceMap.put(4.95, 0.6);
-        angleDistanceMap.put(4.07,0.42);
+        angleDistanceMap.put(4.07, 0.42);
         angleDistanceMap.put(3.2, 0.29);
-        angleDistanceMap.put(2.51,0.15);
-        angleDistanceMap.put(2.02,0.05);
+        angleDistanceMap.put(2.51, 0.15);
+        angleDistanceMap.put(2.02, 0.05);
         angleDistanceMap.put(1.57, 0.0);
 
     }
@@ -180,10 +184,10 @@ public class Shooter extends SubsystemBase implements Logged {
     public void initVelocityMap() {
 //          velocityDistanceMapTable.put(distance[meters], flywheel velocity);
         velocityDistanceMap.put(4.95, 42.0);
-        velocityDistanceMap.put(4.07,40.5);
+        velocityDistanceMap.put(4.07, 40.5);
         velocityDistanceMap.put(3.2, 35.86);
-        velocityDistanceMap.put(2.51,34.5);
-        velocityDistanceMap.put(2.02,33.2);
+        velocityDistanceMap.put(2.51, 34.5);
+        velocityDistanceMap.put(2.02, 33.2);
         velocityDistanceMap.put(1.57, 30.0);
 
     }
@@ -310,8 +314,13 @@ public class Shooter extends SubsystemBase implements Logged {
     }
 
     @NT
-    public boolean flyWheelReadyTrigger(){
+    public boolean flyWheelReadyTrigger() {
         return flyWheelReadyTrigger.getAsBoolean();
+    }
+
+    @NT
+    public boolean hoodAdjustedTrigger() {
+        return hoodAdjustedTrigger.getAsBoolean();
     }
 
 }

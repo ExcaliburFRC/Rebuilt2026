@@ -184,24 +184,18 @@ public class Superstructure implements Logged {
     }
 
     @Log.NT
-    public double getTurretToTargetVectorAngle() {
-        return Units.radiansToDegrees(getTurretToTargetVector(() -> currentTarget).get().getAngle().getRadians());
+    public double getTurretToHubVectorAngle() {
+        return getTurretToTargetVector(() -> Target.HUB).get().getAngle().getDegrees();
     }
 
     @Log.NT
     public double getTurretToDeliveryVectorAngle() {
-        return Units.radiansToDegrees(getTurretToDeliveryVector().get().getAngle().getRadians());
+        return getTurretToDeliveryVector().get().getAngle().getDegrees();
     }
 
     @Log.NT
     public double getTurretToHubVectorDist() {
         return getTurretToTargetVector(() -> Target.HUB).get().getNorm();
-    }
-
-
-    @Log.NT
-    public Pose2d getVectorToHub() {
-        return new Pose2d(getTurretToTargetVector(() -> Target.HUB).get(), new Rotation2d());
     }
 
     @Log.NT
@@ -214,34 +208,6 @@ public class Superstructure implements Logged {
         Translation2d turretField =
                 robotPos.plus(TURRET_OFFSET_TRANSLATION.rotateBy(robotRot));
 
-
-//        Translation2d fieldVector =
-//                Target.HUB.getTargetTranslation().minus(turretField);
-//
-//        Translation2d robotVector =
-//                fieldVector.rotateBy(robotRot.unaryMinus());
-
-
         return new Pose2d(turretField, swerve.getRotation2D().minus(turret.turretMechanism.getPosition().unaryMinus()).plus(Rotation2d.kPi));
-    }
-
-    @Log.NT
-    public Translation2d turretField() {
-        return getTurretOnField().getTranslation();
-    }
-
-    @Log.NT
-    public Translation2d fieldVector() {
-        return Target.HUB.getTargetTranslation().minus(turretField());
-    }
-
-    @Log.NT
-    public Translation2d robotVector() {
-        return fieldVector().rotateBy(swerve.getRotation2D().unaryMinus());
-    }
-
-    @Log.NT
-    public Translation2d returnFinally() {
-        return robotVector().rotateBy(Rotation2d.fromDegrees(-180));
     }
 }

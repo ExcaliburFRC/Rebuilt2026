@@ -4,7 +4,6 @@ import com.ctre.phoenix6.hardware.CANcoder;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.units.Unit;
 import edu.wpi.first.wpilibj2.command.*;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
 import frc.excalib.control.motor.motor_specs.DirectionState;
@@ -13,7 +12,6 @@ import frc.robot.util.Target;
 import monologue.Annotations.Log;
 import monologue.Logged;
 
-import javax.xml.crypto.dsig.spec.XSLTTransformParameterSpec;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
@@ -42,14 +40,11 @@ public class Turret extends SubsystemBase implements Logged {
         turretTarget = Target.HUB;
 
         this.robotAngle = robotAngle;
-//      turretMotor.setMotorPosition(turretAngleSupplier.getAsDouble());
         turretMotor.setPositionConversionFactor(MOTOR_POSITION_CONVERSION_FACTOR);
         turretMotor.setVelocityConversionFactor(MOTOR_POSITION_CONVERSION_FACTOR);
 
-
         turretMotor.setIdleState(IdleState.BRAKE);
         turretMotor.setMotorPosition(turretAngleSupplier.getAsDouble());
-
 
         turretMechanism = new frc.excalib.mechanisms.turret.Turret(
                 turretMotor,
@@ -59,7 +54,6 @@ public class Turret extends SubsystemBase implements Logged {
                 this::getEncoderPosition,
                 new TrapezoidProfile.Constraints(Math.PI * 60, Math.PI * 100)
         );
-
     }
 
 
@@ -74,20 +68,6 @@ public class Turret extends SubsystemBase implements Logged {
                                                 turretRelativeAngleToTarget.getAsDouble())
                                 )
                         )
-                ).alongWith(new PrintCommand("" +
-                        Rotation2d.fromRadians(
-                                SOFT_LIMIT.limit(
-                                        TURRET_CONTINUOUS_SOFTLIMIT.getSetpoint(
-                                                turretAngleSupplier.getAsDouble(),
-                                                turretRelativeAngleToTarget.getAsDouble())
-
-                                )))).alongWith(
-                        new PrintCommand(
-                                "measurment" + turretAngleSupplier.getAsDouble()
-                        ).alongWith(
-                                new PrintCommand(
-                                        "setpoint" + turretRelativeAngleToTarget.getAsDouble()
-                                ))
                 ),
                 () -> turretTarget.equals(Target.IDLE)
         );
@@ -141,9 +121,8 @@ public class Turret extends SubsystemBase implements Logged {
     }
 
     @Log.NT
-    public double getEitanChoenAngle(){
-        return Units.radiansToDegrees(Math.PI - robotAngle.getAsDouble())
-                ;
+    public double getTurretFieldRelativeAngleDegrees() {
+        return Units.radiansToDegrees(Math.PI - robotAngle.getAsDouble());
     }
 
 }

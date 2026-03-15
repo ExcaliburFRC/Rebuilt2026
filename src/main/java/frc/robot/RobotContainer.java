@@ -7,13 +7,9 @@ package frc.robot;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.PowerDistribution;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.*;
@@ -21,19 +17,11 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.excalib.additional_utilities.*;
 import frc.excalib.control.math.Vector2D;
 import frc.excalib.swerve.Swerve;
-
 import frc.robot.superstructure.Superstructure;
 import frc.robot.util.AuroraPoseGetter;
 import frc.robot.util.HubTimerSubsystem;
-import frc.excalib.slam.mapper.VisionMeasurementValidator;
-import frc.robot.util.Target;
 import monologue.Logged;
 
-import java.util.function.Supplier;
-
-import static edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior.*;
-import static frc.excalib.additional_utilities.Color.Colors.*;
-import static frc.excalib.additional_utilities.LEDs.LEDPattern.*;
 import static frc.robot.Constants.*;
 import static frc.robot.Constants.SwerveConstants.MAX_OMEGA_RAD_PER_SEC;
 import static frc.robot.Constants.SwerveConstants.MAX_VEL;
@@ -52,41 +40,28 @@ public class RobotContainer implements Logged {
     private final SendableChooser<String> autoChooser = new SendableChooser<>();
     private final HubTimerSubsystem hubTimer = new HubTimerSubsystem();
 
-    private final LEDs leds = LEDs.getInstance();
-
     private final Superstructure superstructure = new Superstructure(primary, swerve);
 
     // ===== Alerts =====
     private final Alert primaryDisconnected = new Alert("Primary controller disconnected (port 0).", Alert.AlertType.kWarning);
     private final Alert autoNotChosen = new Alert("!!! AUTO NOT SET !!!", Alert.AlertType.kError);
     private final Alert lowBatteryAlert = new Alert("Battery voltage is low", Alert.AlertType.kWarning);
-    private final Trigger lowBatteryTrigger = new Trigger(lowBatteryAlert::get);
 
-    // ===== Vision System State =====
+    // ===== Battery Voltage State =====
     private boolean batteryLow = false;
 
-    //    private final RobotDiagnostics robotDiagnostics = new RobotDiagnostics(PowerDistributionHub);
-    private final CANHealthMonitor canHealthMonitor = new CANHealthMonitor();
-    private final ControllerStateTracker primaryControllerTracker =
-            new ControllerStateTracker(primary.getHID(), "Primary Controller");
     private final PerformanceMetricsTracker performanceMetricsTracker =
             new PerformanceMetricsTracker();
 
 
     public RobotContainer() {
-
-//        lowBatteryTrigger.onTrue(leds.setPattern(BLINKING, ORANGE.color).withInterruptBehavior(kCancelIncoming));
-
         setAutoChooser();
         configureBindings();
         registerCommands();
     }
 
     private void configureBindings() {
-
-
         primary.square().onTrue(superstructure.trackHubCommand());
-//
 
         swerve.setDefaultCommand(
                 swerve.driveCommand(
@@ -97,8 +72,6 @@ public class RobotContainer implements Logged {
                         () -> true
                 )
         );
-
-
     }
 
 
@@ -132,9 +105,6 @@ public class RobotContainer implements Logged {
             swerve.resetOdometry(visionPose);
         }
 
-//        robotDiagnostics.update();
-//        canHealthMonitor.update();
-//        primaryControllerTracker.update();
         primaryDisconnected.set(!DriverStation.isJoystickConnected(primary.getHID().getPort()));
 
         autoNotChosen.set(autoChooser.getSelected() == null ||

@@ -1,6 +1,5 @@
 package frc.robot.subsystems.intake;
 
-import frc.excalib.control.gains.Gains;
 import frc.excalib.control.limits.SoftLimit;
 
 public class IntakeConstants {
@@ -9,7 +8,6 @@ public class IntakeConstants {
     public static final int FOUR_BAR_MOTOR_ID = 10;
     public static final int ROLLER_MOTOR_ID = 11;
     public static final int ANGLE_ENCODER_ID = 12;
-
 
     // ==== Arm Initialization Constants ==== //
     public static final double ARM_MIN_VELOCITY_LIMIT = -1.5;
@@ -28,7 +26,4 @@ public class IntakeConstants {
             () -> ARM_MIN_VELOCITY_LIMIT,
             () -> ARM_MAX_VELOCITY_LIMIT
     );
-
-
-
 }

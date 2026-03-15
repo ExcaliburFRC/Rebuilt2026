@@ -18,7 +18,6 @@ import java.util.function.DoubleSupplier;
 import static frc.robot.Constants.SUBSYSTEMS_CANBUS;
 import static frc.robot.subsystems.intake.Intake.IntakeState.*;
 import static frc.robot.subsystems.intake.IntakeConstants.*;
-import static frc.robot.subsystems.intake.IntakeConstants.ARM_VELOCITY_LIMIT;
 
 public class Intake extends SubsystemBase implements Logged {
 
@@ -31,7 +30,6 @@ public class Intake extends SubsystemBase implements Logged {
     public final CANcoder angleEncoder;
 
     public final SoftLimit intakeAngleLimit;
-    public boolean isIntakeOpen = false;
     public final DoubleSupplier angleSupplier;
     public final Trigger atPositionTrigger;
     public IntakeState currentState;
@@ -44,7 +42,7 @@ public class Intake extends SubsystemBase implements Logged {
         fourBarMotor.setInverted(DirectionState.REVERSE);
         rollerMotor = new TalonFXMotor(ROLLER_MOTOR_ID, SUBSYSTEMS_CANBUS);
 
-        rollerMotor.setCurrentLimit(80,80);
+        rollerMotor.setCurrentLimit(80, 80);
         rollerMotorMechanism = new Mechanism(rollerMotor);
 
         angleSupplier = () -> (angleEncoder.getAbsolutePosition().getValueAsDouble() * (1 / 0.29));
@@ -83,11 +81,6 @@ public class Intake extends SubsystemBase implements Logged {
         return c;
     }
 
-    @Log.NT
-    public boolean getIsIntakeOpen() {
-        return isIntakeOpen;
-    }
-
     public Command rollerManualCommand(double voltage) {
         return rollerMotorMechanism.manualCommand(() -> voltage);
     }
@@ -102,15 +95,14 @@ public class Intake extends SubsystemBase implements Logged {
                 ),
                 () -> currentState.equals(IDLE)
         );
-
         c.addRequirements(this);
         return c;
     }
 
     public enum IntakeState {
-        CLOSE(INTAKE_MIN_ANGLE), // todo
-        IDLE(0), // zero becuase it doesnt move at all
-        OPEN(INTAKE_MAX_ANGLE); // todo
+        CLOSE(INTAKE_MIN_ANGLE),
+        IDLE(0),
+        OPEN(INTAKE_MAX_ANGLE);
 
         private final double radPosition;
 

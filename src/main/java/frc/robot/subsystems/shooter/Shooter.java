@@ -60,7 +60,7 @@ public class Shooter extends SubsystemBase implements Logged {
     private final InterpolatingDoubleTreeMap angleDistanceMap;
     private final InterpolatingDoubleTreeMap velocityDistanceMap;
 
-    private final Trigger volitileTrenchHoodTrigger;
+    private final Trigger inTrenchZoneTrigger;
 
     private Target shooterTarget = HUB;
     private BooleanSupplier shootingMode = () -> false;
@@ -127,14 +127,14 @@ public class Shooter extends SubsystemBase implements Logged {
         initVelocityMap();
 
 
-        activateLedsTrigger = new Trigger(()-> flyWheelMechanism.getVelocity() > 3);
+        activateLedsTrigger = new Trigger(() -> flyWheelMechanism.getVelocity() > 3);
         activateLedsTrigger.onTrue(
                 LEDs.getInstance().setPattern(
                         LEDs.LEDPattern.BLINKING,
                         Color.Colors.TEAM_BLUE.color
                 ).andThen(LEDs.getInstance().restoreLEDs())
         );
-        volitileTrenchHoodTrigger = new Trigger(
+        inTrenchZoneTrigger = new Trigger(
                 () -> {
                     Pose2d pose = poseSupplier.get();
                     if (AllianceUtils.isBlueAlliance()) {
@@ -152,7 +152,7 @@ public class Shooter extends SubsystemBase implements Logged {
         hoodSoftLimit = new SoftLimit(
                 () -> HOOD_MIN_ANGLE_LIMIT,
                 () -> {
-                    if (volitileTrenchHoodTrigger.getAsBoolean()) {
+                    if (inTrenchZoneTrigger.getAsBoolean()) {
                         return HOOD_MAX_ANGLE_LIMIT_IN_TRENCH;
                     }
                     return HOOD_MAX_ANGLE_LIMIT;
@@ -163,26 +163,22 @@ public class Shooter extends SubsystemBase implements Logged {
     }
 
 
-    public void initAngleMap() {
-//        angleDistanceMapTable.put(distance[meters], hood angle);
+    private void initAngleMap() {
         angleDistanceMap.put(4.95, 0.6);
-        angleDistanceMap.put(4.07,0.42);
+        angleDistanceMap.put(4.07, 0.42);
         angleDistanceMap.put(3.2, 0.29);
-        angleDistanceMap.put(2.51,0.15);
-        angleDistanceMap.put(2.02,0.05);
+        angleDistanceMap.put(2.51, 0.15);
+        angleDistanceMap.put(2.02, 0.05);
         angleDistanceMap.put(1.57, 0.0);
-
     }
 
-    public void initVelocityMap() {
-//          velocityDistanceMapTable.put(distance[meters], flywheel velocity);
+    private void initVelocityMap() {
         velocityDistanceMap.put(4.95, 42.0);
-        velocityDistanceMap.put(4.07,40.5);
+        velocityDistanceMap.put(4.07, 40.5);
         velocityDistanceMap.put(3.2, 35.86);
-        velocityDistanceMap.put(2.51,34.5);
-        velocityDistanceMap.put(2.02,33.2);
+        velocityDistanceMap.put(2.51, 34.5);
+        velocityDistanceMap.put(2.02, 33.2);
         velocityDistanceMap.put(1.57, 30.0);
-
     }
 
     public Command setHoodAngleCommand(DoubleSupplier angleSetpoint) {
@@ -223,11 +219,6 @@ public class Shooter extends SubsystemBase implements Logged {
     }
 
     public Command setAdjustedTransportBehavior() {
-//        return new ConditionalCommand(
-//                transportMechanism.manualCommand(() -> TRANSPORT_VOLTAGE),
-//                transportMechanism.manualCommand(() -> 0),
-//                shootingMode
-//        );
         return transportMechanism.manualCommand(() -> TRANSPORT_VOLTAGE);
     }
 
@@ -305,8 +296,4 @@ public class Shooter extends SubsystemBase implements Logged {
     public double getHoodAngleSupplier() {
         return hoodAngleSupplier.getAsDouble();
     }
-
-
-
-
 }

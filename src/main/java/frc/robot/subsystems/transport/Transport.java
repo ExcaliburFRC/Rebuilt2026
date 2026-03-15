@@ -14,13 +14,13 @@ import static frc.robot.subsystems.transport.TransportConstants.*;
 
 public class Transport extends SubsystemBase implements Logged {
     private final TalonFXMotor drumMotor;
-    public FlyWheel drumMechanism;
+    private final FlyWheel drumMechanism;
 
     public Transport() {
         drumMotor = new TalonFXMotor(DRUM_MOTOR_ID, SUBSYSTEMS_CANBUS);
         drumMechanism = new FlyWheel(drumMotor, MAX_ACCELERATION, MAX_JERK, GAINS);
 
-        drumMotor.setCurrentLimit(120,70);
+        drumMotor.setCurrentLimit(120, 70);
         setDefaultCommand(transportFuelCommand());
     }
 
@@ -30,6 +30,6 @@ public class Transport extends SubsystemBase implements Logged {
     }
 
     public Command transportFuelCommand() {
-        return drumMechanism.manualCommand(()-> 0, this);
+        return drumMechanism.manualCommand(() -> 0, this);
     }
 }

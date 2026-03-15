@@ -91,6 +91,7 @@ public class Shooter extends SubsystemBase implements Logged {
         hoodEncoder.setPosition(hoodEncoder.getAbsolutePosition().getValueAsDouble());
         this.turretRelativeDistanceFromTarget = turretRelativeDistanceFromTarget;
 
+
         angleController = new PIDController(HOOD_PID_GAINS.kp, HOOD_PID_GAINS.ki, HOOD_PID_GAINS.kd);
         angleController.setTolerance(0.01);
 

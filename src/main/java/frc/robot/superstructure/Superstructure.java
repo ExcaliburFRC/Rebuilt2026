@@ -84,9 +84,14 @@ public class Superstructure implements Logged {
 
     private void initDistanceTimeOfFlightMap() {
 //        distanceFlightTimeTable.put(distance[meters], flight time);
-        distanceTimeOfFlightMap.put(2.38, 0.7);
-        distanceTimeOfFlightMap.put(2.99, 0.9);
-        distanceTimeOfFlightMap.put(3.88, 0.95);
+        distanceTimeOfFlightMap.put(4.3, 1.39);
+        distanceTimeOfFlightMap.put(2.99, 1.28);
+        distanceTimeOfFlightMap.put(2.36, 1.21);
+        distanceTimeOfFlightMap.put(3.6, 1.35);
+        distanceTimeOfFlightMap.put(1.95, 1.12);
+        distanceTimeOfFlightMap.put(0.0, 0.0);
+        distanceTimeOfFlightMap.put(0.0, 0.0);
+        distanceTimeOfFlightMap.put(0.0, 0.0);
     }
 
 

@@ -35,13 +35,14 @@ public class Superstructure implements Logged {
     public final InterpolatingDoubleTreeMap distanceTimeOfFlightMap;
 
     public final CommandPS5Controller controller;
-    private final Trigger deliveryTrigger;
+    private Trigger deliveryTrigger;
 
     public Superstructure(CommandPS5Controller controller, Swerve swerve) {
         intake = new Intake();
         transport = new Transport();
 
         this.swerve = swerve;
+
         distanceTimeOfFlightMap = new InterpolatingDoubleTreeMap();
         initDistanceTimeOfFlightMap();
 
@@ -49,9 +50,14 @@ public class Superstructure implements Logged {
         shooter = new Shooter(() -> getTurretToTargetVector(() -> currentTarget).get().getNorm(), swerve::getPose2D);
 
         turret.setDefaultCommand(turret.defaultCommand());
+        shooter.setDefaultCommand(shooter.defaultCommand());
+
+        initDeliveryTrigger();
 
         this.controller = controller;
+    }
 
+    private void initDeliveryTrigger() {
         deliveryTrigger = new Trigger(() -> {
             Translation2d deliveryRightPose = DELIVERY_RIGHT_POSE.get().getTranslation();
             Translation2d deliveryLeftPose = DELIVERY_LEFT_POSE.get().getTranslation();
@@ -74,8 +80,6 @@ public class Superstructure implements Logged {
                 return false;
             }
         });
-
-
     }
 
     private void initDistanceTimeOfFlightMap() {
@@ -186,11 +190,6 @@ public class Superstructure implements Logged {
     @Log.NT
     public double getTurretToHubVectorAngle() {
         return getTurretToTargetVector(() -> Target.HUB).get().getAngle().getDegrees();
-    }
-
-    @Log.NT
-    public double getTurretToDeliveryVectorAngle() {
-        return getTurretToDeliveryVector().get().getAngle().getDegrees();
     }
 
     @Log.NT

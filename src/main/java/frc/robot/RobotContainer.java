@@ -43,7 +43,7 @@ public class RobotContainer implements Logged {
 
     private final LEDs leds = LEDs.getInstance();
 
-    private final Superstructure superstructure = new Superstructure(primary, swerve);
+    private final Superstructure superstructure = new Superstructure(swerve);
 
     // ===== Alerts =====
     private final Alert primaryDisconnected = new Alert("Primary controller disconnected (port 0).", Alert.AlertType.kWarning);
@@ -72,16 +72,14 @@ public class RobotContainer implements Logged {
     }
 
     private void configureBindings() {
-        primary.square().onTrue(superstructure.trackHubCommand());
-        primary.triangle().onTrue(superstructure.shootToHubCommand());
+        // Driver Controls
+        primary.square().toggleOnTrue(superstructure.trackHubCommand());
+        primary.triangle().toggleOnTrue(superstructure.shootToHubCommand());
+        primary.povUp().whileTrue(superstructure.shootFixedCommand(44, 0.4));
 
-        Command c = superstructure.shooter.setFlyWheelDynamicVelocity(() -> 44)
-                .alongWith(superstructure.shooter.manualTransport())
-                .alongWith(superstructure.shooter.setHoodAngleCommand(() -> 0.4))
-                .alongWith(superstructure.transport.transportFuelCommand()
-                .alongWith(superstructure.turret.targetHubCommand()));
-        c.addRequirements(superstructure.shooter);
-        primary.povUp().onTrue(c);
+        // Intake Controls
+        primary.L1().whileTrue(superstructure.intakeCommand());
+        primary.R1().whileTrue(superstructure.ejectCommand());
 
         swerve.setDefaultCommand(
                 swerve.driveCommand(
@@ -103,10 +101,10 @@ public class RobotContainer implements Logged {
     }
 
     public void registerCommands() {
-        NamedCommands.registerCommand("floorIntake", new InstantCommand());
-        NamedCommands.registerCommand("prepareShooter", new InstantCommand());
-        NamedCommands.registerCommand("shoot", new InstantCommand());
-        NamedCommands.registerCommand("retractIntake", new InstantCommand());
+        NamedCommands.registerCommand("floorIntake", superstructure.intakeCommand());
+        NamedCommands.registerCommand("prepareShooter", superstructure.trackHubCommand());
+        NamedCommands.registerCommand("shoot", superstructure.shootToHubCommand());
+        NamedCommands.registerCommand("retractIntake", superstructure.stopIntakeCommand());
     }
 
     public void setAutoChooser() {

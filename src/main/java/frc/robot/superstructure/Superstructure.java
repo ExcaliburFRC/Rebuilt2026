@@ -35,10 +35,9 @@ public class Superstructure implements Logged {
 
     public final InterpolatingDoubleTreeMap distanceTimeOfFlightMap;
 
-    public final CommandPS5Controller controller;
     private Trigger deliveryTrigger;
 
-    public Superstructure(CommandPS5Controller controller, Swerve swerve) {
+    public Superstructure(Swerve swerve) {
         intake = new Intake();
         transport = new Transport();
 
@@ -54,8 +53,6 @@ public class Superstructure implements Logged {
         shooter.setDefaultCommand(shooter.defaultCommand());
 
         initDeliveryTrigger();
-
-        this.controller = controller;
     }
 
     private void initDeliveryTrigger() {
@@ -198,6 +195,28 @@ public class Superstructure implements Logged {
                 shooter.trackHubCommand(),
                 turret.targetHubCommand()
         ).alongWith(setSuperstructureTarget(Target.HUB));
+    }
+
+    public Command shootFixedCommand(double flywheelVelocity, double hoodAngle) {
+        return new ParallelCommandGroup(
+                shooter.setFlyWheelDynamicVelocity(() -> flywheelVelocity),
+                shooter.setHoodAngleCommand(() -> hoodAngle),
+                shooter.manualTransport(),
+                transport.transportFuelCommand(),
+                turret.targetHubCommand()
+        ).alongWith(setSuperstructureTarget(Target.HUB));
+    }
+
+    public Command intakeCommand() {
+        return intake.intakeCommand();
+    }
+
+    public Command ejectCommand() {
+        return intake.rollerManualCommand(-7); // Assuming -7 volts is eject based on intakeCommand using 7
+    }
+
+    public Command stopIntakeCommand() {
+        return intake.closeCommand();
     }
 
     public Command intakeRollerActivationCommand(double voltage) {

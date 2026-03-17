@@ -93,7 +93,11 @@ public class RobotContainer implements Logged {
     }
 
     public Command getAutonomousCommand() {
-        return AutoBuilder.buildAuto(autoChooser.getSelected());
+        String selected = autoChooser.getSelected();
+        if (selected == null || "/ null Auto".equals(selected)) {
+            return Commands.none();
+        }
+        return AutoBuilder.buildAuto(selected);
     }
 
     public double applyDeadband(double val) {

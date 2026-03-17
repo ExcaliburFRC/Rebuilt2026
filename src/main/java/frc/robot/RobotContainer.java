@@ -34,13 +34,12 @@ public class RobotContainer implements Logged {
     private final LoggablePS5Controller primary = new LoggablePS5Controller(PRIMARY_CONTROLLER_PORT);
 
     private final Swerve swerve = Constants.SwerveConstants.configureSwerve(Constants.INITIAL_POSE);
-    private final PowerDistribution PowerDistributionHub = new PowerDistribution(PDH_PORT, PowerDistribution.ModuleType.kRev);
+    private final PowerDistribution powerDistributionHub = new PowerDistribution(PDH_PORT, PowerDistribution.ModuleType.kRev);
 
     private final SendableChooser<String> autoChooser = new SendableChooser<>();
     private final HubTimerSubsystem hubTimer = new HubTimerSubsystem();
 
     private final LEDs leds = LEDs.getInstance();
-
     private final Superstructure superstructure = new Superstructure(swerve);
 
     // ===== Alerts =====
@@ -52,7 +51,7 @@ public class RobotContainer implements Logged {
     // ===== Vision System State =====
     private boolean batteryLow = false;
 
-    //    private final RobotDiagnostics robotDiagnostics = new RobotDiagnostics(PowerDistributionHub);
+    //    private final RobotDiagnostics robotDiagnostics = new RobotDiagnostics(powerDistributionHub);
     private final CANHealthMonitor canHealthMonitor = new CANHealthMonitor();
     private final ControllerStateTracker primaryControllerTracker =
             new ControllerStateTracker(primary.getHID(), "Primary Controller");
@@ -61,7 +60,6 @@ public class RobotContainer implements Logged {
 
 
     public RobotContainer() {
-
 //        lowBatteryTrigger.onTrue(leds.setPattern(BLINKING, ORANGE.color).withInterruptBehavior(kCancelIncoming));
 
         setAutoChooser();
@@ -132,7 +130,7 @@ public class RobotContainer implements Logged {
         autoNotChosen.set(autoChooser.getSelected() == null ||
                 autoChooser.getSelected().equals("/ null Auto"));
 
-        double voltage = PowerDistributionHub.getVoltage();
+        double voltage = powerDistributionHub.getVoltage();
         if (voltage < BATTERY_VOLTAGE_WARNING_THRESHOLD - BATTERY_VOLTAGE_HYSTERESIS) {
             batteryLow = true;
         } else if (voltage > BATTERY_VOLTAGE_WARNING_THRESHOLD + BATTERY_VOLTAGE_HYSTERESIS) {
@@ -140,7 +138,7 @@ public class RobotContainer implements Logged {
         }
         lowBatteryAlert.set(batteryLow);
 
-        performanceMetricsTracker.recordPowerConsumption(PowerDistributionHub.getTotalPower());
+        performanceMetricsTracker.recordPowerConsumption(powerDistributionHub.getTotalPower());
     }
 
     public PerformanceMetricsTracker getPerformanceMetricsTracker() {

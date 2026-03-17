@@ -19,6 +19,8 @@ import frc.excalib.control.motor.motor_specs.DirectionState;
 import frc.excalib.control.motor.motor_specs.IdleState;
 import frc.excalib.mechanisms.Mechanism;
 import frc.excalib.mechanisms.fly_wheel.FlyWheel;
+import frc.robot.util.GameDataClient;
+import frc.robot.util.HubTimerSubsystem;
 import frc.robot.util.Target;
 import monologue.Logged;
 
@@ -68,9 +70,11 @@ public class Shooter extends SubsystemBase implements Logged {
     private Trigger activateLedsTrigger;
     private Trigger flyWheelReadyTrigger;
     private Trigger hoodAdjustedTrigger;
+    private Trigger activeHubTrigger;
 
 
-    public Shooter(DoubleSupplier turretRelativeDistanceFromTarget, Supplier<Pose2d> poseSupplier) {
+    public Shooter(DoubleSupplier turretRelativeDistanceFromTarget, Supplier<Pose2d> poseSupplier, Trigger shouldShootActiveHubTrigger) {
+
         hoodMotor = new TalonFXMotor(HOOD_MOTOR_ID, SUBSYSTEMS_CANBUS);
         flyWheelMotorLow = new TalonFXMotor(FLYWHEEL_MOTOR_LOW_ID, SUBSYSTEMS_CANBUS);
         flyWheelMotorTop = new TalonFXMotor(FLYWHEEL_MOTOR_TOP_ID, SUBSYSTEMS_CANBUS);
@@ -157,6 +161,8 @@ public class Shooter extends SubsystemBase implements Logged {
                     }
                 }
         );
+
+        activeHubTrigger = shouldShootActiveHubTrigger;
 
         hoodSoftLimit = new SoftLimit(
                 () -> HOOD_MIN_ANGLE_LIMIT,
@@ -247,7 +253,7 @@ public class Shooter extends SubsystemBase implements Logged {
         Command c = new ConditionalCommand(
                 idleCommand(),
                 new ParallelCommandGroup(
-                        setAdjustedFlyWheelVelocity(),
+                        setAdjustedFlyWheelVelocity().unless(activeHubTrigger),
                         setAdjustedHoodAngle(),
                         setAdjustedTransportBehavior()),
                 () -> shooterTarget.equals(IDLE)

@@ -4,6 +4,8 @@ import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -15,6 +17,7 @@ import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.transport.Transport;
 import frc.robot.subsystems.turret.Turret;
+import frc.robot.util.HubTimerSubsystem;
 import frc.robot.util.Target;
 import monologue.Annotations.Log;
 import monologue.Logged;
@@ -37,6 +40,8 @@ public class Superstructure implements Logged {
 
     private Trigger deliveryTrigger;
 
+    public static Trigger shouldShootActiveHubTrigger;
+
     public Superstructure(Swerve swerve) {
         intake = new Intake();
         transport = new Transport();
@@ -46,8 +51,35 @@ public class Superstructure implements Logged {
         distanceTimeOfFlightMap = new InterpolatingDoubleTreeMap();
         initDistanceTimeOfFlightMap();
 
+        shouldShootActiveHubTrigger = new Trigger(
+                () -> { //checks if to shoot to hub and take into account that there time until the ball arrives to hub so it anticipates the time the hub is turned on
+                    double matchTime = DriverStation.getMatchTime();
+
+                    if (matchTime < 0) {
+                        return false;
+                    }
+
+                    double timeIntoCycle = matchTime % HubTimerSubsystem.HUB_PERIOD;
+                    boolean hubActive = timeIntoCycle <= HubTimerSubsystem.HUB_ACTIVE_TIME;
+
+                    boolean flag = false;
+
+                    if (!flag) {
+                        if (!hubActive) {
+                            timeIntoCycle = timeIntoCycle - distanceTimeOfFlightMap.get(getTurretToHubVectorDist());
+                            flag = true;
+                            hubActive = timeIntoCycle <= HubTimerSubsystem.HUB_ACTIVE_TIME;
+                        }
+                    } else {
+                        timeIntoCycle = matchTime % HubTimerSubsystem.HUB_PERIOD;
+                        hubActive = timeIntoCycle <= HubTimerSubsystem.HUB_ACTIVE_TIME;
+                    }
+
+                    return hubActive;
+                });
+
         turret = new Turret(() -> getTurretToTargetVector(() -> currentTarget).get().getAngle().getRadians(), () -> swerve.getRotation2D().getRadians());
-        shooter = new Shooter(() -> getTurretToTargetVector(() -> currentTarget).get().getNorm(), swerve::getPose2D);
+        shooter = new Shooter(() -> getTurretToTargetVector(() -> currentTarget).get().getNorm(), swerve::getPose2D, shouldShootActiveHubTrigger);
 
         turret.setDefaultCommand(turret.defaultCommand());
         shooter.setDefaultCommand(shooter.defaultCommand());

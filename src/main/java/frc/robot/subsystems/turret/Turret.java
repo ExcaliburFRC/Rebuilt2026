@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
 import frc.excalib.control.motor.motor_specs.DirectionState;
 import frc.excalib.control.motor.motor_specs.IdleState;
+import frc.excalib.mechanisms.Mechanism;
 import frc.robot.util.Target;
 import monologue.Annotations.Log;
 import monologue.Logged;
@@ -20,11 +21,11 @@ import static frc.robot.Constants.SUBSYSTEMS_CANBUS;
 import static frc.robot.subsystems.turret.TurretConstants.*;
 
 public class Turret extends SubsystemBase implements Logged {
-    public final TalonFXMotor turretMotor;
+    public final TalonFXMotor turretMotor, cableMotor;
     public final CANcoder turretEncoder;
 
     public final frc.excalib.mechanisms.turret.Turret turretMechanism;
-
+    public final Mechanism cableMechanism;
     public final DoubleSupplier turretAngleSupplier;
 
     public final DoubleSupplier turretRelativeAngleToTarget;
@@ -39,6 +40,10 @@ public class Turret extends SubsystemBase implements Logged {
         turretEncoder.setPosition(turretEncoder.getAbsolutePosition().getValueAsDouble());
         turretAngleSupplier = () -> turretEncoder.getPosition().getValueAsDouble() * ENCODER_POSITION_CONVERSION_FACTOR;
         turretMotor.setMotorPosition(turretEncoder.getPosition().getValueAsDouble());
+
+        cableMotor = new TalonFXMotor(CABLE_MOTOR_ID);
+        cableMotor.setCurrentLimit(5,20);
+        cableMechanism = new Mechanism(cableMotor);
 
         turretMotor.setCurrentLimit(120, 80);
         this.turretRelativeAngleToTarget = turretRelativeAngleToTarget;
@@ -93,7 +98,7 @@ public class Turret extends SubsystemBase implements Logged {
                         )
                 ),
                 () -> turretTarget.equals(Target.IDLE)
-        );
+        ).alongWith(cableMechanism.manualCommand(()->-1));
         c.addRequirements(this);
         return c;
     }

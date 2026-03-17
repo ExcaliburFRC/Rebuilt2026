@@ -9,6 +9,7 @@ public class TurretConstants {
     public static final double ROTATIONS_TO_RAD = 2 * Math.PI;
 
     public static final int TURRET_MOTOR_ID = 42;
+    public static final int CABLE_MOTOR_ID = 42;
     public static final int TURRET_ENCODER_ID = 41;
     public static final double MAX_LIMIT = 3.54;
     public static final double MIN_LIMIT = -1.5;

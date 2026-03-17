@@ -143,7 +143,7 @@ public class Shooter extends SubsystemBase implements Logged {
                 ).andThen(LEDs.getInstance().restoreLEDs())
         );
 
-        volitileTrenchHoodTrigger = new Trigger(
+        volatileTrenchHoodTrigger = new Trigger(
                 () -> {
                     Pose2d pose = poseSupplier.get();
                     if (AllianceUtils.isBlueAlliance()) {
@@ -161,7 +161,7 @@ public class Shooter extends SubsystemBase implements Logged {
         hoodSoftLimit = new SoftLimit(
                 () -> HOOD_MIN_ANGLE_LIMIT,
                 () -> {
-                    if (volitileTrenchHoodTrigger.getAsBoolean()) {
+                    if (volatileTrenchHoodTrigger.getAsBoolean()) {
                         return HOOD_MAX_ANGLE_LIMIT_IN_TRENCH;
                     }
                     return HOOD_MAX_ANGLE_LIMIT;

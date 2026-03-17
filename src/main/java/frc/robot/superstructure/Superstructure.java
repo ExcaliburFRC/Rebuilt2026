@@ -2,6 +2,7 @@ package frc.robot.superstructure;
 
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
@@ -114,6 +115,9 @@ public class Superstructure implements Logged {
     public Supplier<Translation2d> getTurretToTargetVector(Supplier<Target> target) {
         return () -> {
 
+            ChassisSpeeds robotSpeeds = swerve.getRobotRelativeSpeeds();
+
+
             Pose2d robotPose = swerve.getPose2D();
             Rotation2d robotRot = robotPose.getRotation();
 
@@ -127,7 +131,19 @@ public class Superstructure implements Logged {
             Translation2d robotVector =
                     fieldVector.rotateBy(robotRot.unaryMinus());
 
-            return robotVector.rotateBy(Rotation2d.fromDegrees(-180));
+            Translation2d turretToTarget = robotVector.rotateBy(Rotation2d.fromDegrees(-180));
+
+            Translation2d virtualTargetOffset = new Translation2d(
+                    robotSpeeds.vxMetersPerSecond
+                            - TURRET_OFFSET_TRANSLATION.getY() * robotSpeeds.omegaRadiansPerSecond,
+
+                    robotSpeeds.vyMetersPerSecond
+                            - TURRET_OFFSET_TRANSLATION.getX() * robotSpeeds.omegaRadiansPerSecond
+            ).times(distanceTimeOfFlightMap.get(turretToTarget.getNorm()));
+
+
+            Translation2d virtualTurretToTarget = turretToTarget.minus(virtualTargetOffset);
+            return virtualTurretToTarget;
         };
     }
 

@@ -4,6 +4,7 @@ import com.ctre.phoenix6.hardware.CANcoder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
+import edu.wpi.first.math.proto.Kinematics;
 import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.excalib.additional_utilities.AllianceUtils;
@@ -180,7 +181,7 @@ public class Shooter extends SubsystemBase implements Logged {
         angleDistanceMap.put(3.48, 0.18);
         angleDistanceMap.put(3.19, 0.13);
         angleDistanceMap.put(4.0, 0.22);
-        angleDistanceMap.put(4.81,0.32);
+        angleDistanceMap.put(4.81, 0.32);
 
     }
 
@@ -193,7 +194,7 @@ public class Shooter extends SubsystemBase implements Logged {
         velocityDistanceMap.put(3.48, 39.5);
         velocityDistanceMap.put(3.19, 39.0);
         velocityDistanceMap.put(4.0, 43.0);
-        velocityDistanceMap.put(4.81,44.0);
+        velocityDistanceMap.put(4.81, 44.0);
     }
 
     public Command setHoodAngleCommand(DoubleSupplier angleSetpoint) {
@@ -244,7 +245,7 @@ public class Shooter extends SubsystemBase implements Logged {
 
     public Command defaultCommand() {
         Command c = new ConditionalCommand(
-                Commands.none(),
+                idleCommand(),
                 new ParallelCommandGroup(
                         setAdjustedFlyWheelVelocity(),
                         setAdjustedHoodAngle(),
@@ -274,9 +275,15 @@ public class Shooter extends SubsystemBase implements Logged {
 
     public Command shootToHubCommand() {
         return new StartEndCommand(
-                () -> CommandScheduler.getInstance().schedule(setTargetCommand(HUB).andThen(turnOnShootingCommand())),
-                () -> CommandScheduler.getInstance().schedule(setTargetCommand(IDLE).andThen(turnOffShootingCommand())
-                ));
+                () -> {
+                    shooterTarget = HUB;
+                    shootingMode = () -> true;
+                },
+                () -> {
+                    shooterTarget = IDLE;
+                    shootingMode = () -> false;
+                }
+        );
     }
 
     public Command trackHubCommand() {
@@ -291,6 +298,13 @@ public class Shooter extends SubsystemBase implements Logged {
                 () -> CommandScheduler.getInstance().schedule(setTargetCommand(DELIVERY).andThen(turnOnShootingCommand())),
                 () -> CommandScheduler.getInstance().schedule(setTargetCommand(IDLE).andThen(turnOffShootingCommand()))
         );
+    }
+
+    public Command idleCommand() {
+        return new RunCommand(() -> {
+            flyWheelMechanism.setVoltage(0);
+            hoodMechanism.setVoltage(0);
+        }, this);
     }
 
     public Command manualTransport() {

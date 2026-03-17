@@ -15,8 +15,6 @@ import frc.excalib.control.math.Vector2D;
 import frc.excalib.control.motor.controllers.Motor;
 import frc.excalib.mechanisms.fly_wheel.FlyWheel;
 import frc.excalib.mechanisms.turret.Turret;
-import monologue.Annotations;
-import monologue.Annotations.Log.NT;
 import monologue.Logged;
 
 import java.util.function.DoubleSupplier;
@@ -25,12 +23,9 @@ import java.util.function.Supplier;
 import static frc.excalib.control.motor.motor_specs.DirectionState.FORWARD;
 import static frc.excalib.control.motor.motor_specs.DirectionState.REVERSE;
 import static frc.excalib.control.motor.motor_specs.IdleState.BRAKE;
-import static frc.excalib.control.motor.motor_specs.IdleState.COAST;
 
 /**
  * A class representing a swerve module
- *
- * @author Yoav Cohen & Itay Keller
  */
 public class SwerveModule implements Logged {
     public final FlyWheel m_driveWheel;
@@ -56,12 +51,13 @@ public class SwerveModule implements Logged {
         driveMotor.setVelocityConversionFactor(velocityConversionFactor);
         driveMotor.setIdleState(BRAKE);
         driveMotor.setPositionConversionFactor(positionConversionFactor);
-        driveMotor.setCurrentLimit(0, 40);
+        driveMotor.setCurrentLimit(80, 60);
 
         rotationMotor.setIdleState(BRAKE);
         rotationMotor.setMotorPosition(angleSupplier.getAsDouble());
         rotationMotor.setVelocityConversionFactor(rotationVelocityConversionFactor);
         rotationMotor.setInverted(FORWARD);
+        rotationMotor.setCurrentLimit(40,30);
 
         m_driveWheel = new FlyWheel(driveMotor, 10, 10, velocityGains);
 

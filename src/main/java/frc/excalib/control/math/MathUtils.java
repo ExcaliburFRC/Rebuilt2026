@@ -26,5 +26,4 @@ public class MathUtils {
         double angle = Math.atan2(place2.getY() - place1.getY(), place1.getX() - place2.getX());
         if (place1.getY() > place2.getY()) angle += Math.PI;
         return angle;
-    }
-}
+    }}

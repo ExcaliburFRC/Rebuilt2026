@@ -8,7 +8,6 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -274,6 +273,10 @@ public class Swerve extends SubsystemBase implements Logged {
         m_odometry.resetOdometry(modules.getModulesPositions(), newPose);
     }
 
+    public Command resetOdometryCommand(Pose2d newPose) {
+        return new InstantCommand(() -> m_odometry.resetOdometry(modules.getModulesPositions(), newPose));
+    }
+
     /**
      * Gets the robot's rotation.
      *
@@ -493,22 +496,40 @@ public class Swerve extends SubsystemBase implements Logged {
         modules.periodic();
         field.setRobotPose(getPose2D());
         updateOdometry();
-        Pose2d arrPose = getAuroraPose2de();
+        Pose2d arrPose = getAuroraPose2d();
         if (!((arrPose.getX() == 0) && (arrPose.getY() == 0) && (arrPose.getRotation().getRadians() == 0))) {
-            m_odometry.resetOdometry(modules.getModulesPositions(), getAuroraPose2de());
+            m_odometry.resetOdometry(modules.getModulesPositions(), getAuroraPose2d());
         }
 
 
     }
 
     @Log.NT
-    public Pose2d getAuroraPose2de() {
+    public Pose2d getAuroraPose2d() {
         Pose2d auroraPose = new Pose2d(
                 new Translation2d(
                         NetworkTableInstance.getDefault().getTable("Aurora").getSubTable("robotPose").getEntry("x").getDouble(0),
                         NetworkTableInstance.getDefault().getTable("Aurora").getSubTable("robotPose").getEntry("y").getDouble(0)
                 ),
                 new Rotation2d(NetworkTableInstance.getDefault().getTable("Aurora").getSubTable("robotPose").getEntry("yaw").getDouble(0)
+                )
+        );
+
+        return auroraPose;
+    }
+
+    @Log.NT
+    public Pose3d getAuroraPose3() {
+        Pose3d auroraPose = new Pose3d(
+                new Translation3d(
+                        NetworkTableInstance.getDefault().getTable("Aurora").getSubTable("robotPose").getEntry("x").getDouble(0),
+                        NetworkTableInstance.getDefault().getTable("Aurora").getSubTable("robotPose").getEntry("y").getDouble(0),
+                        NetworkTableInstance.getDefault().getTable("Aurora").getSubTable("robotPose").getEntry("z").getDouble(0)
+                ),
+                new Rotation3d(
+                        NetworkTableInstance.getDefault().getTable("Aurora").getSubTable("robotPose").getEntry("roll").getDouble(0),
+                        NetworkTableInstance.getDefault().getTable("Aurora").getSubTable("robotPose").getEntry("pitch").getDouble(0),
+                        NetworkTableInstance.getDefault().getTable("Aurora").getSubTable("robotPose").getEntry("yaw").getDouble(0)
                 )
         );
 
@@ -537,7 +558,4 @@ public class Swerve extends SubsystemBase implements Logged {
         return angleController.atSetpoint();
     }
 
-    public Pose2d getApproximatedFuturePose2D() {
-        return new Pose2d();
-    }
 }

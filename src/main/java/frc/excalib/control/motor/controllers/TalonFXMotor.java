@@ -8,7 +8,6 @@ import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.*;
@@ -17,7 +16,6 @@ import frc.excalib.control.motor.motor_specs.IdleState;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 
 import static com.ctre.phoenix6.signals.InvertedValue.Clockwise_Positive;
 import static com.ctre.phoenix6.signals.InvertedValue.CounterClockwise_Positive;
@@ -82,7 +80,7 @@ public class TalonFXMotor extends TalonFX implements Motor {
         signals.add(velocitySignal);
         signals.add(currentSignal);
         signals.add(voltageSignal);
-        signals.add(temperatureSignal);
+//        signals.add(temperatureSignal);
 
 
         motors.add(this);
@@ -90,8 +88,7 @@ public class TalonFXMotor extends TalonFX implements Motor {
     }
 
     public static void refreshAll() {
-        for (TalonFXMotor motor : motors) motor.refresh();
-        for (ArrayList<BaseStatusSignal> signals : canMap.values()){
+        for (ArrayList<BaseStatusSignal> signals : canMap.values()) {
             BaseStatusSignal.refreshAll(signals.toArray(new BaseStatusSignal[0]));
         }
     }
@@ -168,12 +165,14 @@ public class TalonFXMotor extends TalonFX implements Motor {
     }
 
     @Override
-    public void setCurrentLimit(int stallLimit, int freeLimit) {
+    public void setCurrentLimit(int statorLimit, int supplyLimit) {
         var talonFXConfigurator = super.getConfigurator();
         var limitConfigs = new CurrentLimitsConfigs();
-        limitConfigs.SupplyCurrentLimit = freeLimit;
+        talonFXConfigurator.refresh(limitConfigs);
+        limitConfigs.StatorCurrentLimit = statorLimit;
+        limitConfigs.StatorCurrentLimitEnable = true;
+        limitConfigs.SupplyCurrentLimit = supplyLimit;
         limitConfigs.SupplyCurrentLimitEnable = true;
-
         talonFXConfigurator.apply(limitConfigs);
     }
 

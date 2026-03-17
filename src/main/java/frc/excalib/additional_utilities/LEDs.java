@@ -26,8 +26,8 @@ public class LEDs extends SubsystemBase {
     private int tailIndex = 0;
     private double offset = 0;
 
-    public static final int LEDS_PORT = 9; // pwm
-    public static final int LENGTH = 50;
+    public static final int LEDS_PORT = 8; // pwm
+    public static final int LENGTH = 22;
 
     Color[] orange = new Color[LENGTH];
     Color[] black = new Color[LENGTH];
@@ -39,13 +39,17 @@ public class LEDs extends SubsystemBase {
 
         Arrays.fill(orange, ORANGE.color);
         Arrays.fill(black, OFF.color);
+    }
 
-        setDefaultCommand(setPattern(LEDPattern.EXPAND, BLUE.color, WHITE.color));
+    private void initializeDefaultCommand() {
+//        setDefaultCommand(setPattern(LEDPattern.EXPAND, BLUE.color, YELLOW.color));
+        setDefaultCommand(setPattern(LEDPattern.TRAIN, BLUE.color, YELLOW.color));
     }
 
     public static LEDs getInstance() {
         if (instance == null) {
             instance = new LEDs();
+            instance.initializeDefaultCommand();
         }
         return instance;
     }
@@ -174,18 +178,38 @@ public class LEDs extends SubsystemBase {
                 break;
 
             case TRAIN:
-                command = new InstantCommand(() -> {
-                    Arrays.fill(colors, mainColor);
-                    for (int j = 0; j < trainLength; j++)
-                        colors[MathUtil.clamp(j + tailIndex - 1, 0, LENGTH)] = accentColor;
-                    this.tailIndex = invert.get() ? this.tailIndex - 1 : this.tailIndex + 1;
-                    if (this.tailIndex == LENGTH - trainLength || this.tailIndex == 0) invert.set(!invert.get());
-                    setLedStrip(colors);
-                }, this)
-                        .andThen(new WaitCommand(0.05)).repeatedly()
-                        .withName("TRAIN_BACK_AND_FOURTH, main: " + mainColor.toString() + ", accent: " + accentColor.toString());
-                break;
+                final AtomicInteger position = new AtomicInteger(0);
+                final AtomicInteger direction = new AtomicInteger(1);
 
+                command = new RunCommand(() -> {
+
+                    Arrays.fill(colors, mainColor);
+
+                    int pos = position.get();
+
+                    for (int i = 0; i < trainLength; i++) {
+                        int index = pos + i;
+                        if (index >= 0 && index < LENGTH) {
+                            colors[index] = accentColor;
+                        }
+                    }
+
+                    pos += direction.get();
+
+                    if (pos <= 0 || pos >= LENGTH - trainLength) {
+                        direction.set(-direction.get());
+                    }
+
+                    position.set(pos);
+
+                    setLedStrip(colors);
+
+                }, this)
+                        .andThen(new WaitCommand(0.05))
+                        .repeatedly()
+                        .withName("TRAIN_BOUNCE, main: " + mainColor + ", accent: " + accentColor);
+
+                break;
             case TRAIN_CIRCLE:
                 command = new InstantCommand(() -> {
                     Arrays.fill(colors, mainColor);
@@ -242,7 +266,7 @@ public class LEDs extends SubsystemBase {
 
     public Command scheduleLEDcommand(Command ledCommand) {
         return new InstantCommand(
-                ()-> CommandScheduler.getInstance().schedule(ledCommand)
+                () -> CommandScheduler.getInstance().schedule(ledCommand)
         );
     }
 

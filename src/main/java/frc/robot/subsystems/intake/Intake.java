@@ -109,7 +109,7 @@ public class Intake extends SubsystemBase implements Logged {
 
     public enum IntakeState {
         CLOSE(INTAKE_MIN_ANGLE), // todo
-        IDLE(0), // zero becuase it doesnt move at all
+        IDLE(0), // zero because it doesnt move at all
         OPEN(INTAKE_MAX_ANGLE); // todo
 
         private final double radPosition;

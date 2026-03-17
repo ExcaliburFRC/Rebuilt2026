@@ -60,7 +60,7 @@ public class Shooter extends SubsystemBase implements Logged {
     private final InterpolatingDoubleTreeMap angleDistanceMap;
     private final InterpolatingDoubleTreeMap velocityDistanceMap;
 
-    private final Trigger volitileTrenchHoodTrigger;
+    private final Trigger volatileTrenchHoodTrigger;
 
     private Target shooterTarget = HUB;
     private BooleanSupplier shootingMode = () -> false;

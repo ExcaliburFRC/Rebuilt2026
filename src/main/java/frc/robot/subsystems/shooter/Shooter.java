@@ -43,7 +43,7 @@ public class Shooter extends SubsystemBase implements Logged {
 
     private final FlyWheel flyWheelMechanism;
     private final Mechanism hoodMechanism;
-    private final Mechanism transportMechanism;
+    private final FlyWheel transportMechanism;
 
     private DoubleSupplier hoodAngleSupplier;
     private final SoftLimit hoodSoftLimit;
@@ -61,8 +61,7 @@ public class Shooter extends SubsystemBase implements Logged {
     private final InterpolatingDoubleTreeMap velocityDistanceMap;
 
     private final Trigger volatileTrenchHoodTrigger;
-
-    private Target shooterTarget = HUB;
+    private Target shooterTarget = IDLE;
     private BooleanSupplier shootingMode = () -> false;
 
     private Trigger activateLedsTrigger;
@@ -88,6 +87,7 @@ public class Shooter extends SubsystemBase implements Logged {
 
         flyWheelMotorTop.setCurrentLimit(120, 80);
         flyWheelMotorLow.setCurrentLimit(120, 80);
+        transportMotor.setCurrentLimit(120,80);
 
         hoodEncoder.setPosition(hoodEncoder.getAbsolutePosition().getValueAsDouble());
         this.turretRelativeDistanceFromTarget = turretRelativeDistanceFromTarget;
@@ -109,7 +109,7 @@ public class Shooter extends SubsystemBase implements Logged {
 
         flyWheelMechanism = new FlyWheel(shooterMotorGroup, FLYWHEEL_MAX_ACCELERATION, FLYWHEEL_MAX_JERK, FLYWHEEL_GAINS);
 
-        transportMechanism = new Mechanism(transportMotor);
+        transportMechanism = new FlyWheel(transportMotor, 10, 10, TRANSPORT_PID_GAINS);
 
         flywheelVelocityFilter = new EMAFilter(
                 flyWheelMechanism::getVelocity,
@@ -159,7 +159,6 @@ public class Shooter extends SubsystemBase implements Logged {
         );
 
         transportVelocityController = new PIDController(TRANSPORT_PID_GAINS.kp, TRANSPORT_PID_GAINS.ki, TRANSPORT_PID_GAINS.kd);
-
 
         hoodSoftLimit = new SoftLimit(
                 () -> HOOD_MIN_ANGLE_LIMIT,
@@ -218,7 +217,11 @@ public class Shooter extends SubsystemBase implements Logged {
                     double distance = turretRelativeDistanceFromTarget.getAsDouble();
                     double velocity = velocityDistanceMap.get(distance);
                     flywheelVelocitySetpoint = () -> velocity;
-                    flyWheelMechanism.setDynamicVelocity(velocity);
+                    if (!shootingMode.getAsBoolean()) {
+                        flyWheelMechanism.setVoltage(0);
+                    } else {
+                        flyWheelMechanism.setDynamicVelocity(velocity);
+                    }
                 }
         );
     }
@@ -238,26 +241,31 @@ public class Shooter extends SubsystemBase implements Logged {
     }
 
     public Command setAdjustedTransportBehavior() {
-        return new ConditionalCommand(
-                new RunCommand(
-                        () -> {
-                            double output = transportVelocityController.calculate(transportMechanism.logVelocity(), 30);
-                            transportMechanism.setVoltage(output);
+        return new RunCommand(
+                () -> {
+                    if (shootingMode.getAsBoolean()) {
+                        if (flyWheelReadyTrigger()) {
+                            transportMechanism.setVoltage(-12);
+                        } else {
+                            transportMechanism.setVoltage(0);
                         }
-                ),
-                transportMechanism.manualCommand(() -> 0),
-                shootingMode
+                    } else {
+                        transportMechanism.setVoltage(0);
+                    }
+                }
         );
     }
+
 
     public Command defaultCommand() {
         Command c = new ConditionalCommand(
                 idleCommand(),
                 new ParallelCommandGroup(
                         setAdjustedFlyWheelVelocity(),
+                        setAdjustedTransportBehavior(),
                         setAdjustedHoodAngle()),
                 () -> shooterTarget.equals(IDLE)
-        ).alongWith(setAdjustedTransportBehavior());
+        );
         c.addRequirements(this);
         return c;
     }
@@ -280,22 +288,17 @@ public class Shooter extends SubsystemBase implements Logged {
     }
 
     public Command shootToHubCommand() {
-        return new StartEndCommand(
+        return new InstantCommand(
                 () -> {
                     shooterTarget = HUB;
                     shootingMode = () -> true;
-                },
-                () -> {
-                    shooterTarget = IDLE;
-                    shootingMode = () -> false;
                 }
         );
     }
 
     public Command trackHubCommand() {
-        return new StartEndCommand(
-                () -> CommandScheduler.getInstance().schedule(setTargetCommand(HUB)),
-                () -> CommandScheduler.getInstance().schedule(setTargetCommand(IDLE))
+        return new InstantCommand(
+                () -> CommandScheduler.getInstance().schedule(setTargetCommand(HUB).alongWith(turnOffShootingCommand()))
         );
     }
 
@@ -310,12 +313,10 @@ public class Shooter extends SubsystemBase implements Logged {
         return new RunCommand(() -> {
             flyWheelMechanism.setVoltage(0);
             hoodMechanism.setVoltage(0);
-        }, this);
+            transportMechanism.setVoltage(0);
+        }, this).alongWith(turnOffShootingCommand());
     }
 
-    public Command manualTransport() {
-        return transportMechanism.manualCommand(() -> TRANSPORT_VOLTAGE);
-    }
 
     @NT
     public double getFlyWheelVelocitySetpoint() {
@@ -347,4 +348,13 @@ public class Shooter extends SubsystemBase implements Logged {
         return hoodAdjustedTrigger.getAsBoolean();
     }
 
+    @NT
+    public String getShooterTarget() {
+        return shooterTarget.name();
+    }
+
+    @NT
+    public boolean isShootingModeOn() {
+        return shootingMode.getAsBoolean();
+    }
 }

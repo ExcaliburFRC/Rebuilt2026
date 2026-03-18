@@ -7,6 +7,10 @@ package frc.robot;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -19,6 +23,8 @@ import frc.excalib.swerve.Swerve;
 import frc.robot.superstructure.Superstructure;
 import frc.robot.util.AuroraPoseGetter;
 import frc.robot.util.HubTimerSubsystem;
+import monologue.Annotations;
+import monologue.Annotations.Log.NT;
 import monologue.Logged;
 
 import static frc.robot.Constants.*;
@@ -48,6 +54,10 @@ public class RobotContainer implements Logged {
     private final Alert lowBatteryAlert = new Alert("Battery voltage is low", Alert.AlertType.kWarning);
     private final Trigger lowBatteryTrigger = new Trigger(lowBatteryAlert::get);
 
+    private final NetworkTable table = NetworkTableInstance.getDefault().getTable("Tab1");
+    NetworkTableEntry flywheelVel = table.getEntry("flywheelVel");
+    NetworkTableEntry hoodAngle = table.getEntry("hoodAngle");
+
     // ===== Vision System State =====
     private boolean batteryLow = false;
 
@@ -62,6 +72,9 @@ public class RobotContainer implements Logged {
     public RobotContainer() {
 //        lowBatteryTrigger.onTrue(leds.setPattern(BLINKING, ORANGE.color).withInterruptBehavior(kCancelIncoming));
 
+        flywheelVel.setDouble(0);
+        hoodAngle.setDouble(0);
+
         setAutoChooser();
         configureBindings();
         registerCommands();
@@ -69,9 +82,14 @@ public class RobotContainer implements Logged {
 
     private void configureBindings() {
         // Driver Controls
+        Command c = superstructure.turret.setPositionCommand(Rotation2d::new);
+        c.addRequirements(superstructure.turret);
+
 //        primary.square().toggleOnTrue(superstructure.trackHubCommand());
         primary.triangle().toggleOnTrue(superstructure.shootToHubCommand());
-        primary.cross().whileTrue(superstructure.shootFixedCommand(0, 0));
+        primary.cross().toggleOnTrue(superstructure.shootFixedCommand(flywheelVel.getDouble(0), hoodAngle.getDouble(0)));
+        primary.square().toggleOnTrue(superstructure.idleCommand());
+        primary.circle().toggleOnTrue(superstructure.trackHubCommand());
 
         primary.options().onTrue(swerve.resetOdometryCommand(new Pose2d()));
         // Intake Controls
@@ -147,4 +165,9 @@ public class RobotContainer implements Logged {
         return performanceMetricsTracker;
     }
 
+
+    @NT
+    public double getInterpolationFlywheelVel(){
+        return flywheelVel.getDouble(0);
+    }
 }

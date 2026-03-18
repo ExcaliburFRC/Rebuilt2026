@@ -193,7 +193,8 @@ public class Superstructure implements Logged {
     public Command trackHubCommand() {
         return new ParallelCommandGroup(
                 shooter.trackHubCommand(),
-                turret.targetHubCommand()
+                turret.targetHubCommand(),
+                transport.manualCommand(()->0)
         ).alongWith(setSuperstructureTarget(Target.HUB));
     }
 
@@ -201,7 +202,7 @@ public class Superstructure implements Logged {
         return new ParallelCommandGroup(
                 shooter.setFlyWheelDynamicVelocity(() -> flywheelVelocity),
                 shooter.setHoodAngleCommand(() -> hoodAngle),
-                shooter.manualTransport(),
+                shooter.setAdjustedTransportBehavior(),
                 transport.transportFuelCommand(),
                 turret.targetHubCommand()
         ).alongWith(setSuperstructureTarget(Target.HUB));
@@ -211,9 +212,14 @@ public class Superstructure implements Logged {
         return intake.intakeCommand();
     }
 
-    public Command ejectCommand() {
-        return intake.rollerManualCommand(-7); // Assuming -7 volts is eject based on intakeCommand using 7
+    public Command idleCommand(){
+        return new ParallelCommandGroup(
+                shooter.idleCommand(),
+                turret.idleCommand(),
+                transport.manualCommand(()-> 0)
+        );
     }
+
 
     public Command stopIntakeCommand() {
         return intake.closeCommand();

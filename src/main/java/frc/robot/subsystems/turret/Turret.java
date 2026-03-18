@@ -43,15 +43,14 @@ public class Turret extends SubsystemBase implements Logged {
         turretMotor.setCurrentLimit(120, 80);
         this.turretRelativeAngleToTarget = turretRelativeAngleToTarget;
         turretMotor.setInverted(DirectionState.REVERSE);
-        turretTarget = Target.HUB;
+        turretTarget = Target.IDLE;
 
         this.robotAngleSupplier = robotAngleSupplier;
 //      turretMotor.setMotorPosition(turretAngleSupplier.getAsDouble());
         turretMotor.setPositionConversionFactor(MOTOR_POSITION_CONVERSION_FACTOR);
         turretMotor.setVelocityConversionFactor(MOTOR_POSITION_CONVERSION_FACTOR);
 
-
-        turretMotor.setIdleState(IdleState.BRAKE);
+        turretMotor.setIdleState(IdleState.COAST);
         turretMotor.setMotorPosition(turretAngleSupplier.getAsDouble());
 
         turretMechanism = new frc.excalib.mechanisms.turret.Turret(
@@ -59,7 +58,7 @@ public class Turret extends SubsystemBase implements Logged {
                 TURRET_CONTINUOUS_SOFTLIMIT,
                 TURRET_GAINS,
                 PID_TOLERANCE,
-                this::getEncoderPosition,
+                turretMotor::getMotorPosition,
                 new TrapezoidProfile.Constraints(Math.PI * 60, Math.PI * 100)
         );
 
@@ -82,7 +81,7 @@ public class Turret extends SubsystemBase implements Logged {
 
     public Command defaultCommand() {
         Command c = new ConditionalCommand(
-                Commands.none(),
+                turretMechanism.stopTurret(),
                 setPositionCommand(
                         () -> Rotation2d.fromRadians(
                                 SOFT_LIMIT.limit(
@@ -123,9 +122,19 @@ public class Turret extends SubsystemBase implements Logged {
     }
 
     @Log.NT
-    public double getEncoderPosition() {
-        return turretAngleSupplier.getAsDouble();
+    public double getTurretPointingAtHubSetpoint() {
+        return turretRelativeAngleToTarget.getAsDouble();
     }
+
+    @Log
+    public double getLimitedTurretPointingAtHubSetpoint() {
+        return SOFT_LIMIT.limit(
+                TURRET_CONTINUOUS_SOFTLIMIT.getSetpoint(
+                        turretAngleSupplier.getAsDouble(),
+                        turretRelativeAngleToTarget.getAsDouble()));
+
+    }
+
 
     @Log.NT
     public String getTarget() {
@@ -142,4 +151,8 @@ public class Turret extends SubsystemBase implements Logged {
         return isTurretAlligned.getAsBoolean();
     }
 
+    @Log.NT
+    public String getTurretTarget() {
+        return turretTarget.name();
+    }
 }

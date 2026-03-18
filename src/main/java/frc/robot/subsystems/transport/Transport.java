@@ -21,8 +21,8 @@ public class Transport extends SubsystemBase implements Logged {
         drumMotor = new TalonFXMotor(DRUM_MOTOR_ID, SUBSYSTEMS_CANBUS);
         drumMechanism = new FlyWheel(drumMotor, MAX_ACCELERATION, MAX_JERK, GAINS);
 
-        drumMotor.setCurrentLimit(120,70);
-        setDefaultCommand(transportFuelCommand());
+        drumMotor.setCurrentLimit(120,80);
+//        setDefaultCommand(transportFuelCommand());
     }
 
 
@@ -31,6 +31,8 @@ public class Transport extends SubsystemBase implements Logged {
     }
 
     public Command transportFuelCommand() {
+//        return drumMechanism.setDynamicVelocityCommand(() -> 0, this);
         return drumMechanism.setDynamicVelocityCommand(() -> -10, this);
     }
+
 }

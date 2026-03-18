@@ -31,7 +31,7 @@ public class ShooterConstants {
 //    public static final Gains HOOD_PID_GAINS = new Gains();
 
     // ===== Transport Constants =====
-    public static final double TRANSPORT_VOLTAGE = -5;
+    public static final double TRANSPORT_VOLTAGE = -12;
 //    public static final double TRANSPORT_VOLTAGE = 0;
 }
 

@@ -4,7 +4,6 @@ import com.ctre.phoenix6.hardware.CANcoder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
-import edu.wpi.first.math.proto.Kinematics;
 import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.excalib.additional_utilities.AllianceUtils;
@@ -62,7 +61,9 @@ public class Shooter extends SubsystemBase implements Logged {
 
     private final Trigger volatileTrenchHoodTrigger;
 
-    private Target shooterTarget = HUB;
+    private Target shooterTarget = HUB
+
+            ;
     private BooleanSupplier shootingMode = () -> false;
 
     private Trigger activateLedsTrigger;
@@ -143,7 +144,7 @@ public class Shooter extends SubsystemBase implements Logged {
                 ).andThen(LEDs.getInstance().restoreLEDs())
         );
 
-        volitileTrenchHoodTrigger = new Trigger(
+        volatileTrenchHoodTrigger = new Trigger(
                 () -> {
                     Pose2d pose = poseSupplier.get();
                     if (AllianceUtils.isBlueAlliance()) {
@@ -161,7 +162,7 @@ public class Shooter extends SubsystemBase implements Logged {
         hoodSoftLimit = new SoftLimit(
                 () -> HOOD_MIN_ANGLE_LIMIT,
                 () -> {
-                    if (volitileTrenchHoodTrigger.getAsBoolean()) {
+                    if (volatileTrenchHoodTrigger.getAsBoolean()) {
                         return HOOD_MAX_ANGLE_LIMIT_IN_TRENCH;
                     }
                     return HOOD_MAX_ANGLE_LIMIT;
@@ -248,10 +249,9 @@ public class Shooter extends SubsystemBase implements Logged {
                 idleCommand(),
                 new ParallelCommandGroup(
                         setAdjustedFlyWheelVelocity(),
-                        setAdjustedHoodAngle(),
-                        setAdjustedTransportBehavior()),
+                        setAdjustedHoodAngle()),
                 () -> shooterTarget.equals(IDLE)
-        );
+        ).alongWith(setAdjustedTransportBehavior());
         c.addRequirements(this);
         return c;
     }

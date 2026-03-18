@@ -44,7 +44,7 @@ public class Intake extends SubsystemBase implements Logged {
         fourBarMotor.setInverted(DirectionState.REVERSE);
         rollerMotor = new TalonFXMotor(ROLLER_MOTOR_ID, SUBSYSTEMS_CANBUS);
 
-        rollerMotor.setCurrentLimit(80,80);
+        rollerMotor.setCurrentLimit(80, 80);
         rollerMotorMechanism = new Mechanism(rollerMotor);
 
         angleSupplier = () -> (angleEncoder.getAbsolutePosition().getValueAsDouble() * (1 / 0.29));
@@ -56,7 +56,7 @@ public class Intake extends SubsystemBase implements Logged {
         Gains ARM_POSITION_GAINS = new Gains(3, 0, 0, 0.45, 0, 0, 0.82);
         fourBarMechanism = new Arm(fourBarMotor, angleSupplier, ARM_VELOCITY_LIMIT, ARM_POSITION_GAINS, new Mass(() -> Math.cos(angleSupplier.getAsDouble()), () -> Math.sin(angleSupplier.getAsDouble()), ARM_MASS));
 
-        setDefaultCommand(defaultCommand());
+//        setDefaultCommand(defaultCommand());
     }
 
     public Command setAnglePosition(IntakeState targetPosition) {
@@ -81,6 +81,19 @@ public class Intake extends SubsystemBase implements Logged {
         Command c = setPositionCommand(0).alongWith(rollerManualCommand(0));
         c.addRequirements(this);
         return c;
+    }
+
+    public Command pumpFuelCommand() {
+        return new SequentialCommandGroup(
+                new ParallelCommandGroup(
+                        setPositionCommand(0.5),
+                        rollerManualCommand(3)
+                ).withTimeout(0.2),
+                new ParallelCommandGroup(
+                        setPositionCommand(1),
+                        rollerManualCommand(5)
+                ).withTimeout(0.2)
+        ).repeatedly();
     }
 
     @Log.NT

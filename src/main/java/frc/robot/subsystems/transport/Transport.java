@@ -13,7 +13,7 @@ import static frc.robot.Constants.SUBSYSTEMS_CANBUS;
 import static frc.robot.subsystems.transport.TransportConstants.*;
 
 public class Transport extends SubsystemBase implements Logged {
-    private static final double TRANSPORT_FUEL_VOLTAGE = -3.0;
+    private static final double TRANSPORT_FUEL_VOLTAGE = -2.0;
     private final TalonFXMotor drumMotor;
     public FlyWheel drumMechanism;
 

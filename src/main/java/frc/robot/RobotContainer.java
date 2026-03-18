@@ -71,11 +71,12 @@ public class RobotContainer implements Logged {
         // Driver Controls
         primary.square().toggleOnTrue(superstructure.trackHubCommand());
         primary.triangle().toggleOnTrue(superstructure.shootToHubCommand());
-        primary.povUp().whileTrue(superstructure.shootFixedCommand(44, 0.4));
+        primary.cross().whileTrue(superstructure.shootFixedCommand(0, 0));
 
         // Intake Controls
-        primary.L1().whileTrue(superstructure.intakeCommand());
-        primary.R1().whileTrue(superstructure.ejectCommand());
+        primary.povDown().toggleOnTrue(superstructure.intake.intakeCommand());
+        primary.povUp().toggleOnTrue(superstructure.intake.closeCommand());
+        primary.povLeft().whileTrue(superstructure.intake.pumpFuelCommand());
 
         swerve.setDefaultCommand(
                 swerve.driveCommand(

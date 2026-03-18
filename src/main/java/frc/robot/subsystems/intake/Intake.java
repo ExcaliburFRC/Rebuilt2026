@@ -72,7 +72,7 @@ public class Intake extends SubsystemBase implements Logged {
     }
 
     public Command intakeCommand() {
-        Command c = setPositionCommand(1).alongWith(rollerManualCommand(7));
+        Command c = setPositionCommand(1).alongWith(rollerManualCommand(-7));
         c.addRequirements(this);
         return c;
     }

@@ -39,6 +39,7 @@ public class Shooter extends SubsystemBase implements Logged {
     private final MotorGroup shooterMotorGroup;
     private final CANcoder hoodEncoder;
     private final PIDController angleController;
+    private final PIDController transportVelocityController;
 
     private final FlyWheel flyWheelMechanism;
     private final Mechanism hoodMechanism;
@@ -61,9 +62,7 @@ public class Shooter extends SubsystemBase implements Logged {
 
     private final Trigger volatileTrenchHoodTrigger;
 
-    private Target shooterTarget = HUB
-
-            ;
+    private Target shooterTarget = HUB;
     private BooleanSupplier shootingMode = () -> false;
 
     private Trigger activateLedsTrigger;
@@ -159,6 +158,9 @@ public class Shooter extends SubsystemBase implements Logged {
                 }
         );
 
+        transportVelocityController = new PIDController(TRANSPORT_PID_GAINS.kp, TRANSPORT_PID_GAINS.ki, TRANSPORT_PID_GAINS.kd);
+
+
         hoodSoftLimit = new SoftLimit(
                 () -> HOOD_MIN_ANGLE_LIMIT,
                 () -> {
@@ -236,12 +238,16 @@ public class Shooter extends SubsystemBase implements Logged {
     }
 
     public Command setAdjustedTransportBehavior() {
-//        return new ConditionalCommand(
-//                transportMechanism.manualCommand(() -> TRANSPORT_VOLTAGE),
-//                transportMechanism.manualCommand(() -> 0),
-//                shootingMode
-//        );
-        return transportMechanism.manualCommand(() -> TRANSPORT_VOLTAGE);
+        return new ConditionalCommand(
+                new RunCommand(
+                        () -> {
+                            double output = transportVelocityController.calculate(transportMechanism.logVelocity(), 30);
+                            transportMechanism.setVoltage(output);
+                        }
+                ),
+                transportMechanism.manualCommand(() -> 0),
+                shootingMode
+        );
     }
 
     public Command defaultCommand() {

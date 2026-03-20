@@ -20,6 +20,7 @@ import frc.excalib.additional_utilities.*;
 import frc.excalib.control.math.Vector2D;
 import frc.excalib.swerve.Swerve;
 
+import frc.robot.subsystems.transport.Transport;
 import frc.robot.superstructure.Superstructure;
 import frc.robot.util.AuroraPoseGetter;
 import frc.robot.util.HubTimerSubsystem;
@@ -46,7 +47,8 @@ public class RobotContainer implements Logged {
     private final HubTimerSubsystem hubTimer = new HubTimerSubsystem();
 
     private final LEDs leds = LEDs.getInstance();
-    private final Superstructure superstructure = new Superstructure(swerve);
+//    private final Superstructure superstructure = new Superstructure(swerve);
+    private final Transport transport = new Transport(()-> true);
 
     // ===== Alerts =====
     private final Alert primaryDisconnected = new Alert("Primary controller disconnected (port 0).", Alert.AlertType.kWarning);
@@ -82,30 +84,33 @@ public class RobotContainer implements Logged {
 
     private void configureBindings() {
         // Driver Controls
-        Command c = superstructure.turret.setPositionCommand(Rotation2d::new);
-        c.addRequirements(superstructure.turret);
+//        primary.triangle().toggleOnTrue(superstructure.trackHubCommand());
+//        primary.triangle().toggleOnTrue(superstructure.shootToHubCommand());
+//        primary.cross().toggleOnTrue(superstructure.shootFixedCommand(()-> primary.getLeftX()*55, hoodAngle.getDouble(0)));
+//        primary.square().toggleOnTrue(superstructure.idleCommand());
+   /*     primary.circle().toggleOnTrue(superstructure.trackHubCommand());
 
-//        primary.square().toggleOnTrue(superstructure.trackHubCommand());
-        primary.triangle().toggleOnTrue(superstructure.shootToHubCommand());
-        primary.cross().toggleOnTrue(superstructure.shootFixedCommand(flywheelVel.getDouble(0), hoodAngle.getDouble(0)));
-        primary.square().toggleOnTrue(superstructure.idleCommand());
-        primary.circle().toggleOnTrue(superstructure.trackHubCommand());
 
-        primary.options().onTrue(swerve.resetOdometryCommand(new Pose2d()));
         // Intake Controls
-//        primary.povDown().toggleOnTrue(superstructure.intake.intakeCommand());
-//        primary.povUp().toggleOnTrue(superstructure.intake.closeCommand());
-//        primary.povLeft().whileTrue(superstructure.intake.pumpFuelCommand());
+        primary.povDown().toggleOnTrue(superstructure.intake.intakeCommand());
+        primary.povUp().toggleOnTrue(superstructure.intake.closeCommand());
+        primary.povLeft().whileTrue(superstructure.intake.pumpFuelCommand());
+*/
 
-        swerve.setDefaultCommand(
-                swerve.driveCommand(
-                        () -> new Vector2D(
-                                applyDeadband(-primary.getLeftY()) * MAX_VEL,
-                                applyDeadband(-primary.getLeftX()) * MAX_VEL),
-                        () -> -applyDeadband(primary.getRightX()) * MAX_OMEGA_RAD_PER_SEC,
-                        () -> true
-                )
-        );
+//        primary.triangle().toggleOnTrue(superstructure.transport.manualCommand(primary::getLeftX, primary::getLeftX));
+
+//        primary.povUp().toggleOnTrue(c);
+
+
+//        swerve.setDefaultCommand(
+//                swerve.driveCommand(
+//                        () -> new Vector2D(
+//                                applyDeadband(-primary.getLeftY()) * MAX_VEL,
+//                                applyDeadband(-primary.getLeftX()) * MAX_VEL),
+//                        () -> -applyDeadband(primary.getRightX()) * MAX_OMEGA_RAD_PER_SEC,
+//                        () -> true
+//                )
+//        );
     }
 
     public Command getAutonomousCommand() {
@@ -121,10 +126,10 @@ public class RobotContainer implements Logged {
     }
 
     public void registerCommands() {
-        NamedCommands.registerCommand("floorIntake", superstructure.intakeCommand());
-        NamedCommands.registerCommand("prepareShooter", superstructure.trackHubCommand());
-        NamedCommands.registerCommand("shoot", superstructure.shootToHubCommand());
-        NamedCommands.registerCommand("retractIntake", superstructure.stopIntakeCommand());
+//        NamedCommands.registerCommand("floorIntake", superstructure.intakeCommand());
+//        NamedCommands.registerCommand("prepareShooter", superstructure.trackHubCommand());
+//        NamedCommands.registerCommand("shoot", superstructure.shootToHubCommand());
+//        NamedCommands.registerCommand("retractIntake", superstructure.stopIntakeCommand());
     }
 
     public void setAutoChooser() {
@@ -167,7 +172,7 @@ public class RobotContainer implements Logged {
 
 
     @NT
-    public double getInterpolationFlywheelVel(){
+    public double getInterpolationFlywheelVel() {
         return flywheelVel.getDouble(0);
     }
 }

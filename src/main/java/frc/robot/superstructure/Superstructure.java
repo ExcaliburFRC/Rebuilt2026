@@ -19,6 +19,7 @@ import frc.robot.util.Target;
 import monologue.Annotations.Log;
 import monologue.Logged;
 
+import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 import static frc.robot.Constants.FieldConstants.*;
@@ -39,10 +40,8 @@ public class Superstructure implements Logged {
 
     public Superstructure(Swerve swerve) {
         intake = new Intake();
-        transport = new Transport();
 
         this.swerve = swerve;
-
         distanceTimeOfFlightMap = new InterpolatingDoubleTreeMap();
         initDistanceTimeOfFlightMap();
 
@@ -50,7 +49,9 @@ public class Superstructure implements Logged {
         shooter = new Shooter(() -> getTurretToTargetVector(() -> currentTarget).get().getNorm(), swerve::getPose2D);
 
         turret.setDefaultCommand(turret.defaultCommand());
-        shooter.setDefaultCommand(shooter.defaultCommand());
+//        shooter.setDefaultCommand(shooter.defaultCommand());
+
+        transport = new Transport(shooter.shouldTransport());
 
         initDeliveryTrigger();
     }
@@ -194,16 +195,16 @@ public class Superstructure implements Logged {
         return new ParallelCommandGroup(
                 shooter.trackHubCommand(),
                 turret.targetHubCommand(),
-                transport.manualCommand(()->0)
+                transport.manualCommand(() -> 0, () -> 0)
         ).alongWith(setSuperstructureTarget(Target.HUB));
     }
 
-    public Command shootFixedCommand(double flywheelVelocity, double hoodAngle) {
+    public Command shootFixedCommand(DoubleSupplier flywheelVelocity, double hoodAngle) {
         return new ParallelCommandGroup(
-                shooter.setFlyWheelDynamicVelocity(() -> flywheelVelocity),
-                shooter.setHoodAngleCommand(() -> hoodAngle),
-                shooter.setAdjustedTransportBehavior(),
-                transport.transportFuelCommand(),
+                shooter.setFlyWheelDynamicVelocity(flywheelVelocity),
+//                shooter.setHoodAngleCommand(() -> hoodAngle),
+//                shooter.setAdjustedTransportBehavior(),
+//                transport.transportFuelCommand(),
                 turret.targetHubCommand()
         ).alongWith(setSuperstructureTarget(Target.HUB));
     }
@@ -212,11 +213,11 @@ public class Superstructure implements Logged {
         return intake.intakeCommand();
     }
 
-    public Command idleCommand(){
+    public Command idleCommand() {
         return new ParallelCommandGroup(
                 shooter.idleCommand(),
                 turret.idleCommand(),
-                transport.manualCommand(()-> 0)
+                transport.manualCommand(() -> 0, () -> 0)
         );
     }
 

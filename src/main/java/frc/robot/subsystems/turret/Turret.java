@@ -59,7 +59,7 @@ public class Turret extends SubsystemBase implements Logged {
                 TURRET_GAINS,
                 PID_TOLERANCE,
                 turretMotor::getMotorPosition,
-                new TrapezoidProfile.Constraints(Math.PI * 60, Math.PI * 100)
+                new TrapezoidProfile.Constraints(Math.PI * 2, Math.PI * 100)
         );
 
         isTurretAlligned = new Trigger(
@@ -144,6 +144,11 @@ public class Turret extends SubsystemBase implements Logged {
     @Log.NT
     public double getTurretOnFieldAngle() {
         return Units.radiansToDegrees(robotAngleSupplier.getAsDouble() + (turretMechanism.getPosition().getRadians()) - Math.PI);
+    }
+
+    @Log.NT
+    public double getEncoderValue(){
+        return turretAngleSupplier.getAsDouble();
     }
 
     @Log.NT

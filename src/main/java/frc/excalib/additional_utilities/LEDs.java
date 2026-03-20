@@ -1,6 +1,5 @@
 package frc.excalib.additional_utilities;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -23,11 +22,12 @@ public class LEDs extends SubsystemBase {
     private static LEDs instance = null;
     private Random rnd = new Random();
 
-    private int tailIndex = 0;
-    private double offset = 0;
+    private int startIndex = 6;
+    private int tailIndex = 5;
+    private double offset = 5;
 
     public static final int LEDS_PORT = 8; // pwm
-    public static final int LENGTH = 22;
+    public static final int LENGTH = 45;
 
     Color[] orange = new Color[LENGTH];
     Color[] black = new Color[LENGTH];
@@ -304,7 +304,10 @@ public class LEDs extends SubsystemBase {
     }
 
     private void setLedStrip(Color[] colors) {
-        for (int i = 0; i < colors.length; i++) buffer.setLED(i, colors[i]);
+        for (int i = 0; i < colors.length; i++) {
+            int shiftedIndex = stayInBounds(i + startIndex, LENGTH);
+            buffer.setLED(shiftedIndex, colors[i]);
+        }
         LedStrip.setData(buffer);
     }
 

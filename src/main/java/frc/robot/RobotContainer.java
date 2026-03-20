@@ -20,6 +20,7 @@ import frc.excalib.additional_utilities.*;
 import frc.excalib.control.math.Vector2D;
 import frc.excalib.swerve.Swerve;
 
+import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.transport.Transport;
 import frc.robot.superstructure.Superstructure;
 import frc.robot.util.AuroraPoseGetter;
@@ -47,8 +48,7 @@ public class RobotContainer implements Logged {
     private final HubTimerSubsystem hubTimer = new HubTimerSubsystem();
 
     private final LEDs leds = LEDs.getInstance();
-//    private final Superstructure superstructure = new Superstructure(swerve);
-    private final Transport transport = new Transport(()-> true);
+    private final Superstructure superstructure = new Superstructure(swerve);
 
     // ===== Alerts =====
     private final Alert primaryDisconnected = new Alert("Primary controller disconnected (port 0).", Alert.AlertType.kWarning);
@@ -84,33 +84,37 @@ public class RobotContainer implements Logged {
 
     private void configureBindings() {
         // Driver Controls
-//        primary.triangle().toggleOnTrue(superstructure.trackHubCommand());
+        primary.triangle().toggleOnTrue(superstructure.trackHubCommand());
 //        primary.triangle().toggleOnTrue(superstructure.shootToHubCommand());
 //        primary.cross().toggleOnTrue(superstructure.shootFixedCommand(()-> primary.getLeftX()*55, hoodAngle.getDouble(0)));
-//        primary.square().toggleOnTrue(superstructure.idleCommand());
-   /*     primary.circle().toggleOnTrue(superstructure.trackHubCommand());
+        primary.square().toggleOnTrue(superstructure.idleCommand());
+//        primary.circle().toggleOnTrue(superstructure.trackHubCommand());
 
 
+        primary.povUp().onTrue(leds.setPattern(LEDs.LEDPattern.BLINKING, Color.Colors.PINK.color));
+        primary.povUp().onTrue(leds.setPattern(LEDs.LEDPattern.BLINKING, Color.Colors.ORANGE.color));
+        primary.povUp().onTrue(leds.setPattern(LEDs.LEDPattern.BLINKING, Color.Colors.YELLOW.color));
+        primary.povUp().onTrue(leds.setPattern(LEDs.LEDPattern.BLINKING, Color.Colors.PINK.color));
         // Intake Controls
-        primary.povDown().toggleOnTrue(superstructure.intake.intakeCommand());
-        primary.povUp().toggleOnTrue(superstructure.intake.closeCommand());
-        primary.povLeft().whileTrue(superstructure.intake.pumpFuelCommand());
-*/
+//        primary.povDown().toggleOnTrue(intake.intakeCommand());
+//        primary.povUp().toggleOnTrue(intake.closeCommand());
+//        primary.povLeft().whileTrue(intake.pumpFuelCommand());
+
 
 //        primary.triangle().toggleOnTrue(superstructure.transport.manualCommand(primary::getLeftX, primary::getLeftX));
 
 //        primary.povUp().toggleOnTrue(c);
 
 
-//        swerve.setDefaultCommand(
-//                swerve.driveCommand(
-//                        () -> new Vector2D(
-//                                applyDeadband(-primary.getLeftY()) * MAX_VEL,
-//                                applyDeadband(-primary.getLeftX()) * MAX_VEL),
-//                        () -> -applyDeadband(primary.getRightX()) * MAX_OMEGA_RAD_PER_SEC,
-//                        () -> true
-//                )
-//        );
+        swerve.setDefaultCommand(
+                swerve.driveCommand(
+                        () -> new Vector2D(
+                                applyDeadband(-primary.getLeftY()) * MAX_VEL,
+                                applyDeadband(-primary.getLeftX()) * MAX_VEL),
+                        () -> -applyDeadband(primary.getRightX()) * MAX_OMEGA_RAD_PER_SEC,
+                        () -> true
+                )
+        );
     }
 
     public Command getAutonomousCommand() {
@@ -142,10 +146,6 @@ public class RobotContainer implements Logged {
     }
 
     public void periodic() {
-        Pose2d visionPose = AuroraPoseGetter.getPose2d();
-        if (!visionPose.equals(new Pose2d())) {
-            swerve.m_odometry.addVisionMeasurement(AuroraPoseGetter.getPose2d(), Timer.getFPGATimestamp());
-        }
 
 //        robotDiagnostics.update();
 //        canHealthMonitor.update();

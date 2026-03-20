@@ -11,6 +11,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -497,8 +498,9 @@ public class Swerve extends SubsystemBase implements Logged {
         field.setRobotPose(getPose2D());
         updateOdometry();
         Pose2d arrPose = getAuroraPose2d();
-        if (!((arrPose.getX() == 0) && (arrPose.getY() == 0) && (arrPose.getRotation().getRadians() == 0))) {
-            m_odometry.resetOdometry(modules.getModulesPositions(), getAuroraPose2d());
+        if (!((arrPose.getX() == 0) && (arrPose.getY() == 0))) {
+//            m_odometry.resetOdometry(modules.getModulesPositions(), getAuroraPose2d());
+            m_odometry.addVisionMeasurement(arrPose, Timer.getFPGATimestamp()-0.2);
         }
 
 

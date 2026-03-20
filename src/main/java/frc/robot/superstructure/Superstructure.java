@@ -38,6 +38,8 @@ public class Superstructure implements Logged {
 
     private Trigger deliveryTrigger;
 
+    public Supplier<Translation2d> turretToHubVector;
+
     public Superstructure(Swerve swerve) {
         intake = new Intake();
 
@@ -53,6 +55,7 @@ public class Superstructure implements Logged {
 
         transport = new Transport(shooter.shouldTransport());
 
+        turretToHubVector = getTurretToTargetVector(()-> Target.HUB);
         initDeliveryTrigger();
     }
 
@@ -94,31 +97,13 @@ public class Superstructure implements Logged {
     }
 
 
-//        return () -> {
-//            Translation2d virtualTargetOffset = new Translation2d(
-//                    robotSpeeds.vxMetersPerSecond
-//                            + TURRET_OFFSET_TRANSLATION.getY()
-//                            * robotSpeeds.omegaRadiansPerSecond,
-//
-//                    robotSpeeds.vyMetersPerSecond
-//                            + TURRET_OFFSET_TRANSLATION.getX()
-//                            * robotSpeeds.omegaRadiansPerSecond
-//            ).times(distanceTimeOfFlightMap.get(turretToTarget.getNorm()));
-//
-//
-//            Translation2d virtualTurretToTarget = turretToTarget.minus(virtualTargetOffset);
-//            return virtualTurretToTarget;
-//        };
-
     public Supplier<Translation2d> getTurretToTargetVector(Supplier<Target> target) {
         return () -> {
 
             ChassisSpeeds robotSpeeds = swerve.getRobotRelativeSpeeds();
 
-
             Pose2d robotPose = swerve.getPose2D();
             Rotation2d robotRot = robotPose.getRotation();
-
 
             Translation2d turretField =
                     getTurretOnField().getTranslation();
@@ -126,17 +111,15 @@ public class Superstructure implements Logged {
             Translation2d fieldVector =
                     target.get().getTargetTranslation().minus(turretField);
 
-            Translation2d robotVector =
-                    fieldVector.rotateBy(robotRot.unaryMinus());
 
-            Translation2d turretToTarget = robotVector.rotateBy(Rotation2d.fromDegrees(-180));
+            Translation2d turretToTarget = fieldVector.rotateBy(robotRot.unaryMinus());
 
             Translation2d virtualTargetOffset = new Translation2d(
                     robotSpeeds.vxMetersPerSecond
                             - TURRET_OFFSET_TRANSLATION.getY() * robotSpeeds.omegaRadiansPerSecond,
 
                     robotSpeeds.vyMetersPerSecond
-                            - TURRET_OFFSET_TRANSLATION.getX() * robotSpeeds.omegaRadiansPerSecond
+                            + TURRET_OFFSET_TRANSLATION.getX() * robotSpeeds.omegaRadiansPerSecond
             ).times(distanceTimeOfFlightMap.get(turretToTarget.getNorm()));
 
 
@@ -236,24 +219,35 @@ public class Superstructure implements Logged {
 
     @Log.NT
     public double getTurretToHubVectorAngle() {
-        return getTurretToTargetVector(() -> Target.HUB).get().getAngle().getDegrees();
+        return turretToHubVector.get().getAngle().getDegrees();
     }
 
     @Log.NT
     public double getTurretToHubVectorDist() {
-        return getTurretToTargetVector(() -> Target.HUB).get().getNorm();
+        return turretToHubVector.get().getNorm();
     }
 
     @Log.NT
     public Pose2d getTurretOnField() {
         Pose2d robotPose = swerve.getPose2D();
-        Translation2d robotPos = robotPose.getTranslation();
+        Translation2d robotTranslation = robotPose.getTranslation();
         Rotation2d robotRot = robotPose.getRotation();
 
         // turret position in field coordinates
         Translation2d turretField =
-                robotPos.plus(TURRET_OFFSET_TRANSLATION.rotateBy(robotRot));
+                robotTranslation.plus(TURRET_OFFSET_TRANSLATION.rotateBy(robotRot));
 
-        return new Pose2d(turretField, swerve.getRotation2D().minus(turret.turretMechanism.getPosition().unaryMinus()).plus(Rotation2d.kPi));
+        return new Pose2d(turretField, swerve.getRotation2D().minus(turret.turretMechanism.getPosition().unaryMinus()));
+    }
+
+    @Log.NT
+    public Pose2d getHubOnFieldAfterCalc() {
+        Pose2d turretOnField = getTurretOnField();
+        return new Pose2d(turretOnField.getTranslation().plus(turretToHubVector.get().rotateBy(swerve.getRotation2D())), new Rotation2d());
+    }
+
+    @Log.NT
+    public Pose2d getHubOnField(){
+        return BLUE_DOWN_FIELD_TRENCH_POSE.get();
     }
 }

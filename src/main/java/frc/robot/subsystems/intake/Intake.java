@@ -72,7 +72,7 @@ public class Intake extends SubsystemBase implements Logged {
     }
 
     public Command intakeCommand() {
-        Command c = setPositionCommand(1).alongWith(rollerManualCommand(-7));
+        Command c = setPositionCommand(1).alongWith(rollerManualCommand(0));
         c.addRequirements(this);
         return c;
     }
@@ -86,11 +86,11 @@ public class Intake extends SubsystemBase implements Logged {
     public Command pumpFuelCommand() {
         return new SequentialCommandGroup(
                 new ParallelCommandGroup(
-                        setPositionCommand(0.5),
+                        setPositionCommand(0.7),
                         rollerManualCommand(3)
                 ).withTimeout(0.2),
                 new ParallelCommandGroup(
-                        setPositionCommand(1),
+                        setPositionCommand(0.2),
                         rollerManualCommand(5)
                 ).withTimeout(0.2)
         ).repeatedly();

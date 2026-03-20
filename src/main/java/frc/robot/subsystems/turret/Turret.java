@@ -50,7 +50,7 @@ public class Turret extends SubsystemBase implements Logged {
         turretMotor.setPositionConversionFactor(MOTOR_POSITION_CONVERSION_FACTOR);
         turretMotor.setVelocityConversionFactor(MOTOR_POSITION_CONVERSION_FACTOR);
 
-        turretMotor.setIdleState(IdleState.COAST);
+        turretMotor.setIdleState(IdleState.BRAKE);
         turretMotor.setMotorPosition(turretAngleSupplier.getAsDouble());
 
         turretMechanism = new frc.excalib.mechanisms.turret.Turret(

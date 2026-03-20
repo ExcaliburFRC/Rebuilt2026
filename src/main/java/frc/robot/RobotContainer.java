@@ -84,20 +84,20 @@ public class RobotContainer implements Logged {
 
     private void configureBindings() {
         // Driver Controls
-        primary.triangle().toggleOnTrue(superstructure.trackHubCommand());
-//        primary.triangle().toggleOnTrue(superstructure.shootToHubCommand());
+//        primary.triangle().toggleOnTrue(superstructure.trackHubCommand());
+        primary.triangle().toggleOnTrue(superstructure.shootToHubCommand());
 //        primary.cross().toggleOnTrue(superstructure.shootFixedCommand(()-> primary.getLeftX()*55, hoodAngle.getDouble(0)));
         primary.square().toggleOnTrue(superstructure.idleCommand());
 //        primary.circle().toggleOnTrue(superstructure.trackHubCommand());
 
 
-        primary.povUp().onTrue(leds.setPattern(LEDs.LEDPattern.BLINKING, Color.Colors.PINK.color));
-        primary.povUp().onTrue(leds.setPattern(LEDs.LEDPattern.BLINKING, Color.Colors.ORANGE.color));
-        primary.povUp().onTrue(leds.setPattern(LEDs.LEDPattern.BLINKING, Color.Colors.YELLOW.color));
-        primary.povUp().onTrue(leds.setPattern(LEDs.LEDPattern.BLINKING, Color.Colors.PINK.color));
+//        primary.povUp().onTrue(leds.setPattern(LEDs.LEDPattern.BLINKING, Color.Colors.PINK.color));
+//        primary.povUp().onTrue(leds.setPattern(LEDs.LEDPattern.BLINKING, Color.Colors.ORANGE.color));
+//        primary.povUp().onTrue(leds.setPattern(LEDs.LEDPattern.BLINKING, Color.Colors.YELLOW.color));
+//        primary.povUp().onTrue(leds.setPattern(LEDs.LEDPattern.BLINKING, Color.Colors.PINK.color));
         // Intake Controls
-//        primary.povDown().toggleOnTrue(intake.intakeCommand());
-//        primary.povUp().toggleOnTrue(intake.closeCommand());
+        primary.povDown().toggleOnTrue(superstructure.intake.intakeCommand());
+        primary.povUp().toggleOnTrue(superstructure.intake.closeCommand());
 //        primary.povLeft().whileTrue(intake.pumpFuelCommand());
 
 

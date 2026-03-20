@@ -18,16 +18,16 @@ public class ShooterConstants {
 
     public static final double HOOD_TOLERANCE = 0.02;
     public static final double FLYWHEEL_MAX_JERK = 0;
-//    public static final Gains FLYWHEEL_GAINS = new Gains(0.2, 0, 0, 0.33, 0.156*0.93, 0, 0);
-    public static final Gains FLYWHEEL_GAINS = new Gains();
+    public static final Gains FLYWHEEL_GAINS = new Gains(0.2, 0, 0, 0.33, 0.156*0.93, 0, 0);
+//    public static final Gains FLYWHEEL_GAINS = new Gains();
 
     // ===== Hood Angle Constants =====
     public static final double HOOD_MAX_ANGLE_LIMIT_IN_TRENCH = 0.2;
     public static final double HOOD_MIN_ANGLE_LIMIT = 0;
     public static final double HOOD_MAX_ANGLE_LIMIT = 0.9;
     public static final double POSITION_CONVERSION_FACTOR = -0.590137;
-//    public static final Gains HOOD_GAINS = new Gains(10.8, 0, 0.15, 0.3125, 0, 0, 0);
-    public static final Gains HOOD_GAINS = new Gains();
+    public static final Gains HOOD_GAINS = new Gains(10.8, 0, 0.15, 0.3125, 0, 0, 0);
+//    public static final Gains HOOD_GAINS = new Gains();
 
 }
 

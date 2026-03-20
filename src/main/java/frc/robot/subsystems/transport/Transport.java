@@ -44,7 +44,7 @@ public class Transport extends SubsystemBase implements Logged {
 
 //        transportVelocityController = new PIDController(TRANSPORT_PID_GAINS.kp, TRANSPORT_PID_GAINS.ki, TRANSPORT_PID_GAINS.kd);
 
-//        setDefaultCommand(transportFuelCommand());
+        setDefaultCommand(transportFuelCommand());
     }
 
 

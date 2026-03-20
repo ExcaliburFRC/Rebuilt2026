@@ -116,8 +116,7 @@ public class Shooter extends SubsystemBase implements Logged {
 
         kvFilter = new EMAFilter(
                 this::getKV,
-                0.025
-                ,
+                0.025,
                 PeriodicScheduler.PERIOD.MILLISECONDS_20
         );
 

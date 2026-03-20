@@ -43,7 +43,7 @@ public class Turret extends SubsystemBase implements Logged {
         turretMotor.setCurrentLimit(120, 80);
         this.turretRelativeAngleToTarget = turretRelativeAngleToTarget;
         turretMotor.setInverted(DirectionState.REVERSE);
-        turretTarget = Target.IDLE;
+        turretTarget = Target.HUB;
 
         this.robotAngleSupplier = robotAngleSupplier;
 //      turretMotor.setMotorPosition(turretAngleSupplier.getAsDouble());

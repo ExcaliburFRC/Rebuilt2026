@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.excalib.additional_utilities.AllianceUtils;
 import frc.excalib.additional_utilities.Color;
 import frc.excalib.additional_utilities.LEDs;
+import frc.excalib.commands.ContinuouslyConditionalCommand;
 import frc.excalib.control.limits.SoftLimit;
 import frc.excalib.control.math.EMAFilter;
 import frc.excalib.control.math.periodics.PeriodicScheduler;
@@ -61,13 +62,14 @@ public class Shooter extends SubsystemBase implements Logged {
     private final InterpolatingDoubleTreeMap velocityDistanceMap;
 
     private final Trigger volatileTrenchHoodTrigger;
-    private Target shooterTarget = HUB;
-    private BooleanSupplier shootingMode = () -> true;
+    private Target shooterTarget = IDLE;
+    private BooleanSupplier shootingMode = () -> false;
 
     private Trigger activateLedsTrigger;
     private Trigger flyWheelReadyTrigger;
     private Trigger hoodAdjustedTrigger;
     private BooleanSupplier transportNeededSupplier;
+    private BooleanSupplier availableToShoot;
 
 
     public Shooter(DoubleSupplier turretRelativeDistanceFromTarget, Supplier<Pose2d> poseSupplier) {
@@ -156,42 +158,67 @@ public class Shooter extends SubsystemBase implements Logged {
             return HOOD_MAX_ANGLE_LIMIT;
         });
 
-//        setDefaultCommand(defaultCommand());
+        availableToShoot = flyWheelReadyTrigger.and(hoodAdjustedTrigger);
+        setDefaultCommand(defaultCommand());
     }
 
 
     public void initAngleMap() {
 //        angleDistanceMapTable.put(distance[meters], hood angle);
-        angleDistanceMap.put(1.947, 0.0);
-        angleDistanceMap.put(2.58, 0.08);
-        angleDistanceMap.put(3.96, 0.225);
-        angleDistanceMap.put(5.07, 0.4);
-        angleDistanceMap.put(3.48, 0.18);
-        angleDistanceMap.put(3.19, 0.13);
-        angleDistanceMap.put(4.0, 0.22);
-        angleDistanceMap.put(4.81, 0.32);
+//        angleDistanceMap.put(1.947, 0.0);
+//        angleDistanceMap.put(2.58, 0.08);
+//        angleDistanceMap.put(3.96, 0.225);
+//        angleDistanceMap.put(5.07, 0.4);
+//        angleDistanceMap.put(3.48, 0.18);
+//        angleDistanceMap.put(3.19, 0.13);
+//        angleDistanceMap.put(4.0, 0.22);
+//        angleDistanceMap.put(4.81, 0.32);
+//        angleDistanceMap.put(5.7, 0.6);
+
+
+        angleDistanceMap.put(3.36, 0.2);
+        angleDistanceMap.put(2.52, 0.15);
+        angleDistanceMap.put(2.57, 0.25);
+        angleDistanceMap.put(2.08, 0.05);
+        angleDistanceMap.put(2.98, 0.25);
+        angleDistanceMap.put(3.6, 0.25);
+        angleDistanceMap.put(4.8, 0.37);
+
 
     }
 
     public void initVelocityMap() {
 //          velocityDistanceMapTable.put(distance[meters], flywheel velocity);
-        velocityDistanceMap.put(1.948, 35.0);
-        velocityDistanceMap.put(2.58, 37.3);
-        velocityDistanceMap.put(3.96, 41.0);
-        velocityDistanceMap.put(5.07, 44.0);
-        velocityDistanceMap.put(3.48, 39.5);
-        velocityDistanceMap.put(3.19, 39.0);
-        velocityDistanceMap.put(4.0, 43.0);
-        velocityDistanceMap.put(4.81, 44.0);
+//        velocityDistanceMap.put(1.948, 35.0);
+//        velocityDistanceMap.put(2.58, 37.3);
+//        velocityDistanceMap.put(3.96, 41.0);
+//        velocityDistanceMap.put(5.07, 44.0);
+//        velocityDistanceMap.put(3.48, 39.5);
+//        velocityDistanceMap.put(3.19, 39.0);
+//        velocityDistanceMap.put(4.0, 43.0);
+//        velocityDistanceMap.put(4.81, 44.0);
+//        velocityDistanceMap.put(5.7, 49.0);
+
+        velocityDistanceMap.put(3.36, 36.0);
+        velocityDistanceMap.put(2.52, 34.0);
+        velocityDistanceMap.put(3.57, 38.0);
+        velocityDistanceMap.put(2.08, 33.0);
+        velocityDistanceMap.put(2.98, 34.0);
+        velocityDistanceMap.put(3.6, 37.0);
+        velocityDistanceMap.put(4.8, 45.0);
     }
 
     public Command setHoodAngleCommand(DoubleSupplier angleSetpoint) {
         return new RunCommand(() -> hoodMechanism.setVoltage(getControlledOutputForAngle(() -> hoodSoftLimit.limit(angleSetpoint.getAsDouble()))), this);
     }
 
-    public Command setFlyWheelDynamicVelocity(DoubleSupplier vel, SubsystemBase... req) {
+    public void setFlyWheelDynamicVelocity(DoubleSupplier vel, SubsystemBase... req) {
         flywheelVelocitySetpoint = vel;
-        return flyWheelMechanism.setDynamicVelocityCommand(vel, req);
+        flyWheelMechanism.setDynamicVelocityCommand(vel, req).alongWith(new PrintCommand("" + flywheelVelocitySetpoint.getAsDouble()));
+    }
+
+    public Command setFlyWheelDynamicVelocityCommand(DoubleSupplier vel, SubsystemBase... req) {
+        return new RunCommand(() -> setFlyWheelDynamicVelocity(vel, req));
     }
 
     public Command setAdjustedFlyWheelVelocity() {
@@ -206,14 +233,18 @@ public class Shooter extends SubsystemBase implements Logged {
 //            }
 //        });
 
-        return new ConditionalCommand(
-                setFlyWheelDynamicVelocity(
-                        () -> velocityDistanceMap.get(
-                                turretRelativeDistanceFromTarget.getAsDouble()
-                        )
-                ),
-                new RunCommand(()->flyWheelMechanism.setVoltage(0)),
-                shootingMode
+        return new RunCommand(
+                () -> {
+                    if (shootingMode.getAsBoolean()) {
+                        setFlyWheelDynamicVelocity(
+                                () -> velocityDistanceMap.get(
+                                        turretRelativeDistanceFromTarget.getAsDouble()
+                                )
+                        );
+                    } else {
+                        flyWheelMechanism.setVoltage(0);
+                    }
+                }
         );
     }
 
@@ -243,7 +274,9 @@ public class Shooter extends SubsystemBase implements Logged {
     }
 
     public Command defaultCommand() {
-        Command c = new ConditionalCommand(idleCommand(), new ParallelCommandGroup(setAdjustedFlyWheelVelocity(), setAdjustedTransportBehavior(), setAdjustedHoodAngle()), () -> shooterTarget.equals(IDLE));
+        Command c = new ConditionalCommand(
+                idleCommand(),
+                new ParallelCommandGroup(setAdjustedFlyWheelVelocity(), setAdjustedTransportBehavior(), setAdjustedHoodAngle()), () -> shooterTarget.equals(IDLE));
         c.addRequirements(this);
         return c;
     }
@@ -270,10 +303,11 @@ public class Shooter extends SubsystemBase implements Logged {
     }
 
     public Command shootToHubCommand() {
-        return new InstantCommand(() -> {
-            shooterTarget = HUB;
-            shootingMode = () -> true;
-        });
+        return new InstantCommand(
+                () -> {
+                    shooterTarget = HUB;
+                    shootingMode = () -> true;
+                });
     }
 
     public Command trackHubCommand() {
@@ -359,4 +393,12 @@ public class Shooter extends SubsystemBase implements Logged {
         return flywheelVelocitySetpoint.getAsDouble() / flyWheelMechanism.getVelocity();
     }
 
+    public BooleanSupplier isAvailableToShoot() {
+        return availableToShoot;
+    }
+
+    @NT
+    public boolean volatileTrenchHoodTrigger() {
+        return volatileTrenchHoodTrigger.getAsBoolean();
+    }
 }

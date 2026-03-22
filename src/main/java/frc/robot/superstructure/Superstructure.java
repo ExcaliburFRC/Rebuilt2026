@@ -86,14 +86,16 @@ public class Superstructure implements Logged {
 
     private void initDistanceTimeOfFlightMap() {
 //        distanceFlightTimeTable.put(distance[meters], flight time);
-        distanceTimeOfFlightMap.put(4.3, 1.39);
-        distanceTimeOfFlightMap.put(2.99, 1.28);
-        distanceTimeOfFlightMap.put(2.36, 1.21);
-        distanceTimeOfFlightMap.put(3.6, 1.35);
-        distanceTimeOfFlightMap.put(1.95, 1.12);
-        distanceTimeOfFlightMap.put(0.0, 0.0);
-        distanceTimeOfFlightMap.put(0.0, 0.0);
-        distanceTimeOfFlightMap.put(0.0, 0.0);
+//        distanceTimeOfFlightMap.put(4.3, 1.39);
+//        distanceTimeOfFlightMap.put(2.99, 1.28);
+//        distanceTimeOfFlightMap.put(2.36, 1.21);
+//        distanceTimeOfFlightMap.put(3.6, 1.35);
+//        distanceTimeOfFlightMap.put(1.95, 1.12);
+//        distanceTimeOfFlightMap.put(0.0, 0.0);
+//        distanceTimeOfFlightMap.put(0.0, 0.0);
+        distanceTimeOfFlightMap.put(5.036, 1.3);
+        distanceTimeOfFlightMap.put(3.93, 1.2);
+        distanceTimeOfFlightMap.put(2.8, 0.98);
     }
 
 
@@ -114,18 +116,18 @@ public class Superstructure implements Logged {
 
             Translation2d turretToTarget = fieldVector.rotateBy(robotRot.unaryMinus());
 
-            return turretToTarget;
-//            Translation2d virtualTargetOffset = new Translation2d(
-//                    robotSpeeds.vxMetersPerSecond
-//                            - TURRET_OFFSET_TRANSLATION.getY() * robotSpeeds.omegaRadiansPerSecond,
-//
-//                    robotSpeeds.vyMetersPerSecond
-//                            + TURRET_OFFSET_TRANSLATION.getX() * robotSpeeds.omegaRadiansPerSecond
-//            ).times(distanceTimeOfFlightMap.get(turretToTarget.getNorm()));
-//
-//
-//            Translation2d virtualTurretToTarget = turretToTarget.minus(virtualTargetOffset);
-//            return virtualTurretToTarget;
+//            return turretToTarget;
+            Translation2d virtualTargetOffset = new Translation2d(
+                    robotSpeeds.vxMetersPerSecond
+                            - TURRET_OFFSET_TRANSLATION.getY() * robotSpeeds.omegaRadiansPerSecond,
+
+                    robotSpeeds.vyMetersPerSecond
+                            + TURRET_OFFSET_TRANSLATION.getX() * robotSpeeds.omegaRadiansPerSecond
+            ).times(distanceTimeOfFlightMap.get(turretToTarget.getNorm()));
+
+
+            Translation2d virtualTurretToTarget = turretToTarget.minus(virtualTargetOffset);
+            return virtualTurretToTarget;
         };
     }
 
@@ -183,12 +185,13 @@ public class Superstructure implements Logged {
         ).alongWith(setSuperstructureTarget(Target.HUB));
     }
 
-    public Command shootFixedCommand(DoubleSupplier flywheelVelocity, double hoodAngle) {
+    public Command shootFixedCommand(DoubleSupplier flywheelVelocity, DoubleSupplier hoodAngle) {
         return new ParallelCommandGroup(
-                shooter.setFlyWheelDynamicVelocity(flywheelVelocity),
-//                shooter.setHoodAngleCommand(() -> hoodAngle),
+                shooter.setFlyWheelDynamicVelocityCommand(flywheelVelocity),
+                shooter.setHoodAngleCommand(
+                        hoodAngle),
 //                shooter.setAdjustedTransportBehavior(),
-//                transport.transportFuelCommand(),
+                transport.transportFuelCommand(),
                 turret.targetHubCommand()
         ).alongWith(setSuperstructureTarget(Target.HUB));
     }

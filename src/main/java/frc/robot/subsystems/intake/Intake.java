@@ -72,7 +72,7 @@ public class Intake extends SubsystemBase implements Logged {
     }
 
     public Command intakeCommand() {
-        Command c = setPositionCommand(1).alongWith(rollerManualCommand(-4));
+        Command c = setPositionCommand(1).alongWith(rollerManualCommand(-9));
         c.addRequirements(this);
         return c;
     }
@@ -102,7 +102,7 @@ public class Intake extends SubsystemBase implements Logged {
     }
 
     public Command rollerManualCommand(double voltage) {
-        return rollerMotorMechanism.manualCommand(() -> voltage);
+        return new RunCommand(()->rollerMotorMechanism.setVoltage(voltage));
     }
 
     public Command defaultCommand() {

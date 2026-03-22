@@ -42,8 +42,9 @@ public class LEDs extends SubsystemBase {
     }
 
     private void initializeDefaultCommand() {
-//        setDefaultCommand(setPattern(LEDPattern.EXPAND, BLUE.color, YELLOW.color));
-        setDefaultCommand(setPattern(LEDPattern.TRAIN, BLUE.color, YELLOW.color));
+        setDefaultCommand(setPattern(LEDPattern.EXPAND, BLUE.color, YELLOW.color));
+//        setDefaultCommand(setPattern(LEDPattern.TRAIN, BLUE.color, YELLOW.color));
+
     }
 
     public static LEDs getInstance() {

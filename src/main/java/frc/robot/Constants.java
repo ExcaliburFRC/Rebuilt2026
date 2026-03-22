@@ -69,7 +69,7 @@ public final class Constants {
                         -TRACK_WIDTH / 2, -TRACK_WIDTH / 2
                 );
 
-        public static final double MAX_MODULE_VEL = 3.5;
+        public static final double MAX_MODULE_VEL = 3;
         public static final double MAX_VEL = 2.5;
 
         public static final double MAX_FRONT_ACC = 1;
@@ -199,8 +199,8 @@ public final class Constants {
 
         public static final double FUEL_DIAMETER = 0.15;
 
-        public static double FRONT_TRENCH_SIDEX_LINE_DIST_METERS = 3.9624;
-        public static double BACK_TRENCH_SIDEX_LINE_DIST_METERS = 5.1;
+        public static double FRONT_TRENCH_SIDEX_LINE_DIST_METERS = 3.3;
+        public static double BACK_TRENCH_SIDEX_LINE_DIST_METERS = 4.6;
         public static double TRENCH_SIDEY_LINE_DIST_METERS = 1.5;
 
     }

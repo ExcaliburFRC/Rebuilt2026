@@ -20,7 +20,9 @@ import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.excalib.additional_utilities.AllianceUtils;
+import frc.excalib.additional_utilities.Color;
 import frc.excalib.additional_utilities.Elastic;
+import frc.excalib.additional_utilities.LEDs;
 import frc.excalib.control.gains.SysidConfig;
 import frc.excalib.control.imu.IMU;
 import frc.excalib.control.math.Vector2D;
@@ -48,6 +50,7 @@ public class Swerve extends SubsystemBase implements Logged {
     private ChassisSpeeds m_desiredChassisSpeeds = new ChassisSpeeds();
     private Trigger finishTrigger;
     private Rotation2d pi = new Rotation2d(Math.PI);
+    private final Trigger seesAprilTag;
 
     private final SwerveDriveKinematics m_swerveDriveKinematics;
     private final PIDController angleController = new PIDController(ANGLE_PID_GAINS.kp, ANGLE_PID_GAINS.ki, ANGLE_PID_GAINS.kd);
@@ -90,6 +93,10 @@ public class Swerve extends SubsystemBase implements Logged {
                 m_imu::getZRotation,
                 initialPosition
         );
+
+        seesAprilTag = new Trigger(() -> !getAuroraPose2d().equals(new Pose2d()));
+        seesAprilTag.whileTrue(LEDs.getInstance().setPattern(LEDs.LEDPattern.SOLID, Color.Colors.GREEN.color));
+        seesAprilTag.onFalse(LEDs.getInstance().restoreLEDs());
 
         m_swerveDriveKinematics = this.modules.getSwerveDriveKinematics();
 
@@ -500,7 +507,7 @@ public class Swerve extends SubsystemBase implements Logged {
         Pose2d arrPose = getAuroraPose2d();
         if (!((arrPose.getX() == 0) && (arrPose.getY() == 0))) {
 //            m_odometry.resetOdometry(modules.getModulesPositions(), getAuroraPose2d());
-            m_odometry.addVisionMeasurement(arrPose, Timer.getFPGATimestamp()-0.2);
+            m_odometry.addVisionMeasurement(arrPose, Timer.getFPGATimestamp() - 0.2);
         }
 
 

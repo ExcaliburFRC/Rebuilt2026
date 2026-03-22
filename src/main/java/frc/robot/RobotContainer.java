@@ -8,6 +8,8 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -83,12 +85,20 @@ public class RobotContainer implements Logged {
     }
 
     private void configureBindings() {
-        // Driver Controls
+        // Driver Control
 //        primary.triangle().toggleOnTrue(superstructure.trackHubCommand());
         primary.triangle().toggleOnTrue(superstructure.shootToHubCommand());
-//        primary.cross().toggleOnTrue(superstructure.shootFixedCommand(()-> primary.getLeftX()*55, hoodAngle.getDouble(0)));
+        primary.cross().toggleOnTrue(superstructure.shootFixedCommand(() -> flywheelVel.getDouble(0.0), () -> hoodAngle.getDouble(0.0)));
         primary.square().toggleOnTrue(superstructure.idleCommand());
-//        primary.circle().toggleOnTrue(superstructure.trackHubCommand());
+//        primary.circle().toggleOnTrue(superstructure.trackHubCommand());[]\
+
+        primary.options().onTrue(swerve.resetOdometryCommand(
+                new Pose2d(
+                        new Translation2d(
+                                FieldConstants.BLUE_HUB_CENTER_POSE.get().getX() - Units.inchesToMeters(22.5) - 0.69 / 2,
+                                FieldConstants.BLUE_HUB_CENTER_POSE.get().getY()),
+                        Rotation2d.kZero)
+        ).ignoringDisable(true));
 
 
 //        primary.povUp().onTrue(leds.setPattern(LEDs.LEDPattern.BLINKING, Color.Colors.PINK.color));
@@ -96,8 +106,8 @@ public class RobotContainer implements Logged {
 //        primary.povUp().onTrue(leds.setPattern(LEDs.LEDPattern.BLINKING, Color.Colors.YELLOW.color));
 //        primary.povUp().onTrue(leds.setPattern(LEDs.LEDPattern.BLINKING, Color.Colors.PINK.color));
         // Intake Controls
-        primary.povDown().toggleOnTrue(superstructure.intake.intakeCommand());
-        primary.povUp().toggleOnTrue(superstructure.intake.closeCommand());
+//        primary.povDown().toggleOnTrue(superstructure.intake.intakeCommand());
+//        primary.povUp().toggleOnTrue(superstructure.intake.closeCommand());
 //        primary.povLeft().whileTrue(intake.pumpFuelCommand());
 
 

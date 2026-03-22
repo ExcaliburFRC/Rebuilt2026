@@ -5,6 +5,7 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
 import frc.excalib.control.motor.motor_specs.DirectionState;
+import frc.excalib.control.motor.motor_specs.IdleState;
 import frc.excalib.mechanisms.fly_wheel.FlyWheel;
 import monologue.Annotations;
 import monologue.Annotations.Log;
@@ -22,7 +23,7 @@ public class Transport extends SubsystemBase implements Logged {
     public FlyWheel drumMechanism, transportMechanism;
     //    private final PIDController transportVelocityController;
     private final BooleanSupplier shouldTransport;
-    private double transportVelocitySetpoint = 30;
+    private double transportVelocitySetpoint = 10;
 
     public Transport(BooleanSupplier shouldTransport) {
         drumMotor = new TalonFXMotor(DRUM_MOTOR_ID, SUBSYSTEMS_CANBUS);
@@ -31,15 +32,17 @@ public class Transport extends SubsystemBase implements Logged {
         transportMotor = new TalonFXMotor(TRANSPORT_MOTOR_ID, SUBSYSTEMS_CANBUS);
 
         this.shouldTransport = shouldTransport;
-        drumMotor.setCurrentLimit(20, 20);
-        transportMotor.setCurrentLimit(20, 20);
+        drumMotor.setCurrentLimit(80, 80);
+        transportMotor.setCurrentLimit(80, 80);
 
 
+        transportMotor.setIdleState(IdleState.BRAKE);
+        drumMotor.setIdleState(IdleState.BRAKE);
         drumMotor.setInverted(DirectionState.REVERSE);
         transportMotor.setInverted(DirectionState.REVERSE);
 
         transportMechanism = new FlyWheel(transportMotor, 10, 10, TRANSPORT_PID_GAINS);
-        drumMotor.setVelocityConversionFactor(0.39898);
+        drumMotor.setVelocityConversionFactor(0.39898/9);
         transportMotor.setVelocityConversionFactor(0.0731);
 
 //        transportVelocityController = new PIDController(TRANSPORT_PID_GAINS.kp, TRANSPORT_PID_GAINS.ki, TRANSPORT_PID_GAINS.kd);
@@ -57,9 +60,11 @@ public class Transport extends SubsystemBase implements Logged {
     public Command transportFuelCommand() {
         return new RunCommand(
                 () -> {
-                    if (true) {
+                    if (shouldTransport.getAsBoolean()) {
                         transportMechanism.setDynamicVelocity(transportVelocitySetpoint);
                         drumMechanism.setDynamicVelocity(transportVelocitySetpoint);
+//                        transportMechanism.setVoltage(6);
+//                        drumMechanism.setVoltage(3);
                     }
                 },
                 this
@@ -67,7 +72,9 @@ public class Transport extends SubsystemBase implements Logged {
     }
 
     @NT
-    public double getSetpoint() {
-        return transportVelocitySetpoint;
+    public boolean shouldTransport() {
+        return shouldTransport.getAsBoolean();
     }
+
+
 }

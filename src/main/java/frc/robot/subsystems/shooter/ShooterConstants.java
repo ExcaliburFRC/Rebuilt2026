@@ -22,7 +22,7 @@ public class ShooterConstants {
 //    public static final Gains FLYWHEEL_GAINS = new Gains();
 
     // ===== Hood Angle Constants =====
-    public static final double HOOD_MAX_ANGLE_LIMIT_IN_TRENCH = 0.2;
+    public static final double HOOD_MAX_ANGLE_LIMIT_IN_TRENCH = 0;
     public static final double HOOD_MIN_ANGLE_LIMIT = 0;
     public static final double HOOD_MAX_ANGLE_LIMIT = 0.9;
     public static final double POSITION_CONVERSION_FACTOR = -0.590137;

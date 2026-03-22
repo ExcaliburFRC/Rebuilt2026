@@ -50,7 +50,6 @@ public class RobotContainer implements Logged {
     private final HubTimerSubsystem hubTimer = new HubTimerSubsystem();
 
     private final LEDs leds = LEDs.getInstance();
-    private final Superstructure superstructure = new Superstructure(swerve);
 
     // ===== Alerts =====
     private final Alert primaryDisconnected = new Alert("Primary controller disconnected (port 0).", Alert.AlertType.kWarning);
@@ -86,11 +85,6 @@ public class RobotContainer implements Logged {
 
     private void configureBindings() {
         // Driver Control
-//        primary.triangle().toggleOnTrue(superstructure.trackHubCommand());
-        primary.triangle().toggleOnTrue(superstructure.shootToHubCommand());
-        primary.cross().toggleOnTrue(superstructure.shootFixedCommand(() -> flywheelVel.getDouble(0.0), () -> hoodAngle.getDouble(0.0)));
-        primary.square().toggleOnTrue(superstructure.idleCommand());
-//        primary.circle().toggleOnTrue(superstructure.trackHubCommand());[]\
 
         primary.options().onTrue(swerve.resetOdometryCommand(
                 new Pose2d(
@@ -100,20 +94,6 @@ public class RobotContainer implements Logged {
                         Rotation2d.kZero)
         ).ignoringDisable(true));
 
-
-//        primary.povUp().onTrue(leds.setPattern(LEDs.LEDPattern.BLINKING, Color.Colors.PINK.color));
-//        primary.povUp().onTrue(leds.setPattern(LEDs.LEDPattern.BLINKING, Color.Colors.ORANGE.color));
-//        primary.povUp().onTrue(leds.setPattern(LEDs.LEDPattern.BLINKING, Color.Colors.YELLOW.color));
-//        primary.povUp().onTrue(leds.setPattern(LEDs.LEDPattern.BLINKING, Color.Colors.PINK.color));
-        // Intake Controls
-//        primary.povDown().toggleOnTrue(superstructure.intake.intakeCommand());
-//        primary.povUp().toggleOnTrue(superstructure.intake.closeCommand());
-//        primary.povLeft().whileTrue(intake.pumpFuelCommand());
-
-
-//        primary.triangle().toggleOnTrue(superstructure.transport.manualCommand(primary::getLeftX, primary::getLeftX));
-
-//        primary.povUp().toggleOnTrue(c);
 
 
         swerve.setDefaultCommand(

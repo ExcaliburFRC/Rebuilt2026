@@ -21,7 +21,6 @@ import frc.excalib.control.motor.motor_specs.IdleState;
 import frc.excalib.mechanisms.Mechanism;
 import frc.excalib.mechanisms.fly_wheel.FlyWheel;
 import frc.excalib.mechanisms.turret.Turret;
-import frc.robot.util.Target;
 import monologue.Annotations;
 import monologue.Logged;
 
@@ -51,7 +50,6 @@ public class Shooter extends SubsystemBase implements Logged {
     public final DoubleSupplier turretRelativeAngleToTarget;
 
     public final Trigger isTurretAlligned;
-    public Target turretTarget;
 
     private ShooterStates currentState;
 
@@ -75,8 +73,6 @@ public class Shooter extends SubsystemBase implements Logged {
     private final InterpolatingDoubleTreeMap distanceTimeOfFlightMap;
 
     private final Trigger volatileTrenchHoodTrigger;
-    private Target shooterTarget = Target.IDLE;
-    private BooleanSupplier shootingMode = () -> false;
 
     private Trigger activateLedsTrigger;
     private Trigger flyWheelReadyTrigger;
@@ -116,7 +112,6 @@ public class Shooter extends SubsystemBase implements Logged {
         turretMotor.setCurrentLimit(120, 80);
         this.turretRelativeAngleToTarget = () -> getTurretToTargetVector().get().getAngle().getRadians();
         turretMotor.setInverted(DirectionState.REVERSE);
-        turretTarget = Target.IDLE;
 
         turretMotor.setIdleState(IdleState.BRAKE);
         turretMotor.setMotorPosition(turretAngleSupplier.getAsDouble());
@@ -133,19 +128,13 @@ public class Shooter extends SubsystemBase implements Logged {
         );
 
         isTurretAlligned = new Trigger(
-                () -> {
-                    if (turretTarget.equals(Target.IDLE)) {
-                        return true;
-                    } else if (turretTarget.equals(Target.HUB) || turretTarget.equals(Target.DELIVERY)) {
-                        return Math.abs(
-                                turretMechanism.getPosition().getRadians() -
-                                        SOFT_LIMIT.limit(
-                                                TURRET_CONTINUOUS_SOFTLIMIT.getSetpoint(
-                                                        turretAngleSupplier.getAsDouble(),
-                                                        turretRelativeAngleToTarget.getAsDouble()))) < PID_TOLERANCE;
-                    }
-                    return false;
-                }
+                () -> Math.abs(
+                        turretMechanism.getPosition().getRadians() -
+                                SOFT_LIMIT.limit(
+                                        TURRET_CONTINUOUS_SOFTLIMIT.getSetpoint(
+                                                turretAngleSupplier.getAsDouble(),
+                                                turretRelativeAngleToTarget.getAsDouble()))) < PID_TOLERANCE
+
         );
 
         hoodEncoder.setPosition(hoodEncoder.getAbsolutePosition().getValueAsDouble());
@@ -394,10 +383,6 @@ public class Shooter extends SubsystemBase implements Logged {
     }
 
 
-    public Command setTargetCommand(Target targetToSet) {
-        return new InstantCommand(() -> shooterTarget = targetToSet, this);
-    }
-
     @NT
     public double getFlyWheelVelocitySetpoint() {
         return flywheelVelocitySetpoint.getAsDouble();
@@ -426,11 +411,6 @@ public class Shooter extends SubsystemBase implements Logged {
     @NT
     public boolean hoodAdjustedTrigger() {
         return hoodAdjustedTrigger.getAsBoolean();
-    }
-
-    @NT
-    public String getShooterTarget() {
-        return shooterTarget.name();
     }
 
     @NT

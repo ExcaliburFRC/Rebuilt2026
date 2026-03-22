@@ -36,8 +36,6 @@ import static frc.robot.Constants.PhysicalConstants.TURRET_OFFSET_TRANSLATION;
 import static frc.robot.Constants.SUBSYSTEMS_CANBUS;
 import static frc.robot.subsystems.shooter.ShooterConstants.*;
 import static frc.robot.subsystems.shooter.ShooterStates.IDLE;
-import static frc.robot.subsystems.turret.TurretConstants.*;
-import static frc.robot.util.Target.*;
 import static monologue.Annotations.Log.*;
 
 public class Shooter extends SubsystemBase implements Logged {

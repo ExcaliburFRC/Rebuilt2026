@@ -1,29 +1,8 @@
 package frc.robot.superstructure;
 
 import edu.wpi.first.math.geometry.*;
-import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.*;
-import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.excalib.slam.mapper.AuroraClient;
-import frc.excalib.swerve.Swerve;
-import frc.excalib.control.math.MathUtils;
-import frc.robot.Constants;
-import frc.robot.subsystems.intake.Intake;
-import frc.robot.subsystems.shooter.Shooter;
-import frc.robot.subsystems.transport.Transport;
-import frc.robot.subsystems.turret.Turret;
-import frc.robot.util.Target;
-import monologue.Annotations.Log;
 import monologue.Logged;
-
-import java.util.function.DoubleSupplier;
-import java.util.function.Supplier;
-
-import static frc.robot.Constants.FieldConstants.*;
-import static frc.robot.Constants.PhysicalConstants.*;
 
 public class Superstructure implements Logged {
 

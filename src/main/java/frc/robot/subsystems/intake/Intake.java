@@ -16,9 +16,9 @@ import monologue.Logged;
 import java.util.function.DoubleSupplier;
 
 import static frc.robot.Constants.SUBSYSTEMS_CANBUS;
-import static frc.robot.subsystems.intake.Intake.IntakeState.*;
 import static frc.robot.subsystems.intake.IntakeConstants.*;
 import static frc.robot.subsystems.intake.IntakeConstants.ARM_VELOCITY_LIMIT;
+import static frc.robot.subsystems.intake.IntakeStates.CLOSE;
 
 public class Intake extends SubsystemBase implements Logged {
 
@@ -34,10 +34,10 @@ public class Intake extends SubsystemBase implements Logged {
     public boolean isIntakeOpen = false;
     public final DoubleSupplier angleSupplier;
     public final Trigger atPositionTrigger;
-    public IntakeState currentState;
+    public IntakeStates currentState;
 
     public Intake() {
-        currentState = IDLE;
+        currentState = CLOSE;
 
         angleEncoder = new CANcoder(ANGLE_ENCODER_ID, SUBSYSTEMS_CANBUS);
         fourBarMotor = new TalonFXMotor(FOUR_BAR_MOTOR_ID, SUBSYSTEMS_CANBUS);
@@ -51,7 +51,7 @@ public class Intake extends SubsystemBase implements Logged {
 
         intakeAngleLimit = new SoftLimit(() -> INTAKE_MIN_ANGLE, () -> INTAKE_MAX_ANGLE);
 
-        atPositionTrigger = new Trigger(() -> (Math.abs(currentState.radPosition - angleSupplier.getAsDouble()) < INTAKE_ANGLE_TOLERANCE));
+        atPositionTrigger = new Trigger(() -> (Math.abs(currentState.angle - angleSupplier.getAsDouble()) < INTAKE_ANGLE_TOLERANCE));
 
         Gains ARM_POSITION_GAINS = new Gains(3, 0, 0, 0.45, 0, 0, 0.82);
         fourBarMechanism = new Arm(fourBarMotor, angleSupplier, ARM_VELOCITY_LIMIT, ARM_POSITION_GAINS, new Mass(() -> Math.cos(angleSupplier.getAsDouble()), () -> Math.sin(angleSupplier.getAsDouble()), ARM_MASS));
@@ -59,8 +59,8 @@ public class Intake extends SubsystemBase implements Logged {
 //        setDefaultCommand(defaultCommand());
     }
 
-    public Command setAnglePosition(IntakeState targetPosition) {
-        return new InstantCommand(() -> this.currentState = targetPosition);
+    public Command setStateCommand(IntakeStates stateToSet) {
+        return new InstantCommand(() -> this.currentState = stateToSet, this);
     }
 
     public Command setPositionCommand(double angle) {
@@ -69,31 +69,6 @@ public class Intake extends SubsystemBase implements Logged {
                 (at) -> at = false,
                 0
         );
-    }
-
-    public Command intakeCommand() {
-        Command c = setPositionCommand(1).alongWith(rollerManualCommand(-9));
-        c.addRequirements(this);
-        return c;
-    }
-
-    public Command closeCommand() {
-        Command c = setPositionCommand(0).alongWith(rollerManualCommand(0));
-        c.addRequirements(this);
-        return c;
-    }
-
-    public Command pumpFuelCommand() {
-        return new SequentialCommandGroup(
-                new ParallelCommandGroup(
-                        setPositionCommand(0.7),
-                        rollerManualCommand(1)
-                ).withTimeout(0.2),
-                new ParallelCommandGroup(
-                        setPositionCommand(0.2),
-                        rollerManualCommand(1)
-                ).withTimeout(0.2)
-        ).repeatedly();
     }
 
     @Log.NT
@@ -106,30 +81,10 @@ public class Intake extends SubsystemBase implements Logged {
     }
 
     public Command defaultCommand() {
-        Command c = new ConditionalCommand(
-                Commands.none(),
-                fourBarMechanism.anglePositionControlCommand(
-                        () -> intakeAngleLimit.limit(currentState.radPosition),
-                        at -> at = false,
-                        MAX_OFFSET
-                ),
-                () -> currentState.equals(IDLE)
+        return new ParallelCommandGroup(
+                rollerManualCommand(currentState.voltage),
+                setPositionCommand(currentState.angle)
         );
-
-        c.addRequirements(this);
-        return c;
-    }
-
-    public enum IntakeState {
-        CLOSE(INTAKE_MIN_ANGLE), // todo
-        IDLE(0), // zero because it doesnt move at all
-        OPEN(INTAKE_MAX_ANGLE); // todo
-
-        private final double radPosition;
-
-        IntakeState(double radPosition) {
-            this.radPosition = radPosition;
-        }
     }
 
     @Log.NT

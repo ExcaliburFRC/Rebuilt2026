@@ -21,7 +21,7 @@ public class Transport extends SubsystemBase implements Logged {
     public FlyWheel drumMechanism, transportMechanism;
     private TransportStates currentState = TransportStates.IDLE;
 
-    public Transport(BooleanSupplier shouldTransport) {
+    public Transport() {
         drumMotor = new TalonFXMotor(DRUM_MOTOR_ID, SUBSYSTEMS_CANBUS);
         drumMechanism = new FlyWheel(drumMotor, MAX_ACCELERATION, MAX_JERK, DRUM_GAINS);
 

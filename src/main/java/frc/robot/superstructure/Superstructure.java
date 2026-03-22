@@ -8,6 +8,8 @@ import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.transport.Transport;
 import monologue.Logged;
 
+import static frc.robot.superstructure.RobotState.*;
+
 public class Superstructure implements Logged {
     private RobotState currentRobotState;
 
@@ -46,7 +48,73 @@ public class Superstructure implements Logged {
     }
 
     public void initTriggers(){
-        
+        intakeRequested.negate()
+                .and(ourAllianceShiftActivate)
+                .and(inAllianceZone)
+                .onTrue(setStateCommandAndWait(NO_INTAKE_SHOOT_HUB));
+
+        intakeRequested
+                .and(ourAllianceShiftActivate)
+                .and(inAllianceZone)
+                .onTrue(setStateCommandAndWait(INTAKE_SHOOT_HUB));
+
+        intakeRequested.negate()
+                .and(ourAllianceShiftActivate.negate())
+                .and(inNeutralZone)
+                .and(closerToCloseDeliveryTrigger)
+                .onTrue(setStateCommandAndWait(NO_INTAKE_SHOOT_CLOSE_DELIVERY));
+
+        intakeRequested.negate()
+                .and(ourAllianceShiftActivate.negate())
+                .and(inNeutralZone)
+                .and(closerToCloseDeliveryTrigger.negate())
+                .onTrue(setStateCommandAndWait(NO_INTAKE_SHOOT_FAR_DELIVERY));
+
+        intakeRequested
+                .and(ourAllianceShiftActivate.negate())
+                .and(inNeutralZone)
+                .and(closerToCloseDeliveryTrigger)
+                .onTrue(setStateCommandAndWait(INTAKE_SHOOT_CLOSE_DELIVERY));
+
+        intakeRequested
+                .and(ourAllianceShiftActivate.negate())
+                .and(inNeutralZone)
+                .and(closerToCloseDeliveryTrigger.negate())
+                .onTrue(setStateCommandAndWait(INTAKE_SHOOT_FAR_DELIVERY));
+
+        intakeRequested.negate()
+                .and(ourAllianceShiftActivate.negate())
+                .and(inNeutralZone.negate())
+                .onTrue(setStateCommandAndWait(NO_INTAKE_AIM_HUB));
+
+        intakeRequested
+                .and(ourAllianceShiftActivate.negate())
+                .and(inNeutralZone.negate())
+                .onTrue(setStateCommandAndWait(INTAKE_AIM_HUB));
+
+        intakeRequested.negate()
+                .and(ourAllianceShiftActivate)
+                .and(inNeutralZone)
+                .and(closerToCloseDeliveryTrigger)
+                .onTrue(setStateCommandAndWait(NO_INTAKE_AIM_CLOSE_DELIVERY));
+
+        intakeRequested.negate()
+                .and(ourAllianceShiftActivate)
+                .and(inNeutralZone)
+                .and(closerToCloseDeliveryTrigger.negate())
+                .onTrue(setStateCommandAndWait(NO_INTAKE_AIM_FAR_DELIVERY));
+
+        intakeRequested
+                .and(ourAllianceShiftActivate)
+                .and(inNeutralZone)
+                .and(closerToCloseDeliveryTrigger)
+                .onTrue(setStateCommandAndWait(INTAKE_AIM_CLOSE_DELIVERY));
+
+        intakeRequested
+                .and(ourAllianceShiftActivate)
+                .and(inNeutralZone)
+                .and(closerToCloseDeliveryTrigger.negate())
+                .onTrue(setStateCommandAndWait(INTAKE_AIM_FAR_DELIVERY));
     }
 
     public Command setStateCommand(RobotState robotStateToSet) {

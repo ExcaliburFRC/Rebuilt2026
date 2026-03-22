@@ -11,6 +11,8 @@ import monologue.Annotations;
 import monologue.Annotations.Log;
 import monologue.Logged;
 
+import java.util.function.BooleanSupplier;
+
 import static frc.robot.superstructure.RobotState.*;
 
 public class Superstructure implements Logged {
@@ -26,6 +28,7 @@ public class Superstructure implements Logged {
 
     private final Trigger intakeRequested;
 
+
     private Trigger NO_INTAKE_SHOOT_HUB_TRIGGER, INTAKE_SHOOT_HUB_TRIGGER,
             NO_INTAKE_SHOOT_CLOSE_DELIVERY_TRIGGER, NO_INTAKE_SHOOT_FAR_DELIVERY_TRIGGER,
             INTAKE_SHOOT_CLOSE_DELIVERY_TRIGGER, INTAKE_SHOOT_FAR_DELIVERY_TRIGGER,
@@ -33,7 +36,7 @@ public class Superstructure implements Logged {
             NO_INTAKE_AIM_FAR_DELIVERY_TRIGGER, INTAKE_AIM_CLOSE_DELIVERY_TRIGGER,
             INTAKE_AIM_FAR_DELIVERY_TRIGGER;
 
-    Superstructure(Swerve swerve, Trigger intakeButton) {
+    public Superstructure(Swerve swerve, Trigger intakeButton) {
         currentRobotState = RobotState.NO_INTAKE_AIM_HUB;
 
         shooter = new Shooter(swerve::getPose2D, swerve::getRobotRelativeSpeeds);
@@ -189,6 +192,67 @@ public class Superstructure implements Logged {
     @Log.NT
     public boolean getCloserToCloseDeliveryTrigger() {
         return closerToCloseDeliveryTrigger.getAsBoolean();
+    }
+
+
+    @Log.NT
+    public boolean getINTAKE_SHOOT_HUB_TRIGGER() {
+        return INTAKE_SHOOT_HUB_TRIGGER.getAsBoolean();
+    }
+
+    @Log.NT
+    public boolean getNO_INTAKE_SHOOT_HUB_TRIGGER() {
+        return NO_INTAKE_SHOOT_HUB_TRIGGER.getAsBoolean();
+    }
+
+    @Log.NT
+    public boolean getNO_INTAKE_SHOOT_CLOSE_DELIVERY_TRIGGER() {
+        return NO_INTAKE_SHOOT_CLOSE_DELIVERY_TRIGGER.getAsBoolean();
+    }
+
+    @Log.NT
+    public boolean getNO_INTAKE_SHOOT_FAR_DELIVERY_TRIGGER() {
+        return NO_INTAKE_SHOOT_FAR_DELIVERY_TRIGGER.getAsBoolean();
+    }
+
+    @Log.NT
+    public boolean getINTAKE_SHOOT_CLOSE_DELIVERY_TRIGGER() {
+        return INTAKE_SHOOT_CLOSE_DELIVERY_TRIGGER.getAsBoolean();
+    }
+
+    @Log.NT
+    public boolean getINTAKE_SHOOT_FAR_DELIVERY_TRIGGER() {
+        return INTAKE_SHOOT_FAR_DELIVERY_TRIGGER.getAsBoolean();
+    }
+
+    @Log.NT
+    public boolean getNO_INTAKE_AIM_HUB_TRIGGER() {
+        return NO_INTAKE_AIM_HUB_TRIGGER.getAsBoolean();
+    }
+
+    @Log.NT
+    public boolean getINTAKE_AIM_HUB_TRIGGER() {
+        return INTAKE_AIM_HUB_TRIGGER.getAsBoolean();
+    }
+
+    @Log.NT
+    public boolean getNO_INTAKE_AIM_CLOSE_DELIVERY_TRIGGER() {
+        return NO_INTAKE_AIM_CLOSE_DELIVERY_TRIGGER.getAsBoolean();
+    }
+
+    @Log.NT
+    public boolean getNO_INTAKE_AIM_FAR_DELIVERY_TRIGGER() {
+        return NO_INTAKE_AIM_FAR_DELIVERY_TRIGGER.getAsBoolean();
+    }
+
+    @Log.NT
+    public boolean getINTAKE_AIM_CLOSE_DELIVERY_TRIGGER() {
+        return INTAKE_AIM_CLOSE_DELIVERY_TRIGGER.getAsBoolean();
+    }
+
+    @Log.NT
+    public boolean getINTAKE_AIM_FAR_DELIVERY_TRIGGER() {
+        return INTAKE_AIM_FAR_DELIVERY_TRIGGER.getAsBoolean();
     }
 
 }

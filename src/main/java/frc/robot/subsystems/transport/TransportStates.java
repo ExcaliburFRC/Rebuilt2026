@@ -1,7 +1,7 @@
 package frc.robot.subsystems.transport;
 
 public enum TransportStates {
-    TRANSPORT(0),
+    TRANSPORT(5),
     IDLE(0);
 
 

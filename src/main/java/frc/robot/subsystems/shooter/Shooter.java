@@ -21,7 +21,6 @@ import frc.excalib.control.motor.motor_specs.IdleState;
 import frc.excalib.mechanisms.Mechanism;
 import frc.excalib.mechanisms.fly_wheel.FlyWheel;
 import frc.excalib.mechanisms.turret.Turret;
-import monologue.Annotations;
 import monologue.Logged;
 
 import java.util.function.DoubleSupplier;
@@ -214,7 +213,7 @@ public class Shooter extends SubsystemBase implements Logged {
     }
 
     public Command setTurretPositionCommand(Supplier<Rotation2d> position) {
-        return turretMechanism.setPositionCommand(position, this);
+        return turretMechanism.setPositionCommand(position);
     }
 
     private void initDistanceTimeOfFlightMap() {
@@ -239,8 +238,8 @@ public class Shooter extends SubsystemBase implements Logged {
                         setTurretPositionCommand(Rotation2d::new)
                 ),
                 new ParallelCommandGroup(
-                        setAdjustedHoodAngle(),
-                        setAdjustedFlyWheelVelocity(),
+                        setAdjustedHoodAngleCommand(),
+                        setAdjustedFlyWheelVelocityCommand(),
                         setAdjustedTurretAngle()
                 ),
                 () -> this.currentState.equals(IDLE)
@@ -285,7 +284,7 @@ public class Shooter extends SubsystemBase implements Logged {
     }
 
 
-    @Annotations.Log.NT
+    @NT
     public Pose2d getTurretOnField() {
         Pose2d robotPose = robotPositionSupplier.get();
         Translation2d robotTranslation = robotPose.getTranslation();
@@ -357,16 +356,18 @@ public class Shooter extends SubsystemBase implements Logged {
         return new RunCommand(() -> setFlyWheelDynamicVelocity(vel, req));
     }
 
-    public Command setAdjustedFlyWheelVelocity() {
-        return new RunCommand(() -> {
-            double distance = turretRelativeDistanceFromTarget.getAsDouble();
-            double velocity = velocityDistanceMap.get(distance);
-            flywheelVelocitySetpoint = () -> velocity;
-            setFlyWheelDynamicVelocity(flywheelVelocitySetpoint);
-        });
+    public Command setAdjustedFlyWheelVelocityCommand() {
+        return new RunCommand(
+                () -> {
+                    double distance = turretRelativeDistanceFromTarget.getAsDouble();
+                    double velocity = velocityDistanceMap.get(distance);
+                    flywheelVelocitySetpoint = () -> velocity;
+                    setFlyWheelDynamicVelocity(flywheelVelocitySetpoint);
+                }
+        );
     }
 
-    public Command setAdjustedHoodAngle() {
+    public Command setAdjustedHoodAngleCommand() {
         return new RunCommand(() -> {
             double distance = turretRelativeDistanceFromTarget.getAsDouble();
             hoodAngleSetpoint = () -> hoodSoftLimit.limit(angleDistanceMap.get(distance));
@@ -424,7 +425,12 @@ public class Shooter extends SubsystemBase implements Logged {
         return volatileTrenchHoodTrigger.getAsBoolean();
     }
 
-    public Trigger isShooterReady(){
+    @NT
+    public String getCurrentShooterState() {
+        return currentState.name();
+    }
+
+    public Trigger isShooterReady() {
         return shooterReady;
     }
 }

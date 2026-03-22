@@ -73,8 +73,6 @@ public class RobotContainer implements Logged {
 
     private final Superstructure superstructure = new Superstructure(swerve,primary.R1());
 
-
-
     public RobotContainer() {
 //        lowBatteryTrigger.onTrue(leds.setPattern(BLINKING, ORANGE.color).withInterruptBehavior(kCancelIncoming));
 

@@ -1,11 +1,13 @@
 package frc.robot.subsystems.transport;
 
 import edu.wpi.first.wpilibj2.command.*;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
 import frc.excalib.control.motor.motor_specs.DirectionState;
 import frc.excalib.control.motor.motor_specs.IdleState;
 import frc.excalib.mechanisms.fly_wheel.FlyWheel;
+import monologue.Annotations;
 import monologue.Logged;
 
 import java.util.function.BooleanSupplier;
@@ -13,6 +15,7 @@ import java.util.function.DoubleSupplier;
 
 import static frc.robot.Constants.SUBSYSTEMS_CANBUS;
 import static frc.robot.subsystems.transport.TransportConstants.*;
+import static monologue.Annotations.*;
 
 public class Transport extends SubsystemBase implements Logged {
     private final TalonFXMotor drumMotor, transportMotor;
@@ -55,19 +58,26 @@ public class Transport extends SubsystemBase implements Logged {
     }
 
     public Command defaultCommand() {
-        return new ParallelCommandGroup(
+        Command defaultCommand = new ParallelCommandGroup(
                 drumMechanism.setDynamicVelocityCommand(
                         () -> this.currentState.linearVelocity),
                 transportMechanism.setDynamicVelocityCommand(
                         () -> this.currentState.linearVelocity)
         );
+        defaultCommand.addRequirements(this);
+        return defaultCommand;
     }
 
     public Command setStateCommand(TransportStates stateToSet) {
-        return new InstantCommand(() -> currentState = stateToSet, this);
+        return new InstantCommand(() -> currentState = stateToSet);
     }
 
     public Trigger atPositionTrigger(){
         return atPositionTrigger;
+    }
+
+    @Log.NT
+    public String getCurrentTransportState(){
+        return currentState.name();
     }
 }

@@ -7,11 +7,8 @@ import frc.excalib.swerve.Swerve;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.transport.Transport;
-import monologue.Annotations;
 import monologue.Annotations.Log;
 import monologue.Logged;
-
-import java.util.function.BooleanSupplier;
 
 import static frc.robot.superstructure.RobotState.*;
 
@@ -59,8 +56,7 @@ public class Superstructure implements Logged {
                         < (5.22 + 0.2))
                 .and(inAllianceZone.negate());
 
-        inNeutralZone = inAllianceZone.negate()
-                .and(inIntermediateZone).negate();
+        inNeutralZone = (inAllianceZone.or(inIntermediateZone)).negate();
 
         closerToCloseDeliveryTrigger = new Trigger(
                 () -> shooter.getTurretOnField().getTranslation().getY() < AllianceUtils.FIELD_WIDTH_METERS / 2);
@@ -155,8 +151,9 @@ public class Superstructure implements Logged {
     }
 
 
-    public RobotState getCurrentRobotState() {
-        return currentRobotState;
+    @Log.NT
+    public String getCurrentRobotState() {
+        return currentRobotState.name();
     }
 
     @Log.NT

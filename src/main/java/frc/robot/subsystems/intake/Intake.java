@@ -34,6 +34,7 @@ public class Intake extends SubsystemBase implements Logged {
     public boolean isIntakeOpen = false;
     public final DoubleSupplier angleSupplier;
     public final Trigger atPositionTrigger;
+
     public IntakeStates currentState;
 
     public Intake() {
@@ -45,6 +46,7 @@ public class Intake extends SubsystemBase implements Logged {
         rollerMotor = new TalonFXMotor(ROLLER_MOTOR_ID, SUBSYSTEMS_CANBUS);
 
         rollerMotor.setCurrentLimit(80, 80);
+        fourBarMotor.setPositionConversionFactor((double) 1 / 0.29);
         rollerMotorMechanism = new Mechanism(rollerMotor);
 
         angleSupplier = () -> (angleEncoder.getAbsolutePosition().getValueAsDouble() * (1 / 0.29));
@@ -56,16 +58,16 @@ public class Intake extends SubsystemBase implements Logged {
         Gains ARM_POSITION_GAINS = new Gains(3, 0, 0, 0.45, 0, 0, 0.82);
         fourBarMechanism = new Arm(fourBarMotor, angleSupplier, ARM_VELOCITY_LIMIT, ARM_POSITION_GAINS, new Mass(() -> Math.cos(angleSupplier.getAsDouble()), () -> Math.sin(angleSupplier.getAsDouble()), ARM_MASS));
 
-//        setDefaultCommand(defaultCommand());
+        setDefaultCommand(defaultCommand());
     }
 
     public Command setStateCommand(IntakeStates stateToSet) {
-        return new InstantCommand(() -> this.currentState = stateToSet, this);
+        return new InstantCommand(() -> this.currentState = stateToSet);
     }
 
-    public Command setPositionCommand(double angle) {
-        return fourBarMechanism.goToAngleCommand(
-                intakeAngleLimit.limit(angle),
+    public Command setPositionCommand(DoubleSupplier angle) {
+        return fourBarMechanism.anglePositionControlCommand(
+                () -> intakeAngleLimit.limit(angle.getAsDouble()),
                 (at) -> at = false,
                 0
         );
@@ -76,19 +78,36 @@ public class Intake extends SubsystemBase implements Logged {
         return isIntakeOpen;
     }
 
-    public Command rollerManualCommand(double voltage) {
-        return new RunCommand(()->rollerMotorMechanism.setVoltage(voltage));
+    public Command rollerManualCommand(DoubleSupplier voltage) {
+        return new RunCommand(() -> rollerMotorMechanism.manualCommand(voltage));
     }
 
     public Command defaultCommand() {
-        return new ParallelCommandGroup(
-                rollerManualCommand(currentState.voltage),
-                setPositionCommand(currentState.angle)
+        Command defaultCommand = new ParallelCommandGroup(
+                rollerMotorMechanism.manualCommand(() -> this.currentState.voltage),
+                setPositionCommand(() -> currentState.angle)
         );
+        defaultCommand.addRequirements(this);
+        return defaultCommand;
+    }
+
+    @Log.NT
+    public boolean atPositionTrigger() {
+        return atPositionTrigger.getAsBoolean();
     }
 
     @Log.NT
     public double getIntakeAngleSupplier() {
         return angleSupplier.getAsDouble();
+    }
+
+    @Log.NT
+    public String getCurrentIntakeState() {
+        return currentState.name();
+    }
+
+    @Log.NT
+    public double getCurrentVoltage() {
+        return this.currentState.voltage;
     }
 }

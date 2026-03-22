@@ -1,13 +1,11 @@
 package frc.robot.subsystems.transport;
 
 import edu.wpi.first.wpilibj2.command.*;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
 import frc.excalib.control.motor.motor_specs.DirectionState;
 import frc.excalib.control.motor.motor_specs.IdleState;
 import frc.excalib.mechanisms.fly_wheel.FlyWheel;
-import monologue.Annotations;
-import monologue.Annotations.Log;
-import monologue.Annotations.Log.NT;
 import monologue.Logged;
 
 import java.util.function.BooleanSupplier;
@@ -20,6 +18,7 @@ public class Transport extends SubsystemBase implements Logged {
     private final TalonFXMotor drumMotor, transportMotor;
     public FlyWheel drumMechanism, transportMechanism;
     private TransportStates currentState = TransportStates.IDLE;
+    private Trigger atPositionTrigger;
 
     public Transport() {
         drumMotor = new TalonFXMotor(DRUM_MOTOR_ID, SUBSYSTEMS_CANBUS);
@@ -38,6 +37,12 @@ public class Transport extends SubsystemBase implements Logged {
         transportMechanism = new FlyWheel(transportMotor, 10, 10, TRANSPORT_PID_GAINS);
         drumMotor.setVelocityConversionFactor(0.39898 / 9);
         transportMotor.setVelocityConversionFactor(0.0731);
+
+        atPositionTrigger = new Trigger(
+                () -> Math.abs(transportMechanism.getVelocity() - currentState.linearVelocity) < TRANSPORT_TOLERANCE &&
+                                Math.abs(drumMechanism.getVelocity() - currentState.linearVelocity) < DRUM_TOLERANCE
+
+        );
 
         setDefaultCommand(defaultCommand());
     }
@@ -60,5 +65,9 @@ public class Transport extends SubsystemBase implements Logged {
 
     public Command setStateCommand(TransportStates stateToSet) {
         return new InstantCommand(() -> currentState = stateToSet, this);
+    }
+
+    public Trigger atPositionTrigger(){
+        return atPositionTrigger;
     }
 }

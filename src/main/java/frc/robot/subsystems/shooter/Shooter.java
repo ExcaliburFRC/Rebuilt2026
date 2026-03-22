@@ -24,7 +24,6 @@ import frc.excalib.mechanisms.turret.Turret;
 import monologue.Annotations;
 import monologue.Logged;
 
-import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
@@ -49,7 +48,6 @@ public class Shooter extends SubsystemBase implements Logged {
 
     public final DoubleSupplier turretRelativeAngleToTarget;
 
-    public final Trigger isTurretAlligned;
 
     private ShooterStates currentState;
 
@@ -74,11 +72,12 @@ public class Shooter extends SubsystemBase implements Logged {
 
     private final Trigger volatileTrenchHoodTrigger;
 
-    private Trigger activateLedsTrigger;
-    private Trigger flyWheelReadyTrigger;
-    private Trigger hoodAdjustedTrigger;
-    private BooleanSupplier transportNeededSupplier;
-    private BooleanSupplier availableToShoot;
+    private final Trigger activateLedsTrigger;
+    private final Trigger flyWheelReadyTrigger;
+    private final Trigger hoodAdjustedTrigger;
+    public final Trigger isTurretAligned;
+
+    public final Trigger shooterReady;
 
     private Supplier<ChassisSpeeds> swerveSpeeds;
 
@@ -127,7 +126,7 @@ public class Shooter extends SubsystemBase implements Logged {
                 new TrapezoidProfile.Constraints(Math.PI * 2, Math.PI * 100)
         );
 
-        isTurretAlligned = new Trigger(
+        isTurretAligned = new Trigger(
                 () -> Math.abs(
                         turretMechanism.getPosition().getRadians() -
                                 SOFT_LIMIT.limit(
@@ -157,7 +156,6 @@ public class Shooter extends SubsystemBase implements Logged {
 
         flyWheelMechanism = new FlyWheel(shooterMotorGroup, FLYWHEEL_MAX_ACCELERATION, FLYWHEEL_MAX_JERK, FLYWHEEL_GAINS);
 
-        transportNeededSupplier = () -> false;
 
         flywheelVelocityFilter = new EMAFilter(
                 flyWheelMechanism::getVelocity,
@@ -200,10 +198,13 @@ public class Shooter extends SubsystemBase implements Logged {
             return HOOD_MAX_ANGLE_LIMIT;
         });
 
-        availableToShoot = flyWheelReadyTrigger.and(hoodAdjustedTrigger);
         initDistanceTimeOfFlightMap();
 
         this.turretRelativeDistanceFromTarget = () -> getTurretToTargetVector().get().getNorm();
+
+        shooterReady = isTurretAligned
+                .and(flyWheelReadyTrigger)
+                .and(hoodAdjustedTrigger);
 
         setDefaultCommand(defaultCommand());
     }
@@ -421,5 +422,9 @@ public class Shooter extends SubsystemBase implements Logged {
     @NT
     public boolean volatileTrenchHoodTrigger() {
         return volatileTrenchHoodTrigger.getAsBoolean();
+    }
+
+    public Trigger isShooterReady(){
+        return shooterReady;
     }
 }

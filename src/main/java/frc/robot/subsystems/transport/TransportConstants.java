@@ -9,6 +9,8 @@ public class TransportConstants {
     public static final double MAX_ACCELERATION = 10;
     public static final double MAX_JERK = 10;
 
+    public static final double DRUM_TOLERANCE = 10;
+    public static final double TRANSPORT_TOLERANCE = 10;
     public static final int TRANSPORT_MOTOR_ID = 33;
     public static final Gains TRANSPORT_PID_GAINS = new Gains(0, 0, 0, 1.4, 0.4, 0, 0);
 

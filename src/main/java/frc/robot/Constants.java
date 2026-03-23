@@ -197,6 +197,9 @@ public final class Constants {
         public static final AllianceUtils.AlliancePose BLUE_UP_FIELD_PICKUP_FUEL_PLACEMENT = new
                 AllianceUtils.AlliancePose(0.39, 6.06, 0);
 
+        public static double CLOSE_TRENCH_TO_BUMP_X = 1.65;
+        public static double FAR_TRENCH_TO_BUMP_X = AllianceUtils.FIELD_WIDTH_METERS - CLOSE_TRENCH_TO_BUMP_X ;
+
         public static final double FUEL_DIAMETER = 0.15;
 
         public static double FRONT_TRENCH_SIDEX_LINE_DIST_METERS = 3.3;

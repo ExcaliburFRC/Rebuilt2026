@@ -1,15 +1,20 @@
 package frc.robot.superstructure;
 
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.excalib.additional_utilities.AllianceUtils;
 import frc.excalib.swerve.Swerve;
+import frc.robot.Constants;
+import frc.robot.Constants.FieldConstants;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.transport.Transport;
 import monologue.Annotations.Log;
 import monologue.Logged;
 
+import static frc.robot.Constants.FieldConstants.CLOSE_TRENCH_TO_BUMP_X;
+import static frc.robot.Constants.FieldConstants.FAR_TRENCH_TO_BUMP_X;
 import static frc.robot.superstructure.RobotState.*;
 
 public class Superstructure implements Logged {
@@ -21,10 +26,9 @@ public class Superstructure implements Logged {
 
     private final Trigger robotAtState, ourAllianceShiftActivate;
     private final Trigger inIntermediateZone, inAllianceZone, inNeutralZone;
-    private final Trigger closerToCloseDeliveryTrigger;
+    private final Trigger closerToCloseDeliveryTrigger, underTrenchTrigger, overBumpTrigger;
 
     private final Trigger intakeRequested;
-
 
     private Trigger NO_INTAKE_SHOOT_HUB_TRIGGER, INTAKE_SHOOT_HUB_TRIGGER,
             NO_INTAKE_SHOOT_CLOSE_DELIVERY_TRIGGER, NO_INTAKE_SHOOT_FAR_DELIVERY_TRIGGER,
@@ -61,7 +65,16 @@ public class Superstructure implements Logged {
         closerToCloseDeliveryTrigger = new Trigger(
                 () -> shooter.getTurretOnField().getTranslation().getY() < AllianceUtils.FIELD_WIDTH_METERS / 2);
 
+        underTrenchTrigger = new Trigger(
+                () -> {
+                    double y = shooter.getTurretOnField().getTranslation().getY();
+                    return y < CLOSE_TRENCH_TO_BUMP_X || y > FAR_TRENCH_TO_BUMP_X;
+                }
+        ).and(inIntermediateZone);
+
+        overBumpTrigger = inIntermediateZone.and(underTrenchTrigger.negate());
         intakeRequested = intakeButton;
+
 
         initTriggers();
     }

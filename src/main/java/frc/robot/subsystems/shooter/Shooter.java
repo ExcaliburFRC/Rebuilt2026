@@ -60,6 +60,8 @@ public class Shooter extends SubsystemBase implements Logged {
 
     private final DoubleSupplier turretRelativeDistanceFromTarget;
 
+    public Supplier<Translation2d> turretToHubVector;
+
     private DoubleSupplier flywheelVelocitySetpoint;
     private DoubleSupplier hoodAngleSetpoint;
 
@@ -139,6 +141,8 @@ public class Shooter extends SubsystemBase implements Logged {
 
         distanceTimeOfFlightMap = new InterpolatingDoubleTreeMap();
 
+        turretToHubVector = getTurretToTargetVector();
+
         angleController = new PIDController(HOOD_GAINS.kp, HOOD_GAINS.ki, HOOD_GAINS.kd);
         angleController.setTolerance(0.01);
 
@@ -209,7 +213,7 @@ public class Shooter extends SubsystemBase implements Logged {
     }
 
     public Command setStateCommand(ShooterStates stateToSet) {
-        return new InstantCommand(() -> this.currentState = stateToSet, this);
+        return new InstantCommand(() -> this.currentState = stateToSet);
     }
 
     public Command setTurretPositionCommand(Supplier<Rotation2d> position) {
@@ -231,19 +235,24 @@ public class Shooter extends SubsystemBase implements Logged {
     }
 
     public Command defaultCommand() {
-        return new ConditionalCommand(
+        Command defaultCommand = new ConditionalCommand(
                 new ParallelCommandGroup(
                         setHoodAngleCommand(() -> 0),
-                        setFlyWheelDynamicVelocityCommand(() -> 0),
+                        flyWheelMechanism.setDynamicVelocityCommand(() -> {
+                            flywheelVelocitySetpoint = () -> 0;
+                            return 0;
+                        }),
                         setTurretPositionCommand(Rotation2d::new)
-                ),
+                ).until(() -> !this.currentState.equals(IDLE)),
                 new ParallelCommandGroup(
                         setAdjustedHoodAngleCommand(),
-                        setAdjustedFlyWheelVelocityCommand(),
+                        adjustFlyWheelVelocityCommand(),
                         setAdjustedTurretAngle()
-                ),
-                () -> this.currentState.equals(IDLE)
-        );
+                ).until(() -> this.currentState.equals(IDLE)),
+                () -> this.currentState.equals(IDLE));
+        defaultCommand.addRequirements(this);
+        return defaultCommand;
+
     }
 
     public Command setAdjustedTurretAngle() {
@@ -344,25 +353,17 @@ public class Shooter extends SubsystemBase implements Logged {
     }
 
     public Command setHoodAngleCommand(DoubleSupplier angleSetpoint) {
-        return new RunCommand(() -> hoodMechanism.setVoltage(getControlledOutputForAngle(() -> hoodSoftLimit.limit(angleSetpoint.getAsDouble()))), this);
+        return new RunCommand(() -> hoodMechanism.setVoltage(getControlledOutputForAngle(() -> hoodSoftLimit.limit(angleSetpoint.getAsDouble()))));
     }
 
-    public void setFlyWheelDynamicVelocity(DoubleSupplier vel, SubsystemBase... req) {
-        flywheelVelocitySetpoint = vel;
-        flyWheelMechanism.setDynamicVelocityCommand(vel, req).alongWith(new PrintCommand("" + flywheelVelocitySetpoint.getAsDouble()));
-    }
 
-    public Command setFlyWheelDynamicVelocityCommand(DoubleSupplier vel, SubsystemBase... req) {
-        return new RunCommand(() -> setFlyWheelDynamicVelocity(vel, req));
-    }
-
-    public Command setAdjustedFlyWheelVelocityCommand() {
-        return new RunCommand(
+    public Command adjustFlyWheelVelocityCommand() {
+        return flyWheelMechanism.setDynamicVelocityCommand(
                 () -> {
                     double distance = turretRelativeDistanceFromTarget.getAsDouble();
-                    double velocity = velocityDistanceMap.get(distance);
+                    double velocity = currentState.isShooting ? velocityDistanceMap.get(distance) : 0;
                     flywheelVelocitySetpoint = () -> velocity;
-                    setFlyWheelDynamicVelocity(flywheelVelocitySetpoint);
+                    return velocity;
                 }
         );
     }
@@ -433,4 +434,11 @@ public class Shooter extends SubsystemBase implements Logged {
     public Trigger isShooterReady() {
         return shooterReady;
     }
+
+    @NT
+    public Pose2d getHubOnFieldAfterCalc() {
+        Pose2d turretOnField = getTurretOnField();
+        return new Pose2d(turretOnField.getTranslation().plus(turretToHubVector.get().rotateBy(robotPositionSupplier.get().getRotation())), new Rotation2d());
+    }
+
 }

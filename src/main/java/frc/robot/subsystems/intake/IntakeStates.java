@@ -1,7 +1,7 @@
 package frc.robot.subsystems.intake;
 
 public enum IntakeStates {
-    OPEN(1, -9),
+    OPEN(1, -1),
     CLOSE(0, 0);
     final double angle, voltage;
 

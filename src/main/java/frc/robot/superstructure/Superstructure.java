@@ -70,70 +70,72 @@ public class Superstructure implements Logged {
         NO_INTAKE_SHOOT_HUB_TRIGGER = intakeRequested.negate()
                 .and(ourAllianceShiftActivate)
                 .and(inAllianceZone)
-                .onTrue(setStateCommandAndWait(NO_INTAKE_SHOOT_HUB));
+                .onTrue(setStateCommand(NO_INTAKE_SHOOT_HUB));
 
         INTAKE_SHOOT_HUB_TRIGGER = intakeRequested
                 .and(ourAllianceShiftActivate)
                 .and(inAllianceZone)
-                .onTrue(setStateCommandAndWait(INTAKE_SHOOT_HUB));
+                .onTrue(setStateCommand(INTAKE_SHOOT_HUB));
 
         NO_INTAKE_SHOOT_CLOSE_DELIVERY_TRIGGER = intakeRequested.negate()
                 .and(ourAllianceShiftActivate.negate())
                 .and(inNeutralZone)
                 .and(closerToCloseDeliveryTrigger)
-                .onTrue(setStateCommandAndWait(NO_INTAKE_SHOOT_CLOSE_DELIVERY));
+                .onTrue(setStateCommand(NO_INTAKE_SHOOT_CLOSE_DELIVERY));
 
         NO_INTAKE_SHOOT_FAR_DELIVERY_TRIGGER = intakeRequested.negate()
                 .and(ourAllianceShiftActivate.negate())
                 .and(inNeutralZone)
                 .and(closerToCloseDeliveryTrigger.negate())
-                .onTrue(setStateCommandAndWait(NO_INTAKE_SHOOT_FAR_DELIVERY));
+                .onTrue(setStateCommand(NO_INTAKE_SHOOT_FAR_DELIVERY));
 
         INTAKE_SHOOT_CLOSE_DELIVERY_TRIGGER = intakeRequested
                 .and(ourAllianceShiftActivate.negate())
                 .and(inNeutralZone)
                 .and(closerToCloseDeliveryTrigger)
-                .onTrue(setStateCommandAndWait(INTAKE_SHOOT_CLOSE_DELIVERY));
+                .onTrue(setStateCommand(INTAKE_SHOOT_CLOSE_DELIVERY));
 
         INTAKE_SHOOT_FAR_DELIVERY_TRIGGER = intakeRequested
                 .and(ourAllianceShiftActivate.negate())
                 .and(inNeutralZone)
                 .and(closerToCloseDeliveryTrigger.negate())
-                .onTrue(setStateCommandAndWait(INTAKE_SHOOT_FAR_DELIVERY));
+                .onTrue(setStateCommand(INTAKE_SHOOT_FAR_DELIVERY));
 
+        // also when over bump
         NO_INTAKE_AIM_HUB_TRIGGER = intakeRequested.negate()
                 .and(ourAllianceShiftActivate.negate())
-                .and(inNeutralZone.negate())
-                .onTrue(setStateCommandAndWait(NO_INTAKE_AIM_HUB));
+                .and(inAllianceZone)
+                .onTrue(setStateCommand(NO_INTAKE_AIM_HUB));
 
+        // also when under trench
         INTAKE_AIM_HUB_TRIGGER = intakeRequested
                 .and(ourAllianceShiftActivate.negate())
-                .and(inNeutralZone.negate())
-                .onTrue(setStateCommandAndWait(INTAKE_AIM_HUB));
+                .and(inAllianceZone)
+                .onTrue(setStateCommand(INTAKE_AIM_HUB));
 
         NO_INTAKE_AIM_CLOSE_DELIVERY_TRIGGER = intakeRequested.negate()
                 .and(ourAllianceShiftActivate)
                 .and(inNeutralZone)
                 .and(closerToCloseDeliveryTrigger)
-                .onTrue(setStateCommandAndWait(NO_INTAKE_AIM_CLOSE_DELIVERY));
+                .onTrue(setStateCommand(NO_INTAKE_AIM_CLOSE_DELIVERY));
 
         NO_INTAKE_AIM_FAR_DELIVERY_TRIGGER = intakeRequested.negate()
                 .and(ourAllianceShiftActivate)
                 .and(inNeutralZone)
                 .and(closerToCloseDeliveryTrigger.negate())
-                .onTrue(setStateCommandAndWait(NO_INTAKE_AIM_FAR_DELIVERY));
+                .onTrue(setStateCommand(NO_INTAKE_AIM_FAR_DELIVERY));
 
         INTAKE_AIM_CLOSE_DELIVERY_TRIGGER = intakeRequested
                 .and(ourAllianceShiftActivate)
                 .and(inNeutralZone)
                 .and(closerToCloseDeliveryTrigger)
-                .onTrue(setStateCommandAndWait(INTAKE_AIM_CLOSE_DELIVERY));
+                .onTrue(setStateCommand(INTAKE_AIM_CLOSE_DELIVERY));
 
         INTAKE_AIM_FAR_DELIVERY_TRIGGER = intakeRequested
                 .and(ourAllianceShiftActivate)
                 .and(inNeutralZone)
                 .and(closerToCloseDeliveryTrigger.negate())
-                .onTrue(setStateCommandAndWait(INTAKE_AIM_FAR_DELIVERY));
+                .onTrue(setStateCommand(INTAKE_AIM_FAR_DELIVERY));
     }
 
     public Command setStateCommand(RobotState robotStateToSet) {

@@ -71,7 +71,7 @@ public class RobotContainer implements Logged {
     private final PerformanceMetricsTracker performanceMetricsTracker =
             new PerformanceMetricsTracker();
 
-    private final Superstructure superstructure = new Superstructure(swerve,primary.R1());
+    private final Superstructure superstructure = new Superstructure(swerve, primary.R1());
 
     public RobotContainer() {
 //        lowBatteryTrigger.onTrue(leds.setPattern(BLINKING, ORANGE.color).withInterruptBehavior(kCancelIncoming));
@@ -96,6 +96,16 @@ public class RobotContainer implements Logged {
         ).ignoringDisable(true));
 
 
+        primary.touchpad().onTrue(superstructure.coastCommand());
+
+        primary.povUp().onTrue(
+                superstructure.setManualShootingCommand(
+                        () -> hoodAngle.getDouble(0),
+                        () -> flywheelVel.getDouble(0)
+                )
+        );
+
+        primary.options().onTrue(swerve.resetOdometryCommand(new Pose2d(new Translation2d(-0.067, 2.247), Rotation2d.fromDegrees(159.05))));
 
         swerve.setDefaultCommand(
                 swerve.driveCommand(
@@ -104,7 +114,7 @@ public class RobotContainer implements Logged {
                                 applyDeadband(-primary.getLeftX()) * MAX_VEL),
                         () -> -applyDeadband(primary.getRightX()) * MAX_OMEGA_RAD_PER_SEC,
                         () -> true
-                )
+                ).unless(() -> DISABLE_SWERVE)
         );
     }
 

@@ -16,7 +16,8 @@ public enum RobotState {
     NO_INTAKE_AIM_CLOSE_DELIVERY(IntakeStates.CLOSE, ShooterStates.LOOK_CLOSE_DELIVERY,TransportStates.IDLE),
     NO_INTAKE_AIM_FAR_DELIVERY(IntakeStates.CLOSE, ShooterStates.LOOK_FAR_DELIVERY,TransportStates.IDLE),
     INTAKE_AIM_CLOSE_DELIVERY(IntakeStates.OPEN, ShooterStates.LOOK_CLOSE_DELIVERY,TransportStates.IDLE),
-    INTAKE_AIM_FAR_DELIVERY(IntakeStates.OPEN, ShooterStates.LOOK_FAR_DELIVERY,TransportStates.IDLE);
+    INTAKE_AIM_FAR_DELIVERY(IntakeStates.OPEN, ShooterStates.LOOK_FAR_DELIVERY,TransportStates.IDLE),
+    IDLE(IntakeStates.CLOSE, ShooterStates.IDLE,TransportStates.IDLE);
 
     IntakeStates intakeState;
     ShooterStates shooterState;

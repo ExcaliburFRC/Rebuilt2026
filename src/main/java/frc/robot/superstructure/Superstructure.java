@@ -13,6 +13,8 @@ import frc.robot.subsystems.transport.Transport;
 import monologue.Annotations.Log;
 import monologue.Logged;
 
+import java.util.function.DoubleSupplier;
+
 import static frc.robot.Constants.FieldConstants.CLOSE_TRENCH_TO_BUMP_X;
 import static frc.robot.Constants.FieldConstants.FAR_TRENCH_TO_BUMP_X;
 import static frc.robot.superstructure.RobotState.*;
@@ -41,7 +43,7 @@ public class Superstructure implements Logged {
         currentRobotState = RobotState.NO_INTAKE_AIM_HUB;
 
         shooter = new Shooter(swerve::getPose2D, swerve::getRobotRelativeSpeeds);
-        transport = new Transport();
+        transport = new Transport(()-> true);
         intake = new Intake();
 
         robotAtState = intake.atPositionTrigger
@@ -267,4 +269,18 @@ public class Superstructure implements Logged {
         return INTAKE_AIM_FAR_DELIVERY_TRIGGER.getAsBoolean();
     }
 
+    public Command coastCommand(){
+        return shooter.turretMechanism.coastCommand(this.shooter);
+    }
+
+    public Command setManualShootingCommand(DoubleSupplier hoodAngle,DoubleSupplier rpsSpeed){
+        Command command =  new ParallelCommandGroup(
+                shooter.setAdjustedTurretAngle(),
+                shooter.setHoodAngleCommand(hoodAngle),
+                shooter.setFlyWheelVelocity(rpsSpeed),
+                transport.manualTransport()
+        );
+        command.addRequirements(shooter);
+        return command;
+    }
 }

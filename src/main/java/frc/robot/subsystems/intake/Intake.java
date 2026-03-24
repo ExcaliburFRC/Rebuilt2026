@@ -15,6 +15,7 @@ import monologue.Logged;
 
 import java.util.function.DoubleSupplier;
 
+import static frc.robot.Constants.DISABLE_SUBSYSTEMS;
 import static frc.robot.Constants.SUBSYSTEMS_CANBUS;
 import static frc.robot.subsystems.intake.IntakeConstants.*;
 import static frc.robot.subsystems.intake.IntakeConstants.ARM_VELOCITY_LIMIT;
@@ -58,7 +59,7 @@ public class Intake extends SubsystemBase implements Logged {
         Gains ARM_POSITION_GAINS = new Gains(3, 0, 0, 0.45, 0, 0, 0.82);
         fourBarMechanism = new Arm(fourBarMotor, angleSupplier, ARM_VELOCITY_LIMIT, ARM_POSITION_GAINS, new Mass(() -> Math.cos(angleSupplier.getAsDouble()), () -> Math.sin(angleSupplier.getAsDouble()), ARM_MASS));
 
-//        setDefaultCommand(defaultCommand());
+//        setDefaultCommand(defaultCommand().unless(()-> DISABLE_SUBSYSTEMS));
     }
 
     public Command setStateCommand(IntakeStates stateToSet) {

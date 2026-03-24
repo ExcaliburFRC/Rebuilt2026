@@ -28,11 +28,13 @@ import java.util.function.Supplier;
 
 import static frc.excalib.additional_utilities.AllianceUtils.FIELD_LENGTH_METERS;
 import static frc.excalib.additional_utilities.AllianceUtils.FIELD_WIDTH_METERS;
+import static frc.robot.Constants.DISABLE_SUBSYSTEMS;
 import static frc.robot.Constants.FieldConstants.*;
 import static frc.robot.Constants.PhysicalConstants.TURRET_OFFSET_TRANSLATION;
 import static frc.robot.Constants.SUBSYSTEMS_CANBUS;
 import static frc.robot.subsystems.shooter.ShooterConstants.*;
 import static frc.robot.subsystems.shooter.ShooterStates.IDLE;
+import static frc.robot.subsystems.shooter.ShooterStates.LOOK_HUB;
 import static monologue.Annotations.Log.*;
 
 public class Shooter extends SubsystemBase implements Logged {
@@ -46,7 +48,6 @@ public class Shooter extends SubsystemBase implements Logged {
     public final DoubleSupplier turretAngleSupplier;
 
     public final DoubleSupplier turretRelativeAngleToTarget;
-
 
     private ShooterStates currentState;
 
@@ -98,7 +99,7 @@ public class Shooter extends SubsystemBase implements Logged {
         flyWheelMotorLow.setInverted(DirectionState.FORWARD);
         flyWheelMotorTop.setInverted(DirectionState.FORWARD);
 
-        currentState = IDLE;
+        currentState = LOOK_HUB;
 
         flyWheelMotorTop.setCurrentLimit(120, 80);
         flyWheelMotorLow.setCurrentLimit(120, 80);
@@ -159,7 +160,6 @@ public class Shooter extends SubsystemBase implements Logged {
 
         flyWheelMechanism = new FlyWheel(shooterMotorGroup, FLYWHEEL_MAX_ACCELERATION, FLYWHEEL_MAX_JERK, FLYWHEEL_GAINS);
 
-
         flywheelVelocityFilter = new EMAFilter(
                 flyWheelMechanism::getVelocity,
                 0.05,
@@ -209,7 +209,70 @@ public class Shooter extends SubsystemBase implements Logged {
                 .and(flyWheelReadyTrigger)
                 .and(hoodAdjustedTrigger);
 
-        setDefaultCommand(defaultCommand());
+        setDefaultCommand(defaultCommand().unless(() -> DISABLE_SUBSYSTEMS));
+    }
+
+    private void initDistanceTimeOfFlightMap() {
+        distanceTimeOfFlightMap.put(0.0, 0.0); //v0
+        distanceTimeOfFlightMap.put(1.626, 0.746); //v0
+        distanceTimeOfFlightMap.put(2.04, 1.038); //v0
+        distanceTimeOfFlightMap.put(2.277, 1.116); //v0
+        distanceTimeOfFlightMap.put(2.321, 1.1433); //v0
+        distanceTimeOfFlightMap.put(2.595, 1.178); //v0
+        distanceTimeOfFlightMap.put(2.672, 1.166); //v0
+        distanceTimeOfFlightMap.put(2.87, 1.21); //v0
+        distanceTimeOfFlightMap.put(3.038, 1.144); //v0
+        distanceTimeOfFlightMap.put(3.419, 1.452); //v0
+        distanceTimeOfFlightMap.put(3.5, 1.165); //v0
+    }
+
+    public void initAngleMap() {
+        angleDistanceMap.put(0.0, 0.0);
+        angleDistanceMap.put(2.041, 0.0);
+        angleDistanceMap.put(2.359, 0.0);
+        angleDistanceMap.put(2.538, 0.0);
+        angleDistanceMap.put(2.816, 0.05);
+        angleDistanceMap.put(2.995, 0.1);
+        angleDistanceMap.put(3.293, 0.15);
+        angleDistanceMap.put(3.53, 0.175);
+        angleDistanceMap.put(3.695, 0.2);
+        angleDistanceMap.put(3.98, 0.3);
+        angleDistanceMap.put(4.215, 0.3);
+        angleDistanceMap.put(4.42, 0.3);
+        angleDistanceMap.put(4.66, 0.3);
+        angleDistanceMap.put(4.83, 0.3);
+        angleDistanceMap.put(5.303, 0.4);
+        angleDistanceMap.put(5.49, 0.4);
+        angleDistanceMap.put(5.798, 0.46);
+        angleDistanceMap.put(6.0, 0.5);
+        angleDistanceMap.put(6.334, 0.52);
+        angleDistanceMap.put(6.738, 0.56);
+        angleDistanceMap.put(7.658, 0.56);
+    }
+
+    public void initVelocityMap() {
+//          velocityDistanceMapTable.put(distance[meters], flywheel velocity);
+        velocityDistanceMap.put(0.0, 0.0);
+        velocityDistanceMap.put(2.041, 33.0);
+        velocityDistanceMap.put(2.359, 36.0);
+        velocityDistanceMap.put(2.538, 37.5);
+        velocityDistanceMap.put(2.816, 37.5);
+        velocityDistanceMap.put(2.995, 38.0);
+        velocityDistanceMap.put(3.293, 38.0);
+        velocityDistanceMap.put(3.53, 38.5);
+        velocityDistanceMap.put(3.695, 39.0);
+        velocityDistanceMap.put(3.98, 39.5);
+        velocityDistanceMap.put(4.215, 40.0);
+        velocityDistanceMap.put(4.42, 41.0);
+        velocityDistanceMap.put(4.66, 43.0);
+        velocityDistanceMap.put(4.82, 44.5);
+        velocityDistanceMap.put(5.303, 44.75);
+        velocityDistanceMap.put(5.49, 45.0);
+        velocityDistanceMap.put(5.798, 46.0);
+        velocityDistanceMap.put(6.0, 47.1);
+        velocityDistanceMap.put(6.334, 49.0);
+        velocityDistanceMap.put(6.738, 49.5);
+        velocityDistanceMap.put(7.65, 53.0);
     }
 
     public Command setStateCommand(ShooterStates stateToSet) {
@@ -220,25 +283,6 @@ public class Shooter extends SubsystemBase implements Logged {
         return turretMechanism.setPositionCommand(position);
     }
 
-    private void initDistanceTimeOfFlightMap() {
-        //        distanceFlightTimeTable.put(distance[meters], flight time);
-        //        distanceTimeOfFlightMap.put(4.3, 1.39);
-        //        distanceTimeOfFlightMap.put(2.99, 1.28);
-        //        distanceTimeOfFlightMap.put(2.36, 1.21);
-        //        distanceTimeOfFlightMap.put(3.6, 1.35);
-        //        distanceTimeOfFlightMap.put(1.95, 1.12);
-        //        distanceTimeOfFlightMap.put(0.0, 0.0);
-        //        distanceTimeOfFlightMap.put(0.0, 0.0);
-        distanceTimeOfFlightMap.put(2.06, 1.1); //v2
-        distanceTimeOfFlightMap.put(2.51, 1.05); //v2
-        distanceTimeOfFlightMap.put(2.8, 0.98); //v0
-        distanceTimeOfFlightMap.put(3.03, 1.11); //v2
-        distanceTimeOfFlightMap.put(3.331, 1.32); //v1
-        distanceTimeOfFlightMap.put(3.725, 1.166); //v1
-        distanceTimeOfFlightMap.put(3.93, 1.2); //v0
-        distanceTimeOfFlightMap.put(5.51, 1.298); //v1
-        distanceTimeOfFlightMap.put(0.0, 0.0); //v1
-    }
 
     public Command defaultCommand() {
         Command defaultCommand = new ConditionalCommand(
@@ -310,60 +354,6 @@ public class Shooter extends SubsystemBase implements Logged {
                 robotTranslation.plus(TURRET_OFFSET_TRANSLATION.rotateBy(robotRot));
 
         return new Pose2d(turretField, robotPositionSupplier.get().getRotation().minus(turretMechanism.getPosition().unaryMinus()));
-    }
-
-
-    public void initAngleMap() {
-//        angleDistanceMapTable.put(distance[meters], hood angle);
-//        angleDistanceMap.put(1.947, 0.0);
-//        angleDistanceMap.put(2.58, 0.08);
-//        angleDistanceMap.put(3.96, 0.225);
-//        angleDistanceMap.put(5.07, 0.4);
-//        angleDistanceMap.put(3.48, 0.18);
-//        angleDistanceMap.put(3.19, 0.13);
-//        angleDistanceMap.put(4.0, 0.22);
-//        angleDistanceMap.put(4.81, 0.32);
-//        angleDistanceMap.put(5.7, 0.6);
-
-
-        angleDistanceMap.put(3.36, 0.2);
-        angleDistanceMap.put(2.52, 0.15);
-        angleDistanceMap.put(2.57, 0.25);
-        angleDistanceMap.put(2.08, 0.05);
-        angleDistanceMap.put(2.98, 0.25);
-        angleDistanceMap.put(3.6, 0.26);
-        angleDistanceMap.put(4.8, 0.37);
-        angleDistanceMap.put(5.7, 0.4);
-        angleDistanceMap.put(0.0, 0.0);
-        angleDistanceMap.put(1.74, 0.0);
-
-
-    }
-
-    public void initVelocityMap() {
-//          velocityDistanceMapTable.put(distance[meters], flywheel velocity);
-//        velocityDistanceMap.put(1.948, 35.0);
-//        velocityDistanceMap.put(2.58, 37.3);
-//        velocityDistanceMap.put(3.96, 41.0);
-//        velocityDistanceMap.put(5.07, 44.0);
-//        velocityDistanceMap.put(3.48, 39.5);
-//        velocityDistanceMap.put(3.19, 39.0);
-//        velocityDistanceMap.put(4.0, 43.0);
-//        velocityDistanceMap.put(4.81, 44.0);
-//        velocityDistanceMap.put(5.7, 49.0);
-
-        velocityDistanceMap.put(3.36, 36.0);
-        velocityDistanceMap.put(2.52, 34.0);
-        velocityDistanceMap.put(3.57, 38.0);
-        velocityDistanceMap.put(2.08, 32.0);
-        velocityDistanceMap.put(2.98, 34.0);
-        velocityDistanceMap.put(3.6, 37.0);
-        velocityDistanceMap.put(4.8, 43.0);
-        velocityDistanceMap.put(5.7, 48.0);
-        velocityDistanceMap.put(0.0, 0.0);
-        velocityDistanceMap.put(1.74, 31.0);
-        velocityDistanceMap.put(1.0, 28.0);
-        velocityDistanceMap.put(2.06, 31.0);
     }
 
     public Command setHoodAngleCommand(DoubleSupplier angleSetpoint) {
@@ -456,8 +446,12 @@ public class Shooter extends SubsystemBase implements Logged {
     }
 
     @NT
-    public double getDistanceFromHubTarget(){
+    public double getDistanceFromHubTarget() {
         return getTurretToTargetVector().get().getNorm();
+    }
+
+    public Command setFlyWheelVelocity(DoubleSupplier rps) {
+        return flyWheelMechanism.setDynamicVelocityCommand(rps);
     }
 
 }

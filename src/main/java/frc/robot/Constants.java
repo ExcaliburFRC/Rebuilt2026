@@ -30,11 +30,12 @@ public final class Constants {
     public static final int PDH_PORT = 1;
 
     public static final double CONTROLLER_DEADBAND = 0.09;
+    public static final boolean DISABLE_SUBSYSTEMS = false;
+    public static final boolean DISABLE_SWERVE = false;
 
     public static final CANBus SUBSYSTEMS_CANBUS = new CANBus("");
 
-    public static class SwerveConstants
-    {
+    public static class SwerveConstants {
         public static final int FRONT_RIGHT_DRIVE_ID = 10;
         public static final int FRONT_LEFT_DRIVE_ID = 20;
         public static final int BACK_LEFT_DRIVE_ID = 30;
@@ -69,8 +70,8 @@ public final class Constants {
                         -TRACK_WIDTH / 2, -TRACK_WIDTH / 2
                 );
 
-        public static final double MAX_MODULE_VEL = 3;
-        public static final double MAX_VEL = 2.5;
+        public static final double MAX_MODULE_VEL = 1.5;
+        public static final double MAX_VEL = 2;
 
         public static final double MAX_FRONT_ACC = 1;
         public static final double MAX_SIDE_ACC = 1;
@@ -198,7 +199,7 @@ public final class Constants {
                 AllianceUtils.AlliancePose(0.39, 6.06, 0);
 
         public static double CLOSE_TRENCH_TO_BUMP_X = 1.65;
-        public static double FAR_TRENCH_TO_BUMP_X = AllianceUtils.FIELD_WIDTH_METERS - CLOSE_TRENCH_TO_BUMP_X ;
+        public static double FAR_TRENCH_TO_BUMP_X = AllianceUtils.FIELD_WIDTH_METERS - CLOSE_TRENCH_TO_BUMP_X;
 
         public static final double FUEL_DIAMETER = 0.15;
 
@@ -209,6 +210,6 @@ public final class Constants {
     }
 
     public static class PhysicalConstants {
-        public static final Translation2d TURRET_OFFSET_TRANSLATION = new Translation2d(-0.195, 0); //todo robot to turret
+        public static final Translation2d TURRET_OFFSET_TRANSLATION = new Translation2d(-0.215, 0); //todo robot to turret
     }
 }

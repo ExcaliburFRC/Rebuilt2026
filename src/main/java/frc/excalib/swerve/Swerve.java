@@ -507,7 +507,7 @@ public class Swerve extends SubsystemBase implements Logged {
         Pose2d arrPose = getAuroraPose2d();
         if (!((arrPose.getX() == 0) && (arrPose.getY() == 0))) {
 //            m_odometry.resetOdometry(modules.getModulesPositions(), getAuroraPose2d());
-            m_odometry.addVisionMeasurement(arrPose, Timer.getFPGATimestamp() - 0.2);
+            m_odometry.addVisionMeasurement(arrPose, Timer.getFPGATimestamp() - 0.05);
         }
 
 

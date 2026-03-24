@@ -38,7 +38,7 @@ public class ShooterConstants {
     public static final int TURRET_ENCODER_ID = 41;
     public static final double MAX_LIMIT = 1.5;
     public static final double MIN_LIMIT = -5.4;
-    public static final double PID_TOLERANCE = 0.007;
+    public static final double PID_TOLERANCE = 0.01;
 
     public static final ContinuousSoftLimit TURRET_CONTINUOUS_SOFTLIMIT = new ContinuousSoftLimit(
             () -> MIN_LIMIT,
@@ -46,7 +46,7 @@ public class ShooterConstants {
     );
 
     public static final SoftLimit SOFT_LIMIT = new SoftLimit(() -> MIN_LIMIT, () -> MAX_LIMIT);
-    public static final Gains TURRET_GAINS = new Gains(5, 0, 0.25, 0.39, 0, 0, 0);
+    public static final Gains TURRET_GAINS = new Gains(5.2, 0, 0.26, 0.4, 0, 0, 0);
 //    public static final Gains TURRET_GAINS = new Gains();
 
     public static final double ENCODER_POSITION_CONVERSION_FACTOR = -0.2 * 2 * Math.PI * 0.9823;

@@ -545,8 +545,6 @@ public class Swerve extends SubsystemBase implements Logged {
         return auroraPose;
     }
 
-    ;
-
     @Log.NT
     public boolean isAtPosition() {
         return finishTrigger.getAsBoolean();

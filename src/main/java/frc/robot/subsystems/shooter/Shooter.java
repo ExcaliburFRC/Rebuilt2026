@@ -229,9 +229,15 @@ public class Shooter extends SubsystemBase implements Logged {
         //        distanceTimeOfFlightMap.put(1.95, 1.12);
         //        distanceTimeOfFlightMap.put(0.0, 0.0);
         //        distanceTimeOfFlightMap.put(0.0, 0.0);
-        distanceTimeOfFlightMap.put(5.036, 1.3);
-        distanceTimeOfFlightMap.put(3.93, 1.2);
-        distanceTimeOfFlightMap.put(2.8, 0.98);
+        distanceTimeOfFlightMap.put(2.06, 1.1); //v2
+        distanceTimeOfFlightMap.put(2.51, 1.05); //v2
+        distanceTimeOfFlightMap.put(2.8, 0.98); //v0
+        distanceTimeOfFlightMap.put(3.03, 1.11); //v2
+        distanceTimeOfFlightMap.put(3.331, 1.32); //v1
+        distanceTimeOfFlightMap.put(3.725, 1.166); //v1
+        distanceTimeOfFlightMap.put(3.93, 1.2); //v0
+        distanceTimeOfFlightMap.put(5.51, 1.298); //v1
+        distanceTimeOfFlightMap.put(0.0, 0.0); //v1
     }
 
     public Command defaultCommand() {
@@ -325,8 +331,11 @@ public class Shooter extends SubsystemBase implements Logged {
         angleDistanceMap.put(2.57, 0.25);
         angleDistanceMap.put(2.08, 0.05);
         angleDistanceMap.put(2.98, 0.25);
-        angleDistanceMap.put(3.6, 0.25);
+        angleDistanceMap.put(3.6, 0.26);
         angleDistanceMap.put(4.8, 0.37);
+        angleDistanceMap.put(5.7, 0.4);
+        angleDistanceMap.put(0.0, 0.0);
+        angleDistanceMap.put(1.74, 0.0);
 
 
     }
@@ -346,10 +355,15 @@ public class Shooter extends SubsystemBase implements Logged {
         velocityDistanceMap.put(3.36, 36.0);
         velocityDistanceMap.put(2.52, 34.0);
         velocityDistanceMap.put(3.57, 38.0);
-        velocityDistanceMap.put(2.08, 33.0);
+        velocityDistanceMap.put(2.08, 32.0);
         velocityDistanceMap.put(2.98, 34.0);
         velocityDistanceMap.put(3.6, 37.0);
-        velocityDistanceMap.put(4.8, 45.0);
+        velocityDistanceMap.put(4.8, 43.0);
+        velocityDistanceMap.put(5.7, 48.0);
+        velocityDistanceMap.put(0.0, 0.0);
+        velocityDistanceMap.put(1.74, 31.0);
+        velocityDistanceMap.put(1.0, 28.0);
+        velocityDistanceMap.put(2.06, 31.0);
     }
 
     public Command setHoodAngleCommand(DoubleSupplier angleSetpoint) {
@@ -439,6 +453,11 @@ public class Shooter extends SubsystemBase implements Logged {
     public Pose2d getHubOnFieldAfterCalc() {
         Pose2d turretOnField = getTurretOnField();
         return new Pose2d(turretOnField.getTranslation().plus(turretToHubVector.get().rotateBy(robotPositionSupplier.get().getRotation())), new Rotation2d());
+    }
+
+    @NT
+    public double getDistanceFromHubTarget(){
+        return getTurretToTargetVector().get().getNorm();
     }
 
 }

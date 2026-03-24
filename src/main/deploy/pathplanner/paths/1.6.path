@@ -33,13 +33,13 @@
   "pointTowardsZones": [],
   "eventMarkers": [
     {
-      "name": "intakeOpen/1.6",
+      "name": "",
       "waypointRelativePos": 0.6417399804496543,
       "endWaypointRelativePos": null,
       "command": {
         "type": "named",
         "data": {
-          "name": "floorIntake"
+          "name": null
         }
       }
     }

@@ -24,6 +24,7 @@ import frc.excalib.swerve.Swerve;
 
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.transport.Transport;
+import frc.robot.superstructure.RobotState;
 import frc.robot.superstructure.Superstructure;
 import frc.robot.util.AuroraPoseGetter;
 import frc.robot.util.HubTimerSubsystem;
@@ -79,9 +80,9 @@ public class RobotContainer implements Logged {
         flywheelVel.setDouble(0);
         hoodAngle.setDouble(0);
 
+        registerCommands();
         setAutoChooser();
         configureBindings();
-        registerCommands();
     }
 
     private void configureBindings() {
@@ -131,10 +132,8 @@ public class RobotContainer implements Logged {
     }
 
     public void registerCommands() {
-//        NamedCommands.registerCommand("floorIntake", superstructure.intakeCommand());
-//        NamedCommands.registerCommand("prepareShooter", superstructure.trackHubCommand());
-//        NamedCommands.registerCommand("shoot", superstructure.shootToHubCommand());
-//        NamedCommands.registerCommand("retractIntake", superstructure.stopIntakeCommand());
+        NamedCommands.registerCommand("idle", superstructure.setStateCommand(RobotState.IDLE).alongWith(new PrintCommand("idle")));
+        NamedCommands.registerCommand("shoot", superstructure.setStateCommand(RobotState.NO_INTAKE_SHOOT_HUB).alongWith(new PrintCommand("shoot")));
     }
 
     public void setAutoChooser() {

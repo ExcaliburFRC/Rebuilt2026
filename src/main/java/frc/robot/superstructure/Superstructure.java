@@ -43,7 +43,7 @@ public class Superstructure implements Logged {
         currentRobotState = RobotState.NO_INTAKE_AIM_HUB;
 
         shooter = new Shooter(swerve::getPose2D, swerve::getRobotRelativeSpeeds);
-        transport = new Transport(()-> true);
+        transport = new Transport(shooter.isShooterReady());
         intake = new Intake();
 
         robotAtState = intake.atPositionTrigger

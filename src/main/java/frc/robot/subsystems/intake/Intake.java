@@ -6,6 +6,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.excalib.control.gains.Gains;
 import frc.excalib.control.limits.SoftLimit;
 import frc.excalib.control.math.physics.Mass;
+import frc.excalib.control.motor.controllers.MotorGroup;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
 import frc.excalib.control.motor.motor_specs.DirectionState;
 import frc.excalib.mechanisms.Arm.Arm;
@@ -15,7 +16,6 @@ import monologue.Logged;
 
 import java.util.function.DoubleSupplier;
 
-import static frc.robot.Constants.DISABLE_SUBSYSTEMS;
 import static frc.robot.Constants.SUBSYSTEMS_CANBUS;
 import static frc.robot.subsystems.intake.IntakeConstants.*;
 import static frc.robot.subsystems.intake.IntakeConstants.ARM_VELOCITY_LIMIT;
@@ -23,10 +23,10 @@ import static frc.robot.subsystems.intake.IntakeStates.CLOSE;
 
 public class Intake extends SubsystemBase implements Logged {
 
-    public final TalonFXMotor fourBarMotor;
+    public final TalonFXMotor fourBarMotorLeft, fourBarMotorRight;
     public final TalonFXMotor rollerMotor;
 
-    public final Mechanism rollerMotorMechanism;
+    public final Mechanism rollerMechanism;
     public final Arm fourBarMechanism;
 
     public final CANcoder angleEncoder;
@@ -41,14 +41,21 @@ public class Intake extends SubsystemBase implements Logged {
     public Intake() {
         currentState = CLOSE;
 
-        angleEncoder = new CANcoder(ANGLE_ENCODER_ID, SUBSYSTEMS_CANBUS);
-        fourBarMotor = new TalonFXMotor(FOUR_BAR_MOTOR_ID, SUBSYSTEMS_CANBUS);
-        fourBarMotor.setInverted(DirectionState.REVERSE);
-        rollerMotor = new TalonFXMotor(ROLLER_MOTOR_ID, SUBSYSTEMS_CANBUS);
+        fourBarMotorLeft = new TalonFXMotor(LEFT_FOUR_BAR_MOTOR_ID, SUBSYSTEMS_CANBUS);
+        fourBarMotorLeft.setInverted(DirectionState.REVERSE);
 
+        fourBarMotorRight = new TalonFXMotor(RIGHT_FOUR_BAR_MOTOR_ID, SUBSYSTEMS_CANBUS);
+        fourBarMotorRight.setInverted(DirectionState.REVERSE);
+
+        angleEncoder = new CANcoder(ANGLE_ENCODER_ID, SUBSYSTEMS_CANBUS);
+
+        rollerMotor = new TalonFXMotor(ROLLER_MOTOR_ID, SUBSYSTEMS_CANBUS);
         rollerMotor.setCurrentLimit(80, 80);
-        fourBarMotor.setPositionConversionFactor((double) 1 / 0.29);
-        rollerMotorMechanism = new Mechanism(rollerMotor);
+
+        fourBarMotorLeft.setPositionConversionFactor((double) 1 / 0.29);
+        fourBarMotorRight.setPositionConversionFactor((double) 1 / 0.29);
+
+        rollerMechanism = new Mechanism(rollerMotor);
 
         angleSupplier = () -> (angleEncoder.getAbsolutePosition().getValueAsDouble() * (1 / 0.29));
 
@@ -56,8 +63,17 @@ public class Intake extends SubsystemBase implements Logged {
 
         atPositionTrigger = new Trigger(() -> (Math.abs(currentState.angle - angleSupplier.getAsDouble()) < INTAKE_ANGLE_TOLERANCE));
 
-        Gains ARM_POSITION_GAINS = new Gains(3, 0, 0, 0.45, 0, 0, 0.82);
-        fourBarMechanism = new Arm(fourBarMotor, angleSupplier, ARM_VELOCITY_LIMIT, ARM_POSITION_GAINS, new Mass(() -> Math.cos(angleSupplier.getAsDouble()), () -> Math.sin(angleSupplier.getAsDouble()), ARM_MASS));
+        fourBarMechanism = new Arm(
+                new MotorGroup(fourBarMotorRight, fourBarMotorLeft),
+                angleSupplier,
+                ARM_VELOCITY_LIMIT,
+                ARM_POSITION_GAINS,
+                new Mass(
+                        () -> Math.cos(angleSupplier.getAsDouble()),
+                        () -> Math.sin(angleSupplier.getAsDouble()),
+                        ARM_MASS
+                )
+        );
 
 //        setDefaultCommand(defaultCommand().unless(()-> DISABLE_SUBSYSTEMS));
     }
@@ -80,12 +96,12 @@ public class Intake extends SubsystemBase implements Logged {
     }
 
     public Command rollerManualCommand(DoubleSupplier voltage) {
-        return new RunCommand(() -> rollerMotorMechanism.manualCommand(voltage));
+        return new RunCommand(() -> rollerMechanism.manualCommand(voltage));
     }
 
     public Command defaultCommand() {
         Command defaultCommand = new ParallelCommandGroup(
-                rollerMotorMechanism.manualCommand(() -> this.currentState.voltage),
+                rollerMechanism.manualCommand(() -> this.currentState.voltage),
                 setPositionCommand(() -> currentState.angle)
         );
         defaultCommand.addRequirements(this);

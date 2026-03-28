@@ -32,8 +32,6 @@ public class ShooterConstants {
 //    public static final Gains HOOD_GAINS = new Gains();
 
 
-    public static final double ROTATIONS_TO_RAD = 2 * Math.PI;
-
     public static final int TURRET_MOTOR_ID = 42;
     public static final int TURRET_ENCODER_ID = 41;
     public static final double MAX_LIMIT = 1.5;

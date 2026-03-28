@@ -5,10 +5,10 @@ import frc.robot.subsystems.shooter.ShooterStates;
 import frc.robot.subsystems.transport.TransportStates;
 
 public enum RobotState {
-    NO_INTAKE_SHOOT_HUB(IntakeStates.CLOSE, ShooterStates.SHOOT_HUB, TransportStates.TRANSPORT),
+    NO_INTAKE_SHOOT_HUB(IntakeStates.PUMP, ShooterStates.SHOOT_HUB, TransportStates.TRANSPORT),
     INTAKE_SHOOT_HUB(IntakeStates.OPEN,ShooterStates.SHOOT_HUB,TransportStates.TRANSPORT),
-    NO_INTAKE_SHOOT_CLOSE_DELIVERY(IntakeStates.CLOSE, ShooterStates.SHOOT_CLOSE_DELIVERY,TransportStates.TRANSPORT),
-    NO_INTAKE_SHOOT_FAR_DELIVERY(IntakeStates.CLOSE, ShooterStates.SHOOT_FAR_DELIVERY,TransportStates.TRANSPORT),
+    NO_INTAKE_SHOOT_CLOSE_DELIVERY(IntakeStates.PUMP, ShooterStates.SHOOT_CLOSE_DELIVERY,TransportStates.TRANSPORT),
+    NO_INTAKE_SHOOT_FAR_DELIVERY(IntakeStates.PUMP, ShooterStates.SHOOT_FAR_DELIVERY,TransportStates.TRANSPORT),
     INTAKE_SHOOT_CLOSE_DELIVERY(IntakeStates.OPEN, ShooterStates.SHOOT_CLOSE_DELIVERY,TransportStates.TRANSPORT),
     INTAKE_SHOOT_FAR_DELIVERY(IntakeStates.OPEN, ShooterStates.SHOOT_FAR_DELIVERY,TransportStates.TRANSPORT),
     NO_INTAKE_AIM_HUB(IntakeStates.CLOSE, ShooterStates.LOOK_HUB,TransportStates.IDLE),

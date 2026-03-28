@@ -20,6 +20,7 @@ import static frc.robot.Constants.SUBSYSTEMS_CANBUS;
 import static frc.robot.subsystems.intake.IntakeConstants.*;
 import static frc.robot.subsystems.intake.IntakeConstants.ARM_VELOCITY_LIMIT;
 import static frc.robot.subsystems.intake.IntakeStates.CLOSE;
+import static frc.robot.subsystems.intake.IntakeStates.PUMP;
 
 public class Intake extends SubsystemBase implements Logged {
 
@@ -53,7 +54,6 @@ public class Intake extends SubsystemBase implements Logged {
         rollerMotor = new TalonFXMotor(ROLLER_MOTOR_ID, SUBSYSTEMS_CANBUS);
         rollerMotor.setCurrentLimit(80, 80);
 
-
         rollerMechanism = new Mechanism(rollerMotor);
 
         intakeAngleLimit = new SoftLimit(() -> INTAKE_MIN_ANGLE, () -> INTAKE_MAX_ANGLE);
@@ -61,12 +61,12 @@ public class Intake extends SubsystemBase implements Logged {
 
         this.armMotorGroup = new MotorGroup(fourBarMotorLeft, fourBarMotorRight);
 
-        this.armMotorGroup.setPositionConversionFactor(2*Math.PI/14.14);
-        this.armMotorGroup.setVelocityConversionFactor(2*Math.PI/14.14);
+        this.armMotorGroup.setPositionConversionFactor(2 * Math.PI / 14.14);
+        this.armMotorGroup.setVelocityConversionFactor(2 * Math.PI / 14.14);
 
-        this.armMotorGroup.setMotorPosition(Math.PI-0.732601-0.159);
+        this.armMotorGroup.setMotorPosition(Math.PI - 0.732601 - 0.159);
 
-        angleSupplier = () -> (armMotorGroup.getMotorPosition());
+        angleSupplier = armMotorGroup::getMotorPosition;
 
 
         atPositionTrigger = new Trigger(() -> (Math.abs(currentState.angle - angleSupplier.getAsDouble()) < INTAKE_ANGLE_TOLERANCE));
@@ -125,13 +125,23 @@ public class Intake extends SubsystemBase implements Logged {
     }
 
     public Command defaultCommand() {
-        Command defaultCommand = new ParallelCommandGroup(
-                rollerMechanism.manualCommand(() -> this.currentState.voltage),
-                setPositionCommand(() -> currentState.angle)
-        );
+        Command defaultCommand =
+                new ConditionalCommand(
+                        new ParallelCommandGroup(
+                                rollerMechanism.manualCommand(() -> this.currentState.voltage),
+                                setPositionCommand(() -> currentState.angle)).until(()-> currentState.equals(PUMP)),
+                        new SequentialCommandGroup(
+                                rollerMechanism.manualCommand(() -> this.currentState.voltage),
+                                setPositionCommand(() -> 0.1).withTimeout(0.2),
+                                setPositionCommand(() -> 0.7).withTimeout(0.2)
+                        ).repeatedly().until(() -> !currentState.equals(PUMP)),
+                        () -> currentState.equals(PUMP)
+
+                );
         defaultCommand.addRequirements(this);
         return defaultCommand;
     }
+
 
     @Log.NT
     public boolean atPositionTrigger() {

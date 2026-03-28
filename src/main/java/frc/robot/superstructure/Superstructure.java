@@ -1,252 +1,321 @@
 package frc.robot.superstructure;
 
-import edu.wpi.first.math.geometry.*;
-import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.*;
-import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.excalib.slam.mapper.AuroraClient;
+import frc.excalib.additional_utilities.AllianceUtils;
+import frc.excalib.additional_utilities.LEDs;
 import frc.excalib.swerve.Swerve;
-import frc.excalib.control.math.MathUtils;
-import frc.robot.Constants;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.transport.Transport;
-import frc.robot.subsystems.turret.Turret;
-import frc.robot.util.Target;
+import frc.robot.util.LedState;
 import monologue.Annotations.Log;
 import monologue.Logged;
 
-import java.util.function.Supplier;
+import java.util.function.DoubleSupplier;
 
-import static frc.robot.Constants.FieldConstants.*;
-import static frc.robot.Constants.PhysicalConstants.*;
+import static frc.robot.Constants.FieldConstants.CLOSE_TRENCH_TO_BUMP_X;
+import static frc.robot.Constants.FieldConstants.FAR_TRENCH_TO_BUMP_X;
+import static frc.robot.superstructure.RobotState.*;
 
 public class Superstructure implements Logged {
-    public final Intake intake;
-    public final Shooter shooter;
-    public final Transport transport;
-    public final Turret turret;
-    public final Swerve swerve;
+    private RobotState currentRobotState;
 
-    public Target currentTarget = Target.HUB;
+    private final Shooter shooter;
+    private final Transport transport;
+//    public final Intake intake;
+    private final LEDs leds;
 
-    public final InterpolatingDoubleTreeMap distanceTimeOfFlightMap;
+    private final Trigger robotAtState, ourAllianceShiftActivate;
+    private final Trigger inIntermediateZone, inAllianceZone, inNeutralZone;
+    private final Trigger closerToCloseDeliveryTrigger, underTrenchTrigger, overBumpTrigger;
 
-    private Trigger deliveryTrigger;
+    private final Trigger intakeRequested, shouldDeliver;
 
-    public Superstructure(Swerve swerve) {
-        intake = new Intake();
-        transport = new Transport();
+    private Trigger NO_INTAKE_SHOOT_HUB_TRIGGER, INTAKE_SHOOT_HUB_TRIGGER,
+            NO_INTAKE_SHOOT_CLOSE_DELIVERY_TRIGGER, NO_INTAKE_SHOOT_FAR_DELIVERY_TRIGGER,
+            INTAKE_SHOOT_CLOSE_DELIVERY_TRIGGER, INTAKE_SHOOT_FAR_DELIVERY_TRIGGER,
+            NO_INTAKE_AIM_HUB_TRIGGER, INTAKE_AIM_HUB_TRIGGER, NO_INTAKE_AIM_CLOSE_DELIVERY_TRIGGER,
+            NO_INTAKE_AIM_FAR_DELIVERY_TRIGGER, INTAKE_AIM_CLOSE_DELIVERY_TRIGGER,
+            INTAKE_AIM_FAR_DELIVERY_TRIGGER;
 
-        this.swerve = swerve;
+    public Superstructure(Swerve swerve, Trigger intakeButton, Trigger ourAllianceShiftActivate, Trigger shouldDeliver) {
+        currentRobotState = RobotState.NO_INTAKE_AIM_HUB;
 
-        distanceTimeOfFlightMap = new InterpolatingDoubleTreeMap();
-        initDistanceTimeOfFlightMap();
+        shooter = new Shooter(swerve::getPose2D, swerve::getRobotRelativeSpeeds);
+        transport = new Transport(()-> true);
+//        intake = new Intake();
+        leds = LEDs.getInstance();
 
-        turret = new Turret(() -> getTurretToTargetVector(() -> currentTarget).get().getAngle().getRadians(), () -> swerve.getRotation2D().getRadians());
-        shooter = new Shooter(() -> getTurretToTargetVector(() -> currentTarget).get().getNorm(), swerve::getPose2D);
+        robotAtState =
+                (transport.atPositionTrigger())
+                .and(shooter.isShooterReady());
 
-        turret.setDefaultCommand(turret.defaultCommand());
-        shooter.setDefaultCommand(shooter.defaultCommand());
+        this.ourAllianceShiftActivate = new Trigger(ourAllianceShiftActivate);
 
-        initDeliveryTrigger();
+        inAllianceZone = new Trigger(
+                () -> {
+                    if (AllianceUtils.isBlueAlliance()) {
+                        return shooter.getTurretOnField().getTranslation().getX()
+                                < (4.02 - 0.2);
+                    }
+                    return shooter.getTurretOnField().getTranslation().getX()
+                            > (12.51 + 0.2);
+                }
+
+        ); //tag 26 x
+
+        inIntermediateZone = new Trigger(
+                () -> {
+                    if (AllianceUtils.isBlueAlliance()){
+                        return shooter.getTurretOnField().getTranslation().getX() < (5.22 + 0.2);
+                    }
+                    return shooter.getTurretOnField().getTranslation().getX() > (11.3 - 0.2);
+                })
+                .and(inAllianceZone.negate());
+
+        inNeutralZone = (inAllianceZone.or(inIntermediateZone)).negate();
+
+        closerToCloseDeliveryTrigger = new Trigger(
+                () -> shooter.getTurretOnField().getTranslation().getY() < AllianceUtils.FIELD_WIDTH_METERS / 2);
+
+        underTrenchTrigger = new Trigger(
+                () -> {
+                    double y = shooter.getTurretOnField().getTranslation().getY();
+                    return y < CLOSE_TRENCH_TO_BUMP_X || y > FAR_TRENCH_TO_BUMP_X;
+                }
+        ).and(inIntermediateZone);
+
+        overBumpTrigger = inIntermediateZone.and(underTrenchTrigger.negate());
+        intakeRequested = intakeButton;
+        this.shouldDeliver = shouldDeliver;
+
+//        LEDs.getInstance().setDefaultCommand();
+
+        initTriggers();
     }
 
-    private void initDeliveryTrigger() {
-        deliveryTrigger = new Trigger(() -> {
-            Translation2d deliveryRightPose = DELIVERY_RIGHT_POSE.get().getTranslation();
-            Translation2d deliveryLeftPose = DELIVERY_LEFT_POSE.get().getTranslation();
-            Translation2d netEndRightPose = NET_END_RIGHT_POSE.get().getTranslation();
-            Translation2d netEndLeftPose = NET_END_LEFT_POSE.get().getTranslation();
-            Translation2d targetDeliveryPose = deliveryRightPose;
-            Translation2d targetNetEndPose = netEndRightPose;
-            if (swerve.getPose2D().getTranslation().getDistance(deliveryRightPose) >
-                    swerve.getPose2D().getTranslation().getDistance(deliveryLeftPose)) {
-                targetDeliveryPose = deliveryLeftPose;
-                targetNetEndPose = netEndLeftPose;
-            } else {
-                targetDeliveryPose = deliveryRightPose;
-                targetNetEndPose = netEndRightPose;
-            }
-            if (Math.abs(MathUtils.getPosesTangentAngle(swerve.getPose2D().getTranslation(), targetDeliveryPose)) >
-                    Math.abs(MathUtils.getPosesTangentAngle(swerve.getPose2D().getTranslation(), targetNetEndPose))) {
-                return true;
-            } else {
-                return false;
-            }
-        });
+    public void initTriggers() {
+        NO_INTAKE_SHOOT_HUB_TRIGGER = intakeRequested.negate()
+                .and(ourAllianceShiftActivate)
+                .and(inAllianceZone)
+                .onTrue(setStateCommand(NO_INTAKE_SHOOT_HUB));
+
+        INTAKE_SHOOT_HUB_TRIGGER = intakeRequested
+                .and(ourAllianceShiftActivate)
+                .and(inAllianceZone)
+                .onTrue(setStateCommand(INTAKE_SHOOT_HUB));
+
+        NO_INTAKE_SHOOT_CLOSE_DELIVERY_TRIGGER = intakeRequested.negate()
+                .and(ourAllianceShiftActivate.negate())
+                .and(inNeutralZone)
+                .and(closerToCloseDeliveryTrigger)
+                .onTrue(setStateCommand(NO_INTAKE_SHOOT_CLOSE_DELIVERY));
+
+        NO_INTAKE_SHOOT_FAR_DELIVERY_TRIGGER = intakeRequested.negate()
+                .and(ourAllianceShiftActivate.negate())
+                .and(inNeutralZone)
+                .and(closerToCloseDeliveryTrigger.negate())
+                .onTrue(setStateCommand(NO_INTAKE_SHOOT_FAR_DELIVERY));
+
+        INTAKE_SHOOT_CLOSE_DELIVERY_TRIGGER = intakeRequested
+                .and(ourAllianceShiftActivate.negate())
+                .and(inNeutralZone)
+                .and(closerToCloseDeliveryTrigger)
+                .onTrue(setStateCommand(INTAKE_SHOOT_CLOSE_DELIVERY));
+
+        INTAKE_SHOOT_FAR_DELIVERY_TRIGGER = intakeRequested
+                .and(ourAllianceShiftActivate.negate())
+                .and(inNeutralZone)
+                .and(closerToCloseDeliveryTrigger.negate())
+                .onTrue(setStateCommand(INTAKE_SHOOT_FAR_DELIVERY));
+
+        // also when over bump
+        NO_INTAKE_AIM_HUB_TRIGGER = intakeRequested.negate()
+                .and(ourAllianceShiftActivate.negate())
+                .and(inAllianceZone)
+                .onTrue(setStateCommand(NO_INTAKE_AIM_HUB));
+
+        // also when under trench
+        INTAKE_AIM_HUB_TRIGGER = intakeRequested
+                .and(ourAllianceShiftActivate.negate())
+                .and(inAllianceZone)
+                .onTrue(setStateCommand(INTAKE_AIM_HUB));
+
+        NO_INTAKE_AIM_CLOSE_DELIVERY_TRIGGER = intakeRequested.negate()
+                .and(ourAllianceShiftActivate)
+                .and(inNeutralZone)
+                .and(closerToCloseDeliveryTrigger)
+                .onTrue(setStateCommand(NO_INTAKE_AIM_CLOSE_DELIVERY));
+
+        NO_INTAKE_AIM_FAR_DELIVERY_TRIGGER = intakeRequested.negate()
+                .and(ourAllianceShiftActivate)
+                .and(inNeutralZone)
+                .and(closerToCloseDeliveryTrigger.negate())
+                .onTrue(setStateCommand(NO_INTAKE_AIM_FAR_DELIVERY));
+
+        INTAKE_AIM_CLOSE_DELIVERY_TRIGGER = intakeRequested
+                .and(ourAllianceShiftActivate)
+                .and(inNeutralZone)
+                .and(closerToCloseDeliveryTrigger)
+                .onTrue(setStateCommand(INTAKE_AIM_CLOSE_DELIVERY));
+
+        INTAKE_AIM_FAR_DELIVERY_TRIGGER = intakeRequested
+                .and(ourAllianceShiftActivate)
+                .and(inNeutralZone)
+                .and(closerToCloseDeliveryTrigger.negate())
+                .onTrue(setStateCommand(INTAKE_AIM_FAR_DELIVERY));
     }
 
-    private void initDistanceTimeOfFlightMap() {
-//        distanceFlightTimeTable.put(distance[meters], flight time);
-        distanceTimeOfFlightMap.put(4.3, 1.39);
-        distanceTimeOfFlightMap.put(2.99, 1.28);
-        distanceTimeOfFlightMap.put(2.36, 1.21);
-        distanceTimeOfFlightMap.put(3.6, 1.35);
-        distanceTimeOfFlightMap.put(1.95, 1.12);
-        distanceTimeOfFlightMap.put(0.0, 0.0);
-        distanceTimeOfFlightMap.put(0.0, 0.0);
-        distanceTimeOfFlightMap.put(0.0, 0.0);
-    }
-
-
-//        return () -> {
-//            Translation2d virtualTargetOffset = new Translation2d(
-//                    robotSpeeds.vxMetersPerSecond
-//                            + TURRET_OFFSET_TRANSLATION.getY()
-//                            * robotSpeeds.omegaRadiansPerSecond,
-//
-//                    robotSpeeds.vyMetersPerSecond
-//                            + TURRET_OFFSET_TRANSLATION.getX()
-//                            * robotSpeeds.omegaRadiansPerSecond
-//            ).times(distanceTimeOfFlightMap.get(turretToTarget.getNorm()));
-//
-//
-//            Translation2d virtualTurretToTarget = turretToTarget.minus(virtualTargetOffset);
-//            return virtualTurretToTarget;
-//        };
-
-    public Supplier<Translation2d> getTurretToTargetVector(Supplier<Target> target) {
-        return () -> {
-
-            ChassisSpeeds robotSpeeds = swerve.getRobotRelativeSpeeds();
-
-
-            Pose2d robotPose = swerve.getPose2D();
-            Rotation2d robotRot = robotPose.getRotation();
-
-
-            Translation2d turretField =
-                    getTurretOnField().getTranslation();
-
-            Translation2d fieldVector =
-                    target.get().getTargetTranslation().minus(turretField);
-
-            Translation2d robotVector =
-                    fieldVector.rotateBy(robotRot.unaryMinus());
-
-            Translation2d turretToTarget = robotVector.rotateBy(Rotation2d.fromDegrees(-180));
-
-            Translation2d virtualTargetOffset = new Translation2d(
-                    robotSpeeds.vxMetersPerSecond
-                            - TURRET_OFFSET_TRANSLATION.getY() * robotSpeeds.omegaRadiansPerSecond,
-
-                    robotSpeeds.vyMetersPerSecond
-                            - TURRET_OFFSET_TRANSLATION.getX() * robotSpeeds.omegaRadiansPerSecond
-            ).times(distanceTimeOfFlightMap.get(turretToTarget.getNorm()));
-
-
-            Translation2d virtualTurretToTarget = turretToTarget.minus(virtualTargetOffset);
-            return virtualTurretToTarget;
-        };
-    }
-
-
-    public Supplier<Translation2d> getTurretToDeliveryVector() {
-        Translation2d fieldToDeliveryTranslation;
-        if (swerve.getPose2D().getTranslation().getDistance(DELIVERY_LEFT_POSE.get().getTranslation()) >
-                swerve.getPose2D().getTranslation().getDistance(DELIVERY_RIGHT_POSE.get().getTranslation())) {
-            fieldToDeliveryTranslation = DELIVERY_RIGHT_POSE.get().getTranslation();
-        } else {
-            fieldToDeliveryTranslation = DELIVERY_LEFT_POSE.get().getTranslation();
-        }
-        Translation2d fieldToRobot = swerve.getPose2D().getTranslation();
-
-        Translation2d robotToDelivery = (fieldToDeliveryTranslation.minus(fieldToRobot)).rotateBy(swerve.getRotation2D().unaryMinus());
-        Translation2d turretToDelivery = robotToDelivery.minus(TURRET_OFFSET_TRANSLATION);
-
-        return () -> turretToDelivery;
-    }
-
-    public Command shootToDeliveryCommand() {
-        Translation2d deliveryRightPose = DELIVERY_RIGHT_POSE.get().getTranslation();
-        Translation2d deliveryLeftPose = DELIVERY_LEFT_POSE.get().getTranslation();
-        Translation2d targetDeliveryPose = deliveryRightPose;
-        if (swerve.getPose2D().getTranslation().getDistance(deliveryRightPose) >
-                swerve.getPose2D().getTranslation().getDistance(deliveryLeftPose)) {
-            targetDeliveryPose = deliveryLeftPose;
-        } else {
-            targetDeliveryPose = deliveryRightPose;
-        }
-        return new ConditionalCommand(
-                turret.targetDeliveryCommand(),
-                new ParallelCommandGroup(
-                        shooter.shootToDeliveryCommand(),
-//              turret.targetDeliveryCommand(),
-                        transport.transportFuelCommand()
-                ).alongWith(setSuperstructureTarget(Target.DELIVERY)),
-                deliveryTrigger
+    public Command setStateCommand(RobotState robotStateToSet) {
+        return new ParallelCommandGroup(
+                new InstantCommand(() -> currentRobotState = robotStateToSet),
+                shooter.setStateCommand(robotStateToSet.shooterState),
+                transport.setStateCommand(robotStateToSet.transportState),
+//                intake.setStateCommand(robotStateToSet.intakeState),
+                leds.setStateCommand(ledStateFor(robotStateToSet))
         );
     }
 
-    public Command shootToHubCommand() {
-        return new ParallelCommandGroup(
-                shooter.shootToHubCommand(),
-                turret.targetHubCommand(),
-                transport.transportFuelCommand()
-        ).alongWith(setSuperstructureTarget(Target.HUB));
+    private LedState ledStateFor(RobotState state) {
+        return switch (state) {
+            case NO_INTAKE_SHOOT_HUB,
+                 INTAKE_SHOOT_HUB,
+                 NO_INTAKE_SHOOT_CLOSE_DELIVERY,
+                 NO_INTAKE_SHOOT_FAR_DELIVERY,
+                 INTAKE_SHOOT_CLOSE_DELIVERY,
+                 INTAKE_SHOOT_FAR_DELIVERY -> shooter.isShooterReady().getAsBoolean()
+                    ? LedState.LOCKED_ON_TARGET
+                    : LedState.WAITING;
+            case NO_INTAKE_AIM_HUB,
+                 INTAKE_AIM_HUB,
+                 NO_INTAKE_AIM_CLOSE_DELIVERY,
+                 NO_INTAKE_AIM_FAR_DELIVERY,
+                 INTAKE_AIM_CLOSE_DELIVERY,
+                 INTAKE_AIM_FAR_DELIVERY -> LedState.WAITING;
+            case IDLE -> LedState.IDLE;
+        };
     }
 
-    public Command trackHubCommand() {
-        return new ParallelCommandGroup(
-                shooter.trackHubCommand(),
-                turret.targetHubCommand()
-        ).alongWith(setSuperstructureTarget(Target.HUB));
+    public Command setStateCommandAndWait(RobotState robotStateToSet) {
+        return setStateCommand(robotStateToSet)
+                .andThen(new WaitUntilCommand(robotAtState));
     }
 
-    public Command shootFixedCommand(double flywheelVelocity, double hoodAngle) {
-        return new ParallelCommandGroup(
-                shooter.setFlyWheelDynamicVelocity(() -> flywheelVelocity),
-                shooter.setHoodAngleCommand(() -> hoodAngle),
-                shooter.manualTransport(),
-                transport.transportFuelCommand(),
-                turret.targetHubCommand()
-        ).alongWith(setSuperstructureTarget(Target.HUB));
-    }
 
-    public Command intakeCommand() {
-        return intake.intakeCommand();
-    }
-
-    public Command ejectCommand() {
-        return intake.rollerManualCommand(-7); // Assuming -7 volts is eject based on intakeCommand using 7
-    }
-
-    public Command stopIntakeCommand() {
-        return intake.closeCommand();
-    }
-
-    public Command intakeRollerActivationCommand(double voltage) {
-        return intake.rollerManualCommand(voltage);
-    }
-
-    public Command setSuperstructureTarget(Target targetToSet) {
-        return new InstantCommand(() -> currentTarget = targetToSet);
+    @Log.NT
+    public String getCurrentRobotState() {
+        return currentRobotState.name();
     }
 
     @Log.NT
-    public double getTurretToHubVectorAngle() {
-        return getTurretToTargetVector(() -> Target.HUB).get().getAngle().getDegrees();
+    public boolean getIntakeRequested() {
+        return intakeRequested.getAsBoolean();
     }
 
     @Log.NT
-    public double getTurretToHubVectorDist() {
-        return getTurretToTargetVector(() -> Target.HUB).get().getNorm();
+    public boolean getInIntermediateZone() {
+        return inIntermediateZone.getAsBoolean();
     }
 
     @Log.NT
-    public Pose2d getTurretOnField() {
-        Pose2d robotPose = swerve.getPose2D();
-        Translation2d robotPos = robotPose.getTranslation();
-        Rotation2d robotRot = robotPose.getRotation();
+    public boolean getRobotAtState() {
+        return robotAtState.getAsBoolean();
+    }
 
-        // turret position in field coordinates
-        Translation2d turretField =
-                robotPos.plus(TURRET_OFFSET_TRANSLATION.rotateBy(robotRot));
+    @Log.NT
+    public boolean getOurAllianceShiftActivate() {
+        return ourAllianceShiftActivate.getAsBoolean();
+    }
 
-        return new Pose2d(turretField, swerve.getRotation2D().minus(turret.turretMechanism.getPosition().unaryMinus()).plus(Rotation2d.kPi));
+    @Log.NT
+    public boolean getInAllianceZone() {
+        return inAllianceZone.getAsBoolean();
+    }
+
+    @Log.NT
+    public boolean getInNeutralZone() {
+        return inNeutralZone.getAsBoolean();
+    }
+
+    @Log.NT
+    public boolean getCloserToCloseDeliveryTrigger() {
+        return closerToCloseDeliveryTrigger.getAsBoolean();
+    }
+
+
+    @Log.NT
+    public boolean getINTAKE_SHOOT_HUB_TRIGGER() {
+        return INTAKE_SHOOT_HUB_TRIGGER.getAsBoolean();
+    }
+
+    @Log.NT
+    public boolean getNO_INTAKE_SHOOT_HUB_TRIGGER() {
+        return NO_INTAKE_SHOOT_HUB_TRIGGER.getAsBoolean();
+    }
+
+    @Log.NT
+    public boolean getNO_INTAKE_SHOOT_CLOSE_DELIVERY_TRIGGER() {
+        return NO_INTAKE_SHOOT_CLOSE_DELIVERY_TRIGGER.getAsBoolean();
+    }
+
+    @Log.NT
+    public boolean getNO_INTAKE_SHOOT_FAR_DELIVERY_TRIGGER() {
+        return NO_INTAKE_SHOOT_FAR_DELIVERY_TRIGGER.getAsBoolean();
+    }
+
+    @Log.NT
+    public boolean getINTAKE_SHOOT_CLOSE_DELIVERY_TRIGGER() {
+        return INTAKE_SHOOT_CLOSE_DELIVERY_TRIGGER.getAsBoolean();
+    }
+
+    @Log.NT
+    public boolean getINTAKE_SHOOT_FAR_DELIVERY_TRIGGER() {
+        return INTAKE_SHOOT_FAR_DELIVERY_TRIGGER.getAsBoolean();
+    }
+
+    @Log.NT
+    public boolean getNO_INTAKE_AIM_HUB_TRIGGER() {
+        return NO_INTAKE_AIM_HUB_TRIGGER.getAsBoolean();
+    }
+
+    @Log.NT
+    public boolean getINTAKE_AIM_HUB_TRIGGER() {
+        return INTAKE_AIM_HUB_TRIGGER.getAsBoolean();
+    }
+
+    @Log.NT
+    public boolean getNO_INTAKE_AIM_CLOSE_DELIVERY_TRIGGER() {
+        return NO_INTAKE_AIM_CLOSE_DELIVERY_TRIGGER.getAsBoolean();
+    }
+
+    @Log.NT
+    public boolean getNO_INTAKE_AIM_FAR_DELIVERY_TRIGGER() {
+        return NO_INTAKE_AIM_FAR_DELIVERY_TRIGGER.getAsBoolean();
+    }
+
+    @Log.NT
+    public boolean getINTAKE_AIM_CLOSE_DELIVERY_TRIGGER() {
+        return INTAKE_AIM_CLOSE_DELIVERY_TRIGGER.getAsBoolean();
+    }
+
+    @Log.NT
+    public boolean getINTAKE_AIM_FAR_DELIVERY_TRIGGER() {
+        return INTAKE_AIM_FAR_DELIVERY_TRIGGER.getAsBoolean();
+    }
+
+    public Command coastCommand() {
+        return shooter.turretMechanism.coastCommand(this.shooter);
+    }
+
+    public Command setManualShootingCommand(DoubleSupplier hoodAngle, DoubleSupplier rpsSpeed) {
+        Command command = new ParallelCommandGroup(
+                shooter.setAdjustedTurretAngle(),
+                shooter.setHoodAngleCommand(hoodAngle),
+                shooter.setFlyWheelVelocity(rpsSpeed),
+                transport.manualTransport()
+        );
+        command.addRequirements(shooter);
+        return command;
     }
 }

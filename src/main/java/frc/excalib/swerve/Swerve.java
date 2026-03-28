@@ -3,6 +3,7 @@ package frc.excalib.swerve;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.*;
@@ -207,19 +208,20 @@ public class Swerve extends SubsystemBase implements Logged {
      * @param setPoint The desired pose.
      * @return A command that drives the robot to the wanted pose.
      */
-    public Command driveToPoseCommand(Pose2d setPoint) {
+    public Command driveToPoseCommand(Pose2d setPoint, PathConstraints constraints) {
         return AutoBuilder.pathfindToPose(
                 setPoint,
-                MAX_PATH_CONSTRAINTS
+                constraints
         ).withName("Pathfinding Command");
     }
 
     public Command driveToPoseWithOverrideCommand(
-            Pose2d setPoint,
+            Pose2d setpoint,
+            PathConstraints constraints,
             BooleanSupplier override,
             Supplier<Vector2D> velocityMPS,
             DoubleSupplier omegaRadPerSec) {
-        Command driveToPoseCommand = driveToPoseCommand(setPoint);
+        Command driveToPoseCommand = driveToPoseCommand(setpoint, constraints);
         return new SequentialCommandGroup(
                 driveToPoseCommand.until(() -> velocityMPS.get().getDistance() != 0 && override.getAsBoolean()),
                 driveCommand(
@@ -437,14 +439,6 @@ public class Swerve extends SubsystemBase implements Logged {
         GenericEntry OTFGxEntry = swerveTab.add("OTFGx", 0).withWidget(kTextView).getEntry();
         GenericEntry OTFGyEntry = swerveTab.add("OTFGy", 0).withWidget(kTextView).getEntry();
         GenericEntry OTFGAngleEntry = swerveTab.add("OTFGAngle", 0).withWidget(kTextView).getEntry();
-        swerveTab.add("Drive To Pose",
-                driveToPoseCommand(
-                        new Pose2d(
-                                OTFGxEntry.getDouble(0),
-                                OTFGyEntry.getDouble(0),
-                                Rotation2d.fromDegrees(OTFGAngleEntry.getDouble(0)))
-                )
-        );
     }
 
     /**
@@ -507,7 +501,7 @@ public class Swerve extends SubsystemBase implements Logged {
         Pose2d arrPose = getAuroraPose2d();
         if (!((arrPose.getX() == 0) && (arrPose.getY() == 0))) {
 //            m_odometry.resetOdometry(modules.getModulesPositions(), getAuroraPose2d());
-            m_odometry.addVisionMeasurement(arrPose, Timer.getFPGATimestamp() - 0.05);
+            m_odometry.addVisionMeasurement(arrPose, Timer.getFPGATimestamp());
         }
 
 

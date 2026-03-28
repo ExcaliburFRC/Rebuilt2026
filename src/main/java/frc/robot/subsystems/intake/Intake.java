@@ -25,6 +25,7 @@ public class Intake extends SubsystemBase implements Logged {
 
     public final TalonFXMotor fourBarMotorLeft, fourBarMotorRight;
     public final TalonFXMotor rollerMotor;
+    public final MotorGroup armMotorGroup;
 
     public final Mechanism rollerMechanism;
     public final Arm fourBarMechanism;
@@ -42,7 +43,7 @@ public class Intake extends SubsystemBase implements Logged {
         currentState = CLOSE;
 
         fourBarMotorLeft = new TalonFXMotor(LEFT_FOUR_BAR_MOTOR_ID, SUBSYSTEMS_CANBUS);
-        fourBarMotorLeft.setInverted(DirectionState.REVERSE);
+        fourBarMotorLeft.setInverted(DirectionState.FORWARD);
 
         fourBarMotorRight = new TalonFXMotor(RIGHT_FOUR_BAR_MOTOR_ID, SUBSYSTEMS_CANBUS);
         fourBarMotorRight.setInverted(DirectionState.REVERSE);
@@ -52,19 +53,26 @@ public class Intake extends SubsystemBase implements Logged {
         rollerMotor = new TalonFXMotor(ROLLER_MOTOR_ID, SUBSYSTEMS_CANBUS);
         rollerMotor.setCurrentLimit(80, 80);
 
-        fourBarMotorLeft.setPositionConversionFactor((double) 1 / 0.29);
-        fourBarMotorRight.setPositionConversionFactor((double) 1 / 0.29);
 
         rollerMechanism = new Mechanism(rollerMotor);
 
-        angleSupplier = () -> (angleEncoder.getAbsolutePosition().getValueAsDouble() * (1 / 0.29));
-
         intakeAngleLimit = new SoftLimit(() -> INTAKE_MIN_ANGLE, () -> INTAKE_MAX_ANGLE);
+
+
+        this.armMotorGroup = new MotorGroup(fourBarMotorLeft, fourBarMotorRight);
+
+        this.armMotorGroup.setPositionConversionFactor(2*Math.PI/14.14);
+        this.armMotorGroup.setVelocityConversionFactor(2*Math.PI/14.14);
+
+        this.armMotorGroup.setMotorPosition(Math.PI-0.732601-0.159);
+
+        angleSupplier = () -> (armMotorGroup.getMotorPosition());
+
 
         atPositionTrigger = new Trigger(() -> (Math.abs(currentState.angle - angleSupplier.getAsDouble()) < INTAKE_ANGLE_TOLERANCE));
 
         fourBarMechanism = new Arm(
-                new MotorGroup(fourBarMotorRight, fourBarMotorLeft),
+                this.armMotorGroup,
                 angleSupplier,
                 ARM_VELOCITY_LIMIT,
                 ARM_POSITION_GAINS,
@@ -75,7 +83,7 @@ public class Intake extends SubsystemBase implements Logged {
                 )
         );
 
-//        setDefaultCommand(defaultCommand().unless(()-> DISABLE_SUBSYSTEMS));
+        setDefaultCommand(defaultCommand());
     }
 
     public Command setStateCommand(IntakeStates stateToSet) {
@@ -90,13 +98,30 @@ public class Intake extends SubsystemBase implements Logged {
         );
     }
 
+
+    public Command turnOnRoller() {
+        return rollerManualCommand(() -> 2);
+    }
+
+    public Command turnOffRoller() {
+        return rollerManualCommand(() -> 0);
+    }
+
+    public Command fowardIntake() {
+        return fourBarMechanism.manualCommand(() -> 0.5, this);
+    }
+
+    public Command reverseIntake() {
+        return fourBarMechanism.manualCommand(() -> -0.5, this);
+    }
+
     @Log.NT
     public boolean getIsIntakeOpen() {
         return isIntakeOpen;
     }
 
     public Command rollerManualCommand(DoubleSupplier voltage) {
-        return new RunCommand(() -> rollerMechanism.manualCommand(voltage));
+        return rollerMechanism.manualCommand(voltage, this);
     }
 
     public Command defaultCommand() {

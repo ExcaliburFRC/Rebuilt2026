@@ -35,6 +35,7 @@ import static frc.robot.Constants.SUBSYSTEMS_CANBUS;
 import static frc.robot.subsystems.shooter.ShooterConstants.*;
 import static frc.robot.subsystems.shooter.ShooterStates.IDLE;
 import static frc.robot.subsystems.shooter.ShooterStates.LOOK_HUB;
+import static frc.robot.subsystems.shooter.TargetHeight.HIGH;
 import static monologue.Annotations.Log.*;
 
 public class Shooter extends SubsystemBase implements Logged {
@@ -68,9 +69,13 @@ public class Shooter extends SubsystemBase implements Logged {
 
     private final EMAFilter flywheelVelocityFilter;
 
-    private final InterpolatingDoubleTreeMap angleDistanceMap;
-    private final InterpolatingDoubleTreeMap velocityDistanceMap;
-    private final InterpolatingDoubleTreeMap distanceTimeOfFlightMap;
+    private final InterpolatingDoubleTreeMap highAngleDistanceMap;
+    private final InterpolatingDoubleTreeMap highVelocityDistanceMap;
+    private final InterpolatingDoubleTreeMap highDistanceTimeOfFlightMap;
+
+    private final InterpolatingDoubleTreeMap lowAngleDistanceMap;
+    private final InterpolatingDoubleTreeMap lowVelocityDistanceMap;
+    private final InterpolatingDoubleTreeMap lowDistanceTimeOfFlightMap;
 
     private final Trigger volatileTrenchHoodTrigger;
 
@@ -140,7 +145,7 @@ public class Shooter extends SubsystemBase implements Logged {
 
         hoodEncoder.setPosition(hoodEncoder.getAbsolutePosition().getValueAsDouble());
 
-        distanceTimeOfFlightMap = new InterpolatingDoubleTreeMap();
+        highDistanceTimeOfFlightMap = new InterpolatingDoubleTreeMap();
 
         turretToHubVector = getTurretToTargetVector();
 
@@ -170,11 +175,15 @@ public class Shooter extends SubsystemBase implements Logged {
 
         robotPositionSupplier = poseSupplier;
 
-        angleDistanceMap = new InterpolatingDoubleTreeMap();
+        highAngleDistanceMap = new InterpolatingDoubleTreeMap();
         initAngleMap();
 
-        velocityDistanceMap = new InterpolatingDoubleTreeMap();
+        highVelocityDistanceMap = new InterpolatingDoubleTreeMap();
         initVelocityMap();
+
+        lowAngleDistanceMap = new InterpolatingDoubleTreeMap();
+        lowDistanceTimeOfFlightMap = new InterpolatingDoubleTreeMap();
+        lowVelocityDistanceMap = new InterpolatingDoubleTreeMap();
 
         flyWheelReadyTrigger = new Trigger(() -> Math.abs(flywheelVelocityFilter.getValue() - flywheelVelocitySetpoint.getAsDouble()) < FLYWHEEL_TOLERANCE);
 
@@ -201,78 +210,114 @@ public class Shooter extends SubsystemBase implements Logged {
             return HOOD_MAX_ANGLE_LIMIT;
         });
 
+
         initDistanceTimeOfFlightMap();
 
+        initLowMaps();
         this.turretRelativeDistanceFromTarget = () -> getTurretToTargetVector().get().getNorm();
 
         shooterReady = isTurretAligned
                 .and(flyWheelReadyTrigger)
                 .and(hoodAdjustedTrigger);
 
+//                .and(()-> getTurretToTargetVector().get().getNorm() < 3.5);
+
         setDefaultCommand(defaultCommand().unless(() -> DISABLE_SUBSYSTEMS));
     }
 
     private void initDistanceTimeOfFlightMap() {
-        distanceTimeOfFlightMap.put(0.0, 0.0); //v0
-        distanceTimeOfFlightMap.put(1.626, 0.746); //v0
-        distanceTimeOfFlightMap.put(2.04, 1.038); //v0
-        distanceTimeOfFlightMap.put(2.277, 1.116); //v0
-        distanceTimeOfFlightMap.put(2.321, 1.1433); //v0
-        distanceTimeOfFlightMap.put(2.595, 1.178); //v0
-        distanceTimeOfFlightMap.put(2.672, 1.166); //v0
-        distanceTimeOfFlightMap.put(2.87, 1.21); //v0
-        distanceTimeOfFlightMap.put(3.038, 1.144); //v0
-        distanceTimeOfFlightMap.put(3.419, 1.452); //v0
-        distanceTimeOfFlightMap.put(3.5, 1.165); //v0
+        highDistanceTimeOfFlightMap.put(0.0, 0.0); //v0
+        highDistanceTimeOfFlightMap.put(1.626, 0.746); //v0
+        highDistanceTimeOfFlightMap.put(2.04, 1.038); //v0
+        highDistanceTimeOfFlightMap.put(2.277, 1.116); //v0
+        highDistanceTimeOfFlightMap.put(2.321, 1.1433); //v0
+        highDistanceTimeOfFlightMap.put(2.595, 1.178); //v0
+        highDistanceTimeOfFlightMap.put(2.672, 1.166); //v0
+        highDistanceTimeOfFlightMap.put(2.87, 1.21); //v0
+        highDistanceTimeOfFlightMap.put(3.038, 1.144); //v0
+        highDistanceTimeOfFlightMap.put(3.419, 1.452); //v0
+        highDistanceTimeOfFlightMap.put(3.5, 1.165); //v0
     }
 
     public void initAngleMap() {
-        angleDistanceMap.put(0.0, 0.0);
-        angleDistanceMap.put(2.041, 0.0);
-        angleDistanceMap.put(2.359, 0.0);
-        angleDistanceMap.put(2.538, 0.0);
-        angleDistanceMap.put(2.816, 0.05);
-        angleDistanceMap.put(2.995, 0.1);
-        angleDistanceMap.put(3.293, 0.15);
-        angleDistanceMap.put(3.53, 0.175);
-        angleDistanceMap.put(3.695, 0.2);
-        angleDistanceMap.put(3.98, 0.3);
-        angleDistanceMap.put(4.215, 0.3);
-        angleDistanceMap.put(4.42, 0.3);
-        angleDistanceMap.put(4.66, 0.3);
-        angleDistanceMap.put(4.83, 0.3);
-        angleDistanceMap.put(5.303, 0.4);
-        angleDistanceMap.put(5.49, 0.4);
-        angleDistanceMap.put(5.798, 0.46);
-        angleDistanceMap.put(6.0, 0.5);
-        angleDistanceMap.put(6.334, 0.52);
-        angleDistanceMap.put(6.738, 0.56);
-        angleDistanceMap.put(7.658, 0.56);
+        highAngleDistanceMap.put(0.0, 0.0);
+        highAngleDistanceMap.put(2.041, 0.0);
+        highAngleDistanceMap.put(2.359, 0.0);
+        highAngleDistanceMap.put(2.538, 0.0);
+        highAngleDistanceMap.put(2.816, 0.05);
+        highAngleDistanceMap.put(2.995, 0.1);
+        highAngleDistanceMap.put(3.293, 0.15);
+        highAngleDistanceMap.put(3.53, 0.175);
+        highAngleDistanceMap.put(3.695, 0.2);
+        highAngleDistanceMap.put(3.98, 0.3);
+        highAngleDistanceMap.put(4.215, 0.3);
+        highAngleDistanceMap.put(4.42, 0.3);
+        highAngleDistanceMap.put(4.66, 0.3);
+        highAngleDistanceMap.put(4.83, 0.3);
+        highAngleDistanceMap.put(5.303, 0.4);
+        highAngleDistanceMap.put(5.49, 0.4);
+        highAngleDistanceMap.put(5.798, 0.46);
+        highAngleDistanceMap.put(6.0, 0.5);
+        highAngleDistanceMap.put(6.334, 0.52);
+        highAngleDistanceMap.put(6.738, 0.56);
+        highAngleDistanceMap.put(7.658, 0.56);
     }
 
     public void initVelocityMap() {
 //          velocityDistanceMapTable.put(distance[meters], flywheel velocity);
-        velocityDistanceMap.put(0.0, 0.0);
-        velocityDistanceMap.put(2.041, 33.0);
-        velocityDistanceMap.put(2.359, 36.0);
-        velocityDistanceMap.put(2.538, 37.5);
-        velocityDistanceMap.put(2.816, 37.5);
-        velocityDistanceMap.put(2.995, 38.0);
-        velocityDistanceMap.put(3.293, 38.0);
-        velocityDistanceMap.put(3.53, 38.5);
-        velocityDistanceMap.put(3.695, 39.0);
-        velocityDistanceMap.put(3.98, 39.5);
-        velocityDistanceMap.put(4.215, 40.0);
-        velocityDistanceMap.put(4.42, 41.0);
-        velocityDistanceMap.put(4.66, 43.0);
-        velocityDistanceMap.put(4.82, 44.5);
-        velocityDistanceMap.put(5.303, 44.75);
-        velocityDistanceMap.put(5.49, 45.0);
-        velocityDistanceMap.put(5.798, 46.0);
-        velocityDistanceMap.put(6.0, 47.1);
-        velocityDistanceMap.put(6.334, 49.0);
-        velocityDistanceMap.put(6.738, 49.5);
-        velocityDistanceMap.put(7.65, 53.0);
+        highVelocityDistanceMap.put(0.0, 0.0);
+        highVelocityDistanceMap.put(2.041, 33.0);
+        highVelocityDistanceMap.put(2.359, 36.0);
+        highVelocityDistanceMap.put(2.538, 37.5);
+        highVelocityDistanceMap.put(2.816, 37.5);
+        highVelocityDistanceMap.put(2.995, 38.0);
+        highVelocityDistanceMap.put(3.293, 38.0);
+        highVelocityDistanceMap.put(3.53, 38.5);
+        highVelocityDistanceMap.put(3.695, 39.0);
+        highVelocityDistanceMap.put(3.98, 39.5);
+        highVelocityDistanceMap.put(4.215, 40.0);
+        highVelocityDistanceMap.put(4.42, 41.0);
+        highVelocityDistanceMap.put(4.66, 43.0);
+        highVelocityDistanceMap.put(4.82, 44.5);
+        highVelocityDistanceMap.put(5.303, 44.75);
+        highVelocityDistanceMap.put(5.49, 45.0);
+        highVelocityDistanceMap.put(5.798, 46.0);
+        highVelocityDistanceMap.put(6.0, 47.1);
+        highVelocityDistanceMap.put(6.334, 49.0);
+        highVelocityDistanceMap.put(6.738, 49.5);
+        highVelocityDistanceMap.put(7.65, 53.0);
+    }
+
+    private void initLowMaps() {
+        lowAngleDistanceMap.put(2.0, 1.0);
+        lowAngleDistanceMap.put(3.0, 1.0);
+        lowAngleDistanceMap.put(4.0, 0.925);
+        lowAngleDistanceMap.put(5.0, 0.874);
+        lowAngleDistanceMap.put(6.0, 0.841);
+        lowAngleDistanceMap.put(7.0, 0.819);
+        lowAngleDistanceMap.put(8.0, 0.802);
+        lowAngleDistanceMap.put(9.0, 0.789);
+        lowAngleDistanceMap.put(10.0, 0.779);
+
+        lowVelocityDistanceMap.put(2.0, 13.25247);
+        lowVelocityDistanceMap.put(3.0, 15.852848);
+        lowVelocityDistanceMap.put(4.0, 18.51587);
+        lowVelocityDistanceMap.put(5.0, 20.92826);
+        lowVelocityDistanceMap.put(6.0, 23.09001);
+        lowVelocityDistanceMap.put(7.0, 25.063791);
+        lowVelocityDistanceMap.put(8.0, 26.91224);
+        lowVelocityDistanceMap.put(9.0, 28.635382);
+        lowVelocityDistanceMap.put(10.0, 30.26452);
+
+        lowDistanceTimeOfFlightMap.put(2.0, 0.64);
+        lowDistanceTimeOfFlightMap.put(3.0, 0.72);
+        lowDistanceTimeOfFlightMap.put(4.0, 0.84);
+        lowDistanceTimeOfFlightMap.put(5.0, 0.96);
+        lowDistanceTimeOfFlightMap.put(6.0, 1.06);
+        lowDistanceTimeOfFlightMap.put(7.0, 1.15);
+        lowDistanceTimeOfFlightMap.put(8.0, 1.24);
+        lowDistanceTimeOfFlightMap.put(9.0, 1.32);
+        lowDistanceTimeOfFlightMap.put(10.0, 1.39);
     }
 
     public Command setStateCommand(ShooterStates stateToSet) {
@@ -322,23 +367,23 @@ public class Shooter extends SubsystemBase implements Logged {
                     getTurretOnField().getTranslation();
 
             Translation2d fieldVector =
-                    currentState.targetTranslation.get().minus(turretField);
+                    currentState.targetTranslation.minus(turretField);
 
 
             Translation2d turretToTarget = fieldVector.rotateBy(robotRot.unaryMinus());
 
-//            return turretToTarget;
-            Translation2d virtualTargetOffset = new Translation2d(
-                    robotSpeeds.vxMetersPerSecond
-                            - TURRET_OFFSET_TRANSLATION.getY() * robotSpeeds.omegaRadiansPerSecond,
-
-                    robotSpeeds.vyMetersPerSecond
-                            + TURRET_OFFSET_TRANSLATION.getX() * robotSpeeds.omegaRadiansPerSecond
-            ).times(distanceTimeOfFlightMap.get(turretToTarget.getNorm()));
-
-
-            Translation2d virtualTurretToTarget = turretToTarget.minus(virtualTargetOffset);
-            return virtualTurretToTarget;
+            return turretToTarget;
+//            Translation2d virtualTargetOffset = new Translation2d(
+//                    robotSpeeds.vxMetersPerSecond
+//                            - TURRET_OFFSET_TRANSLATION.getY() * robotSpeeds.omegaRadiansPerSecond,
+//
+//                    robotSpeeds.vyMetersPerSecond
+//                            + TURRET_OFFSET_TRANSLATION.getX() * robotSpeeds.omegaRadiansPerSecond
+//            ).times(getInterpolatingTimeOfFlightMap().get(turretToTarget.getNorm()));
+//
+//
+//            Translation2d virtualTurretToTarget = turretToTarget.minus(virtualTargetOffset);
+//            return virtualTurretToTarget;
         };
     }
 
@@ -365,7 +410,7 @@ public class Shooter extends SubsystemBase implements Logged {
         return flyWheelMechanism.setDynamicVelocityCommand(
                 () -> {
                     double distance = turretRelativeDistanceFromTarget.getAsDouble();
-                    double velocity = currentState.isShooting ? velocityDistanceMap.get(distance) : 0;
+                    double velocity = currentState.isShooting ? getInterpolatingVelocityMap().get(distance) : 0;
                     flywheelVelocitySetpoint = () -> velocity;
                     return velocity;
                 }
@@ -375,8 +420,8 @@ public class Shooter extends SubsystemBase implements Logged {
     public Command setAdjustedHoodAngleCommand() {
         return new RunCommand(() -> {
             double distance = turretRelativeDistanceFromTarget.getAsDouble();
-            hoodAngleSetpoint = () -> hoodSoftLimit.limit(angleDistanceMap.get(distance));
-            hoodMechanism.setVoltage(getControlledOutputForAngle(() -> hoodSoftLimit.limit(angleDistanceMap.get(distance))));
+            hoodAngleSetpoint = () -> hoodSoftLimit.limit(getInterpolatingAngleMap().get(distance));
+            hoodMechanism.setVoltage(getControlledOutputForAngle(() -> hoodSoftLimit.limit(getInterpolatingAngleMap().get(distance))));
         });
     }
 
@@ -454,4 +499,15 @@ public class Shooter extends SubsystemBase implements Logged {
         return flyWheelMechanism.setDynamicVelocityCommand(rps);
     }
 
+    public InterpolatingDoubleTreeMap getInterpolatingTimeOfFlightMap() {
+        return currentState.targetHeight.equals(HIGH) ? highDistanceTimeOfFlightMap : lowDistanceTimeOfFlightMap;
+    }
+
+    public InterpolatingDoubleTreeMap getInterpolatingVelocityMap() {
+        return currentState.targetHeight.equals(HIGH) ? highVelocityDistanceMap : lowVelocityDistanceMap;
+    }
+
+    public InterpolatingDoubleTreeMap getInterpolatingAngleMap() {
+        return currentState.targetHeight.equals(HIGH) ? highAngleDistanceMap : lowAngleDistanceMap;
+    }
 }

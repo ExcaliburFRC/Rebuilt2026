@@ -1,15 +1,14 @@
 package frc.robot.superstructure;
 
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.excalib.additional_utilities.AllianceUtils;
+import frc.excalib.additional_utilities.LEDs;
 import frc.excalib.swerve.Swerve;
-import frc.robot.Constants;
-import frc.robot.Constants.FieldConstants;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.transport.Transport;
+import frc.robot.util.LedState;
 import monologue.Annotations.Log;
 import monologue.Logged;
 
@@ -24,13 +23,14 @@ public class Superstructure implements Logged {
 
     private final Shooter shooter;
     private final Transport transport;
-    private final Intake intake;
+//    public final Intake intake;
+    private final LEDs leds;
 
     private final Trigger robotAtState, ourAllianceShiftActivate;
     private final Trigger inIntermediateZone, inAllianceZone, inNeutralZone;
     private final Trigger closerToCloseDeliveryTrigger, underTrenchTrigger, overBumpTrigger;
 
-    private final Trigger intakeRequested;
+    private final Trigger intakeRequested, shouldDeliver;
 
     private Trigger NO_INTAKE_SHOOT_HUB_TRIGGER, INTAKE_SHOOT_HUB_TRIGGER,
             NO_INTAKE_SHOOT_CLOSE_DELIVERY_TRIGGER, NO_INTAKE_SHOOT_FAR_DELIVERY_TRIGGER,
@@ -39,27 +39,39 @@ public class Superstructure implements Logged {
             NO_INTAKE_AIM_FAR_DELIVERY_TRIGGER, INTAKE_AIM_CLOSE_DELIVERY_TRIGGER,
             INTAKE_AIM_FAR_DELIVERY_TRIGGER;
 
-    public Superstructure(Swerve swerve, Trigger intakeButton) {
+    public Superstructure(Swerve swerve, Trigger intakeButton, Trigger ourAllianceShiftActivate, Trigger shouldDeliver) {
         currentRobotState = RobotState.NO_INTAKE_AIM_HUB;
 
         shooter = new Shooter(swerve::getPose2D, swerve::getRobotRelativeSpeeds);
-        transport = new Transport(shooter.isShooterReady());
-        intake = new Intake();
+        transport = new Transport(()-> true);
+//        intake = new Intake();
+        leds = LEDs.getInstance();
 
-        robotAtState = intake.atPositionTrigger
-                .and(transport.atPositionTrigger())
+        robotAtState =
+                (transport.atPositionTrigger())
                 .and(shooter.isShooterReady());
 
-        ourAllianceShiftActivate = new Trigger(() -> true);
+        this.ourAllianceShiftActivate = new Trigger(ourAllianceShiftActivate);
 
         inAllianceZone = new Trigger(
-                () -> shooter.getTurretOnField().getTranslation().getX()
-                        < (4.02 - 0.2)
+                () -> {
+                    if (AllianceUtils.isBlueAlliance()) {
+                        return shooter.getTurretOnField().getTranslation().getX()
+                                < (4.02 - 0.2);
+                    }
+                    return shooter.getTurretOnField().getTranslation().getX()
+                            > (12.51 + 0.2);
+                }
+
         ); //tag 26 x
 
         inIntermediateZone = new Trigger(
-                () -> shooter.getTurretOnField().getTranslation().getX()
-                        < (5.22 + 0.2))
+                () -> {
+                    if (AllianceUtils.isBlueAlliance()){
+                        return shooter.getTurretOnField().getTranslation().getX() < (5.22 + 0.2);
+                    }
+                    return shooter.getTurretOnField().getTranslation().getX() > (11.3 - 0.2);
+                })
                 .and(inAllianceZone.negate());
 
         inNeutralZone = (inAllianceZone.or(inIntermediateZone)).negate();
@@ -76,7 +88,9 @@ public class Superstructure implements Logged {
 
         overBumpTrigger = inIntermediateZone.and(underTrenchTrigger.negate());
         intakeRequested = intakeButton;
+        this.shouldDeliver = shouldDeliver;
 
+//        LEDs.getInstance().setDefaultCommand();
 
         initTriggers();
     }
@@ -158,8 +172,29 @@ public class Superstructure implements Logged {
                 new InstantCommand(() -> currentRobotState = robotStateToSet),
                 shooter.setStateCommand(robotStateToSet.shooterState),
                 transport.setStateCommand(robotStateToSet.transportState),
-                intake.setStateCommand(robotStateToSet.intakeState)
+//                intake.setStateCommand(robotStateToSet.intakeState),
+                leds.setStateCommand(ledStateFor(robotStateToSet))
         );
+    }
+
+    private LedState ledStateFor(RobotState state) {
+        return switch (state) {
+            case NO_INTAKE_SHOOT_HUB,
+                 INTAKE_SHOOT_HUB,
+                 NO_INTAKE_SHOOT_CLOSE_DELIVERY,
+                 NO_INTAKE_SHOOT_FAR_DELIVERY,
+                 INTAKE_SHOOT_CLOSE_DELIVERY,
+                 INTAKE_SHOOT_FAR_DELIVERY -> shooter.isShooterReady().getAsBoolean()
+                    ? LedState.LOCKED_ON_TARGET
+                    : LedState.WAITING;
+            case NO_INTAKE_AIM_HUB,
+                 INTAKE_AIM_HUB,
+                 NO_INTAKE_AIM_CLOSE_DELIVERY,
+                 NO_INTAKE_AIM_FAR_DELIVERY,
+                 INTAKE_AIM_CLOSE_DELIVERY,
+                 INTAKE_AIM_FAR_DELIVERY -> LedState.WAITING;
+            case IDLE -> LedState.IDLE;
+        };
     }
 
     public Command setStateCommandAndWait(RobotState robotStateToSet) {
@@ -269,12 +304,12 @@ public class Superstructure implements Logged {
         return INTAKE_AIM_FAR_DELIVERY_TRIGGER.getAsBoolean();
     }
 
-    public Command coastCommand(){
+    public Command coastCommand() {
         return shooter.turretMechanism.coastCommand(this.shooter);
     }
 
-    public Command setManualShootingCommand(DoubleSupplier hoodAngle,DoubleSupplier rpsSpeed){
-        Command command =  new ParallelCommandGroup(
+    public Command setManualShootingCommand(DoubleSupplier hoodAngle, DoubleSupplier rpsSpeed) {
+        Command command = new ParallelCommandGroup(
                 shooter.setAdjustedTurretAngle(),
                 shooter.setHoodAngleCommand(hoodAngle),
                 shooter.setFlyWheelVelocity(rpsSpeed),

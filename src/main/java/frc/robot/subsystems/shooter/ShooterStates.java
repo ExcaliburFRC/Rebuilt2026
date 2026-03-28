@@ -16,12 +16,12 @@ public enum ShooterStates {
     LOOK_CLOSE_DELIVERY(DELIVERY_CLOSE_POSE.get().getTranslation(), LOW, false),
     IDLE(new Translation2d(), LOW, false);
 
-    final AllianceTranslation targetTranslation;
+    final Translation2d targetTranslation;
     final TargetHeight targetHeight;
     final boolean isShooting;
 
     ShooterStates(Translation2d blueTargetTranslation, TargetHeight targetHeight, boolean isShooting) {
-        this.targetTranslation = new AllianceTranslation(blueTargetTranslation);
+        this.targetTranslation = new AllianceTranslation(blueTargetTranslation).get();
         this.targetHeight = targetHeight;
         this.isShooting = isShooting;
     }

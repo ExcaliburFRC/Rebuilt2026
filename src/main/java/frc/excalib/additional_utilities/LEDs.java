@@ -6,12 +6,15 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.util.LedState;
 
 import java.util.Arrays;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 import static frc.excalib.additional_utilities.Color.Colors.*;
 
@@ -22,12 +25,14 @@ public class LEDs extends SubsystemBase {
     private static LEDs instance = null;
     private Random rnd = new Random();
 
-    private int startIndex = 6;
-    private int tailIndex = 5;
+    private int startIndex = 0;
+    private int tailIndex = 0;
     private double offset = 5;
 
     public static final int LEDS_PORT = 8; // pwm
     public static final int LENGTH = 45;
+
+    private LedState currentState = LedState.IDLE;
 
     Color[] orange = new Color[LENGTH];
     Color[] black = new Color[LENGTH];
@@ -42,9 +47,7 @@ public class LEDs extends SubsystemBase {
     }
 
     private void initializeDefaultCommand() {
-        setDefaultCommand(setPattern(LEDPattern.EXPAND, BLUE.color, YELLOW.color));
-//        setDefaultCommand(setPattern(LEDPattern.TRAIN, BLUE.color, YELLOW.color));
-
+        setDefaultCommand(setPattern());
     }
 
     public static LEDs getInstance() {
@@ -232,12 +235,15 @@ public class LEDs extends SubsystemBase {
                     }
                     firstHue.addAndGet(3);
                     firstHue.set(firstHue.get() % 180);
+                    LedStrip.setData(buffer);
                 });
+                break;
 
             case RSL:
                 command = new RunCommand(() -> {
                     setLedStrip(RobotController.getRSLState() ? orange : black);
                 }, this).withName("SOLID: " + mainColor.toString());
+                break;
 
             default:
                 break;
@@ -248,6 +254,23 @@ public class LEDs extends SubsystemBase {
 
     public Command setPattern(LEDPattern pattern, Color color) {
         return setPattern(pattern, color, OFF.color);
+    }
+
+    public Command setPattern() {
+        return Commands.defer(
+                () -> setPattern(currentState.pattern, currentState.primary.color, currentState.secondary.color),
+                Set.of(this)
+        ).withName("LED_STATE_PATTERN");
+    }
+
+    public Command setStateCommand(LedState state) {
+        return this.runOnce(() -> currentState = state)
+                .withName("SET_LED_STATE_" + state.name())
+                .ignoringDisable(true);
+    }
+
+    public LedState getCurrentState() {
+        return currentState;
     }
 
 

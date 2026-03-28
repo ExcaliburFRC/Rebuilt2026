@@ -171,9 +171,8 @@ public class Superstructure implements Logged {
         return new ParallelCommandGroup(
                 new InstantCommand(() -> currentRobotState = robotStateToSet),
                 shooter.setStateCommand(robotStateToSet.shooterState),
-                transport.setStateCommand(robotStateToSet.transportState),
+                transport.setStateCommand(robotStateToSet.transportState)
 //                intake.setStateCommand(robotStateToSet.intakeState),
-                leds.setStateCommand(ledStateFor(robotStateToSet))
         );
     }
 

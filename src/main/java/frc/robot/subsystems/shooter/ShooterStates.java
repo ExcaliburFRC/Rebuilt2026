@@ -1,7 +1,7 @@
 package frc.robot.subsystems.shooter;
 
 import edu.wpi.first.math.geometry.Translation2d;
-import frc.excalib.additional_utilities.AllianceUtils.AllianceTranslation;
+import frc.excalib.additional_utilities.AllianceUtils;
 
 import static frc.robot.Constants.FieldConstants.*;
 import static frc.robot.subsystems.shooter.TargetHeight.HIGH;
@@ -21,7 +21,7 @@ public enum ShooterStates {
     final boolean isShooting;
 
     ShooterStates(Translation2d blueTargetTranslation, TargetHeight targetHeight, boolean isShooting) {
-        this.targetTranslation = new AllianceTranslation(blueTargetTranslation).get();
+        this.targetTranslation = blueTargetTranslation;
         this.targetHeight = targetHeight;
         this.isShooting = isShooting;
     }

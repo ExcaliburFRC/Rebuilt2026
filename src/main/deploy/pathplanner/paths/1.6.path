@@ -33,20 +33,20 @@
   "pointTowardsZones": [],
   "eventMarkers": [
     {
-      "name": "intakeOpen/1.6",
+      "name": "",
       "waypointRelativePos": 0.6417399804496543,
       "endWaypointRelativePos": null,
       "command": {
         "type": "named",
         "data": {
-          "name": "floorIntake"
+          "name": null
         }
       }
     }
   ],
   "globalConstraints": {
-    "maxVelocity": 3.0,
-    "maxAcceleration": 3.0,
+    "maxVelocity": 5.0,
+    "maxAcceleration": 10.0,
     "maxAngularVelocity": 540.0,
     "maxAngularAcceleration": 720.0,
     "nominalVoltage": 12.0,

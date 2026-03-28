@@ -13,21 +13,24 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.*;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.*;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.PrintCommand;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.excalib.additional_utilities.*;
 import frc.excalib.control.math.Vector2D;
 import frc.excalib.swerve.Swerve;
-
 import frc.robot.subsystems.intake.Intake;
-import frc.robot.subsystems.transport.Transport;
+import frc.robot.subsystems.intake.IntakeStates;
+import frc.robot.superstructure.RobotState;
 import frc.robot.superstructure.Superstructure;
-import frc.robot.util.AuroraPoseGetter;
 import frc.robot.util.HubTimerSubsystem;
-import monologue.Annotations;
 import monologue.Annotations.Log.NT;
 import monologue.Logged;
 
@@ -50,13 +53,14 @@ public class RobotContainer implements Logged {
     private final HubTimerSubsystem hubTimer = new HubTimerSubsystem();
 
     private final LEDs leds = LEDs.getInstance();
-    private final Superstructure superstructure = new Superstructure(swerve);
 
     // ===== Alerts =====
     private final Alert primaryDisconnected = new Alert("Primary controller disconnected (port 0).", Alert.AlertType.kWarning);
     private final Alert autoNotChosen = new Alert("!!! AUTO NOT SET !!!", Alert.AlertType.kError);
     private final Alert lowBatteryAlert = new Alert("Battery voltage is low", Alert.AlertType.kWarning);
     private final Trigger lowBatteryTrigger = new Trigger(lowBatteryAlert::get);
+    private
+    Trigger shouldDeliverTrigger = new Trigger(()-> false);
 
     private final NetworkTable table = NetworkTableInstance.getDefault().getTable("Tab1");
     NetworkTableEntry flywheelVel = table.getEntry("flywheelVel");
@@ -71,7 +75,8 @@ public class RobotContainer implements Logged {
             new ControllerStateTracker(primary.getHID(), "Primary Controller");
     private final PerformanceMetricsTracker performanceMetricsTracker =
             new PerformanceMetricsTracker();
-
+        private final Intake intake = new Intake();
+     private final Superstructure superstructure = new Superstructure(swerve, primary.R1(), primary.circle(), shouldDeliverTrigger);
 
     public RobotContainer() {
 //        lowBatteryTrigger.onTrue(leds.setPattern(BLINKING, ORANGE.color).withInterruptBehavior(kCancelIncoming));
@@ -79,18 +84,13 @@ public class RobotContainer implements Logged {
         flywheelVel.setDouble(0);
         hoodAngle.setDouble(0);
 
+        //registerCommands();
         setAutoChooser();
         configureBindings();
-        registerCommands();
     }
 
     private void configureBindings() {
         // Driver Control
-//        primary.triangle().toggleOnTrue(superstructure.trackHubCommand());
-        primary.triangle().toggleOnTrue(superstructure.shootToHubCommand());
-        primary.cross().toggleOnTrue(superstructure.shootFixedCommand(() -> flywheelVel.getDouble(0.0), () -> hoodAngle.getDouble(0.0)));
-        primary.square().toggleOnTrue(superstructure.idleCommand());
-//        primary.circle().toggleOnTrue(superstructure.trackHubCommand());[]\
 
         primary.options().onTrue(swerve.resetOdometryCommand(
                 new Pose2d(
@@ -101,21 +101,27 @@ public class RobotContainer implements Logged {
         ).ignoringDisable(true));
 
 
-//        primary.povUp().onTrue(leds.setPattern(LEDs.LEDPattern.BLINKING, Color.Colors.PINK.color));
-//        primary.povUp().onTrue(leds.setPattern(LEDs.LEDPattern.BLINKING, Color.Colors.ORANGE.color));
-//        primary.povUp().onTrue(leds.setPattern(LEDs.LEDPattern.BLINKING, Color.Colors.YELLOW.color));
-//        primary.povUp().onTrue(leds.setPattern(LEDs.LEDPattern.BLINKING, Color.Colors.PINK.color));
-        // Intake Controls
-//        primary.povDown().toggleOnTrue(superstructure.intake.intakeCommand());
-//        primary.povUp().toggleOnTrue(superstructure.intake.closeCommand());
-//        primary.povLeft().whileTrue(intake.pumpFuelCommand());
 
 
-//        primary.triangle().toggleOnTrue(superstructure.transport.manualCommand(primary::getLeftX, primary::getLeftX));
+      //  primary.touchpad().onTrue(superstructure.coastCommand());
 
-//        primary.povUp().toggleOnTrue(c);
+//        primary.povUp().onTrue(
+//                swerve.driveToPoseWithOverrideCommand(
+//                        swerve.getPose2D().getY() > AllianceUtils.FIELD_WIDTH_METERS / 2
+//                                ? new Pose2d(10.63, 5.63, swerve.getRotation2D())
+//                                : new Pose2d(10.69, 2.51, swerve.getRotation2D()),
+//                        MAX_BUMP_CONSTRAINTS,
+//                        () -> true,
+//                        () -> new Vector2D(
+//                                applyDeadband(-primary.getLeftY()) * MAX_VEL,
+//                                applyDeadband(-primary.getLeftX()) * MAX_VEL),
+//                        () -> -applyDeadband(primary.getRightX()) * MAX_OMEGA_RAD_PER_SEC
+//                )
+//        );
+          primary.cross().onTrue((intake.setStateCommand((IntakeStates.CLOSE))));
+          primary.triangle().onTrue(intake.setStateCommand(IntakeStates.OPEN));
 
-
+          primary.square().onTrue(new InstantCommand(()->shouldDeliverTrigger = shouldDeliverTrigger.negate()));
         swerve.setDefaultCommand(
                 swerve.driveCommand(
                         () -> new Vector2D(
@@ -123,7 +129,7 @@ public class RobotContainer implements Logged {
                                 applyDeadband(-primary.getLeftX()) * MAX_VEL),
                         () -> -applyDeadband(primary.getRightX()) * MAX_OMEGA_RAD_PER_SEC,
                         () -> true
-                )
+                ).unless(() -> DISABLE_SWERVE)
         );
     }
 
@@ -140,11 +146,12 @@ public class RobotContainer implements Logged {
     }
 
     public void registerCommands() {
-//        NamedCommands.registerCommand("floorIntake", superstructure.intakeCommand());
-//        NamedCommands.registerCommand("prepareShooter", superstructure.trackHubCommand());
-//        NamedCommands.registerCommand("shoot", superstructure.shootToHubCommand());
-//        NamedCommands.registerCommand("retractIntake", superstructure.stopIntakeCommand());
+        NamedCommands.registerCommand("idle", superstructure.setStateCommand(RobotState.IDLE).alongWith(new PrintCommand("idle")));
+        NamedCommands.registerCommand("shoot", superstructure.setStateCommand(RobotState.NO_INTAKE_SHOOT_HUB).alongWith(new PrintCommand("shoot")));
+        NamedCommands.registerCommand("intake", superstructure.setStateCommand(RobotState.INTAKE_AIM_HUB).alongWith(new PrintCommand("intake")));
     }
+
+
 
     public void setAutoChooser() {
         autoChooser.setDefaultOption("/ null Auto", "/ null Auto");
@@ -179,7 +186,6 @@ public class RobotContainer implements Logged {
     public PerformanceMetricsTracker getPerformanceMetricsTracker() {
         return performanceMetricsTracker;
     }
-
 
     @NT
     public double getInterpolationFlywheelVel() {

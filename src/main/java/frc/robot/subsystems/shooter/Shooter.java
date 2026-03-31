@@ -1,6 +1,5 @@
 package frc.robot.subsystems.shooter;
 
-import com.ctre.phoenix6.hardware.CANcoder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
@@ -12,14 +11,14 @@ import frc.excalib.additional_utilities.LEDs;
 import frc.excalib.control.limits.SoftLimit;
 import frc.excalib.control.math.EMAFilter;
 import frc.excalib.control.math.periodics.PeriodicScheduler;
+import frc.excalib.control.motor.controllers.Motor;
 import frc.excalib.control.motor.controllers.MotorGroup;
-import frc.excalib.control.motor.controllers.TalonFXMotor;
-import frc.excalib.control.motor.motor_specs.DirectionState;
-import frc.excalib.control.motor.motor_specs.IdleState;
 import frc.excalib.mechanisms.Mechanism;
 import frc.excalib.mechanisms.fly_wheel.FlyWheel;
 import frc.robot.util.Target;
 import monologue.Logged;
+import org.littletonrobotics.junction.AutoLogOutput;
+import org.littletonrobotics.junction.Logger;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
@@ -28,16 +27,14 @@ import java.util.function.Supplier;
 import static frc.excalib.additional_utilities.AllianceUtils.FIELD_LENGTH_METERS;
 import static frc.excalib.additional_utilities.AllianceUtils.FIELD_WIDTH_METERS;
 import static frc.robot.Constants.FieldConstants.*;
-import static frc.robot.Constants.SUBSYSTEMS_CANBUS;
 import static frc.robot.subsystems.shooter.ShooterConstants.*;
 import static frc.robot.util.Target.*;
-import static monologue.Annotations.Log.*;
 
 public class Shooter extends SubsystemBase implements Logged {
 
-    private final TalonFXMotor hoodMotor, flyWheelMotorTop, flyWheelMotorLow, transportMotor;
-    private final MotorGroup shooterMotorGroup;
-    private final CANcoder hoodEncoder;
+    private final ShooterIO io;
+    private final ShooterIOInputsAutoLogged inputs = new ShooterIOInputsAutoLogged();
+
     private final PIDController angleController;
 
     private final FlyWheel flyWheelMechanism;
@@ -48,7 +45,6 @@ public class Shooter extends SubsystemBase implements Logged {
     private final SoftLimit hoodSoftLimit;
 
     private final Supplier<Pose2d> robotPositionSupplier;
-
     private final DoubleSupplier turretRelativeDistanceFromTarget;
 
     private DoubleSupplier flywheelVelocitySetpoint;
@@ -69,56 +65,38 @@ public class Shooter extends SubsystemBase implements Logged {
     private Trigger hoodAdjustedTrigger;
 
 
-    public Shooter(DoubleSupplier turretRelativeDistanceFromTarget, Supplier<Pose2d> poseSupplier) {
-        hoodMotor = new TalonFXMotor(HOOD_MOTOR_ID, SUBSYSTEMS_CANBUS);
-        flyWheelMotorLow = new TalonFXMotor(FLYWHEEL_MOTOR_LOW_ID, SUBSYSTEMS_CANBUS);
-        flyWheelMotorTop = new TalonFXMotor(FLYWHEEL_MOTOR_TOP_ID, SUBSYSTEMS_CANBUS);
-        transportMotor = new TalonFXMotor(TRANSPORT_MOTOR_ID, SUBSYSTEMS_CANBUS);
-        hoodEncoder = new CANcoder(HOOD_ENCODER_ID, SUBSYSTEMS_CANBUS);
-
-        shooterMotorGroup = new MotorGroup(flyWheelMotorLow, flyWheelMotorTop);
-        shooterMotorGroup.setIdleState(IdleState.BRAKE);
-        shooterMotorGroup.setMotorPosition(0);
-        shooterMotorGroup.setVelocityConversionFactor((double) 40 / 48);
-        shooterMotorGroup.setPositionConversionFactor((double) 40 / 48);
-
-        flyWheelMotorLow.setInverted(DirectionState.FORWARD);
-        flyWheelMotorTop.setInverted(DirectionState.FORWARD);
-
-        flyWheelMotorTop.setCurrentLimit(120, 80);
-        flyWheelMotorLow.setCurrentLimit(120, 80);
-
-        hoodEncoder.setPosition(hoodEncoder.getAbsolutePosition().getValueAsDouble());
+    public Shooter(ShooterIO io, DoubleSupplier turretRelativeDistanceFromTarget, Supplier<Pose2d> poseSupplier) {
+        this.io = io;
         this.turretRelativeDistanceFromTarget = turretRelativeDistanceFromTarget;
 
+        Motor hoodMotor = io.getHoodMotor();
+        Motor flywheelMotorLow = io.getFlywheelMotorLow();
+        Motor flywheelMotorTop = io.getFlywheelMotorTop();
+        Motor transportMotor = io.getTransportMotor();
+
+        MotorGroup shooterMotorGroup = new MotorGroup(flywheelMotorLow, flywheelMotorTop);
+
+        // hoodAngleSupplier reads from logged inputs for proper replay
+        hoodAngleSupplier = () -> inputs.hoodEncoderPositionRotations * POSITION_CONVERSION_FACTOR;
 
         angleController = new PIDController(HOOD_PID_GAINS.kp, HOOD_PID_GAINS.ki, HOOD_PID_GAINS.kd);
         angleController.setTolerance(0.01);
 
-        hoodMotor.setIdleState(IdleState.BRAKE);
-        hoodMotor.setInverted(DirectionState.FORWARD);
-        hoodAngleSupplier = () -> (hoodEncoder.getPosition().getValueAsDouble() * POSITION_CONVERSION_FACTOR);
-
-        hoodMotor.setPositionConversionFactor(POSITION_CONVERSION_FACTOR * ((double) -0.208 / 1.497) * 1.0231);
-        hoodMotor.setMotorPosition(hoodAngleSupplier.getAsDouble());
-
         flywheelVelocitySetpoint = () -> 0;
         hoodAngleSetpoint = () -> 0;
-        hoodMotor.setIdleState(IdleState.COAST);
 
         flyWheelMechanism = new FlyWheel(shooterMotorGroup, FLYWHEEL_MAX_ACCELERATION, FLYWHEEL_MAX_JERK, FLYWHEEL_GAINS);
-
         transportMechanism = new Mechanism(transportMotor);
+        hoodMechanism = new Mechanism(hoodMotor);
 
+        // flywheelVelocityFilter reads velocity from inputs for proper replay
         flywheelVelocityFilter = new EMAFilter(
-                flyWheelMechanism::getVelocity,
+                () -> inputs.flywheelVelocityRotPerSec,
                 0.05,
                 PeriodicScheduler.PERIOD.MILLISECONDS_20
         );
 
         PeriodicScheduler.PERIOD.MILLISECONDS_20.add(flywheelVelocityFilter);
-
-        hoodMechanism = new Mechanism(hoodMotor);
 
         robotPositionSupplier = poseSupplier;
 
@@ -168,6 +146,12 @@ public class Shooter extends SubsystemBase implements Logged {
         );
 
         setDefaultCommand(defaultCommand());
+    }
+
+    @Override
+    public void periodic() {
+        io.updateInputs(inputs);
+        Logger.processInputs("Shooter", inputs);
     }
 
 
@@ -256,7 +240,7 @@ public class Shooter extends SubsystemBase implements Logged {
     }
 
     public double getPIDForAngle(DoubleSupplier angleSetpoint) {
-        return angleController.calculate(hoodMotor.getMotorPosition(), angleSetpoint.getAsDouble());
+        return angleController.calculate(inputs.hoodMotorPositionConverted, angleSetpoint.getAsDouble());
     }
 
 
@@ -310,32 +294,32 @@ public class Shooter extends SubsystemBase implements Logged {
         return transportMechanism.manualCommand(() -> TRANSPORT_VOLTAGE);
     }
 
-    @NT
+    @AutoLogOutput(key = "Shooter/FlyWheelVelocitySetpoint")
     public double getFlyWheelVelocitySetpoint() {
         return flywheelVelocitySetpoint.getAsDouble() < 0.01 ? 0 : flywheelVelocitySetpoint.getAsDouble();
     }
 
-    @NT
+    @AutoLogOutput(key = "Shooter/FlyWheelVelocity")
     public double getFlyWheelVelocity() {
         return flywheelVelocityFilter.getValue();
     }
 
-    @NT
+    @AutoLogOutput(key = "Shooter/HoodAngleSetpoint")
     public double getHoodAngleSetpoint() {
         return hoodAngleSetpoint.getAsDouble();
     }
 
-    @NT
+    @AutoLogOutput(key = "Shooter/HoodAngle")
     public double getHoodAngleSupplier() {
         return hoodAngleSupplier.getAsDouble();
     }
 
-    @NT
+    @AutoLogOutput(key = "Shooter/FlyWheelReady")
     public boolean flyWheelReadyTrigger() {
         return flyWheelReadyTrigger.getAsBoolean();
     }
 
-    @NT
+    @AutoLogOutput(key = "Shooter/HoodAdjusted")
     public boolean hoodAdjustedTrigger() {
         return hoodAdjustedTrigger.getAsBoolean();
     }

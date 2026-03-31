@@ -25,6 +25,18 @@ import frc.excalib.swerve.SwerveModule;
 public final class Constants {
     public static final Pose2d INITIAL_POSE = new Pose2d();
 
+    /** Selects the robot operating mode for AdvantageKit IO layer selection. */
+    public enum Mode {
+        /** Running on a real robot. */
+        REAL,
+        /** Running a physics simulator. */
+        SIM,
+        /** Replaying from a log file. */
+        REPLAY
+    }
+
+    public static final Mode CURRENT_MODE = Mode.REAL;
+
     public static final double PHYSICS_PERIODIC_TIME = 0.02;
     public static final int PRIMARY_CONTROLLER_PORT = 0;
     public static final int PDH_PORT = 1;

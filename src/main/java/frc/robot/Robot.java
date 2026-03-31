@@ -26,8 +26,8 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
  */
 public class Robot extends LoggedRobot {
     private Command autonomousCommand;
-    private RobotContainer robotContainer;
-    private PerformanceMetricsTracker performanceMetricsTracker;
+    private final RobotContainer robotContainer;
+    private final PerformanceMetricsTracker performanceMetricsTracker;
 
     public Robot() {
         // --- AdvantageKit Logger Setup ---

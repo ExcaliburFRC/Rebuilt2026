@@ -15,6 +15,18 @@ import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.transport.Transport;
 import frc.robot.subsystems.turret.Turret;
+import frc.robot.subsystems.intake.IntakeIO;
+import frc.robot.subsystems.intake.IntakeIOSim;
+import frc.robot.subsystems.intake.IntakeIOTalonFX;
+import frc.robot.subsystems.shooter.ShooterIO;
+import frc.robot.subsystems.shooter.ShooterIOSim;
+import frc.robot.subsystems.shooter.ShooterIOTalonFX;
+import frc.robot.subsystems.transport.TransportIO;
+import frc.robot.subsystems.transport.TransportIOSim;
+import frc.robot.subsystems.transport.TransportIOTalonFX;
+import frc.robot.subsystems.turret.TurretIO;
+import frc.robot.subsystems.turret.TurretIOSim;
+import frc.robot.subsystems.turret.TurretIOTalonFX;
 import frc.robot.util.Target;
 import monologue.Annotations.Log;
 import monologue.Logged;
@@ -38,16 +50,23 @@ public class Superstructure implements Logged {
     private Trigger deliveryTrigger;
 
     public Superstructure(Swerve swerve) {
-        intake = new Intake();
-        transport = new Transport();
+        // Select IO implementations based on the configured operating mode
+        boolean isReal = Constants.CURRENT_MODE == Constants.Mode.REAL;
+        IntakeIO intakeIO       = isReal ? new IntakeIOTalonFX()   : new IntakeIOSim();
+        TransportIO transportIO = isReal ? new TransportIOTalonFX() : new TransportIOSim();
+        TurretIO turretIO       = isReal ? new TurretIOTalonFX()   : new TurretIOSim();
+        ShooterIO shooterIO     = isReal ? new ShooterIOTalonFX()  : new ShooterIOSim();
+
+        intake    = new Intake(intakeIO);
+        transport = new Transport(transportIO);
 
         this.swerve = swerve;
 
         distanceTimeOfFlightMap = new InterpolatingDoubleTreeMap();
         initDistanceTimeOfFlightMap();
 
-        turret = new Turret(() -> getTurretToTargetVector(() -> currentTarget).get().getAngle().getRadians(), () -> swerve.getRotation2D().getRadians());
-        shooter = new Shooter(() -> getTurretToTargetVector(() -> currentTarget).get().getNorm(), swerve::getPose2D);
+        turret  = new Turret(turretIO, () -> getTurretToTargetVector(() -> currentTarget).get().getAngle().getRadians(), () -> swerve.getRotation2D().getRadians());
+        shooter = new Shooter(shooterIO, () -> getTurretToTargetVector(() -> currentTarget).get().getNorm(), swerve::getPose2D);
 
         turret.setDefaultCommand(turret.defaultCommand());
         shooter.setDefaultCommand(shooter.defaultCommand());

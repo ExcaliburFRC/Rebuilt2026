@@ -1,30 +1,30 @@
 package frc.robot.subsystems.turret;
 
-import com.ctre.phoenix6.hardware.CANcoder;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.excalib.control.motor.controllers.TalonFXMotor;
-import frc.excalib.control.motor.motor_specs.DirectionState;
-import frc.excalib.control.motor.motor_specs.IdleState;
+import frc.excalib.control.motor.controllers.Motor;
 import frc.robot.util.Target;
 import monologue.Annotations.Log;
 import monologue.Logged;
+import org.littletonrobotics.junction.AutoLogOutput;
+import org.littletonrobotics.junction.Logger;
 
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
-import static frc.robot.Constants.SUBSYSTEMS_CANBUS;
 import static frc.robot.subsystems.turret.TurretConstants.*;
 
 public class Turret extends SubsystemBase implements Logged {
-    public final TalonFXMotor turretMotor;
-    public final CANcoder turretEncoder;
+
+    private final TurretIO io;
+    private final TurretIOInputsAutoLogged inputs = new TurretIOInputsAutoLogged();
 
     public final frc.excalib.mechanisms.turret.Turret turretMechanism;
 
+    /** Reads encoder position from logged inputs for correct replay behaviour. */
     public final DoubleSupplier turretAngleSupplier;
 
     public final DoubleSupplier turretRelativeAngleToTarget;
@@ -33,26 +33,16 @@ public class Turret extends SubsystemBase implements Logged {
     public final Trigger isTurretAlligned;
     public Target turretTarget;
 
-    public Turret(DoubleSupplier turretRelativeAngleToTarget, DoubleSupplier robotAngleSupplier) {
-        turretMotor = new TalonFXMotor(TURRET_MOTOR_ID, SUBSYSTEMS_CANBUS);
-        turretEncoder = new CANcoder(TURRET_ENCODER_ID, SUBSYSTEMS_CANBUS);
-        turretEncoder.setPosition(turretEncoder.getAbsolutePosition().getValueAsDouble());
-        turretAngleSupplier = () -> turretEncoder.getPosition().getValueAsDouble() * ENCODER_POSITION_CONVERSION_FACTOR;
-        turretMotor.setMotorPosition(turretEncoder.getPosition().getValueAsDouble());
-
-        turretMotor.setCurrentLimit(120, 80);
+    public Turret(TurretIO io, DoubleSupplier turretRelativeAngleToTarget, DoubleSupplier robotAngleSupplier) {
+        this.io = io;
         this.turretRelativeAngleToTarget = turretRelativeAngleToTarget;
-        turretMotor.setInverted(DirectionState.REVERSE);
+        this.robotAngleSupplier = robotAngleSupplier;
         turretTarget = Target.HUB;
 
-        this.robotAngleSupplier = robotAngleSupplier;
-//      turretMotor.setMotorPosition(turretAngleSupplier.getAsDouble());
-        turretMotor.setPositionConversionFactor(MOTOR_POSITION_CONVERSION_FACTOR);
-        turretMotor.setVelocityConversionFactor(MOTOR_POSITION_CONVERSION_FACTOR);
+        // turretAngleSupplier reads from logged inputs so replay works correctly
+        turretAngleSupplier = () -> inputs.encoderPositionRotations * ENCODER_POSITION_CONVERSION_FACTOR;
 
-
-        turretMotor.setIdleState(IdleState.BRAKE);
-        turretMotor.setMotorPosition(turretAngleSupplier.getAsDouble());
+        Motor turretMotor = io.getTurretMotor();
 
         turretMechanism = new frc.excalib.mechanisms.turret.Turret(
                 turretMotor,
@@ -78,6 +68,12 @@ public class Turret extends SubsystemBase implements Logged {
                     return false;
                 }
         );
+    }
+
+    @Override
+    public void periodic() {
+        io.updateInputs(inputs);
+        Logger.processInputs("Turret", inputs);
     }
 
     public Command defaultCommand() {
@@ -122,21 +118,25 @@ public class Turret extends SubsystemBase implements Logged {
         return new InstantCommand(() -> turretTarget = Target.IDLE, this);
     }
 
+    @AutoLogOutput(key = "Turret/EncoderPositionRad")
     @Log.NT
     public double getEncoderPosition() {
         return turretAngleSupplier.getAsDouble();
     }
 
+    @AutoLogOutput(key = "Turret/Target")
     @Log.NT
     public String getTarget() {
         return turretTarget.name();
     }
 
+    @AutoLogOutput(key = "Turret/OnFieldAngleDeg")
     @Log.NT
     public double getTurretOnFieldAngle() {
         return Units.radiansToDegrees(robotAngleSupplier.getAsDouble() + (turretMechanism.getPosition().getRadians()) - Math.PI);
     }
 
+    @AutoLogOutput(key = "Turret/IsAligned")
     @Log.NT
     public boolean isTurretAlligned() {
         return isTurretAlligned.getAsBoolean();

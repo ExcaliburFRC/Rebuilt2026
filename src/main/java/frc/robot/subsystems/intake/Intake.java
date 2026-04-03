@@ -6,6 +6,7 @@ import frc.excalib.control.gains.Gains;
 import frc.excalib.control.limits.SoftLimit;
 import frc.excalib.control.math.physics.Mass;
 import frc.excalib.control.motor.controllers.Motor;
+import frc.excalib.control.motor.controllers.MotorGroup;
 import frc.excalib.mechanisms.Arm.Arm;
 import frc.excalib.mechanisms.Mechanism;
 import monologue.Annotations.Log;
@@ -28,6 +29,7 @@ public class Intake extends SubsystemBase implements Logged {
 
     public final Mechanism rollerMechanism;
     public final Arm fourBarMechanism;
+    private final MotorGroup armMotorGroup;
 
     public final SoftLimit intakeAngleLimit;
     public boolean isIntakeOpen = false;
@@ -44,22 +46,20 @@ public class Intake extends SubsystemBase implements Logged {
         // angleSupplier reads from logged inputs so replay works correctly
         angleSupplier = () -> inputs.angleEncoderAbsolutePositionRotations * (1.0 / 0.29);
 
-        Motor fourBarMotor = io.getFourBarMotor();
-        Motor rollerMotor = io.getRollerMotor();
+    Motor fourBarMotor = io.getFourBarMotor();
+    Motor rollerMotor = io.getRollerMotor();
 
-        rollerMotorMechanism = new Mechanism(rollerMotor);
+    rollerMechanism = new Mechanism(rollerMotor);
 
         intakeAngleLimit = new SoftLimit(() -> INTAKE_MIN_ANGLE, () -> INTAKE_MAX_ANGLE);
 
 
-        this.armMotorGroup = new MotorGroup(fourBarMotorLeft, fourBarMotorRight);
+    this.armMotorGroup = new MotorGroup(fourBarMotor);
 
-        this.armMotorGroup.setPositionConversionFactor(2 * Math.PI / 14.14);
-        this.armMotorGroup.setVelocityConversionFactor(2 * Math.PI / 14.14);
+    this.armMotorGroup.setPositionConversionFactor(2 * Math.PI / 14.14);
+    this.armMotorGroup.setVelocityConversionFactor(2 * Math.PI / 14.14);
 
-        this.armMotorGroup.setMotorPosition(Math.PI - 0.732601 - 0.159);
-
-        angleSupplier = armMotorGroup::getMotorPosition;
+    this.armMotorGroup.setMotorPosition(Math.PI - 0.732601 - 0.159);
 
 
         atPositionTrigger = new Trigger(() -> (Math.abs(currentState.angle - angleSupplier.getAsDouble()) < INTAKE_ANGLE_TOLERANCE));
@@ -153,19 +153,17 @@ public class Intake extends SubsystemBase implements Logged {
     }
 
     public Command defaultCommand() {
-        Command c = Commands.either(
-                Commands.idle(this),
-                fourBarMechanism.anglePositionControlCommand(
-                        () -> intakeAngleLimit.limit(currentState.radPosition),
-                        at -> {},
-                        MAX_OFFSET
-                ),
-                () -> currentState.equals(IDLE)
-        );
-
-                );
-        defaultCommand.addRequirements(this);
-        return defaultCommand;
+    Command c = Commands.either(
+        Commands.idle(this),
+        fourBarMechanism.anglePositionControlCommand(
+            () -> intakeAngleLimit.limit(currentState.radPosition),
+            at -> {},
+            MAX_OFFSET
+        ),
+        () -> currentState.equals(IDLE)
+    );
+    c.addRequirements(this);
+    return c;
     }
 
 

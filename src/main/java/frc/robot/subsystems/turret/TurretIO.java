@@ -2,7 +2,14 @@ package frc.robot.subsystems.turret;
 
 import frc.excalib.control.motor.controllers.Motor;
 import frc.robot.util.VoidMotor;
+import frc.robot.util.Target;
+import monologue.Annotations.Log;
+import monologue.Logged;
 import org.littletonrobotics.junction.AutoLog;
+import org.littletonrobotics.junction.AutoLogOutput;
+import org.littletonrobotics.junction.Logger;
+
+import java.util.function.DoubleSupplier;
 
 /**
  * Hardware abstraction interface for the Turret subsystem.

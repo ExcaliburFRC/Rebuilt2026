@@ -4,23 +4,14 @@
 
 package frc.robot;
 
-import com.ctre.phoenix6.CANBus;
-import com.ctre.phoenix6.hardware.CANcoder;
-import com.pathplanner.lib.config.PIDConstants;
-import com.pathplanner.lib.path.PathConstraints;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
 import frc.excalib.additional_utilities.AllianceUtils;
 import frc.excalib.control.gains.Gains;
-import frc.excalib.control.imu.IMU;
-import frc.excalib.control.imu.Pigeon;
-import frc.excalib.control.motor.controllers.TalonFXMotor;
-import frc.excalib.swerve.ModulesHolder;
-import frc.excalib.swerve.Swerve;
-import frc.excalib.swerve.SwerveModule;
+import com.pathplanner.lib.path.PathConstraints;
+import edu.wpi.first.wpilibj.RobotBase;
 
 public final class Constants {
     public static final Pose2d INITIAL_POSE = new Pose2d();
@@ -35,15 +26,14 @@ public final class Constants {
         REPLAY
     }
 
-    public static final Mode CURRENT_MODE = Mode.REAL;
+    public static final Mode CURRENT_MODE = RobotBase.isReal() ? Mode.REAL : Mode.SIM;
 
     public static final double PHYSICS_PERIODIC_TIME = 0.02;
     public static final int PRIMARY_CONTROLLER_PORT = 0;
     public static final int PDH_PORT = 1;
 
     public static final double CONTROLLER_DEADBAND = 0.09;
-
-    public static final CANBus SUBSYSTEMS_CANBUS = new CANBus("");
+    public static final com.ctre.phoenix6.CANBus SUBSYSTEMS_CANBUS = new com.ctre.phoenix6.CANBus("");
 
     public static class SwerveConstants
     {
@@ -58,7 +48,8 @@ public final class Constants {
         public static final int BACK_RIGHT_ROTATION_ID = 42;
 
         public static final int GYRO_ID = 2;
-        public static final CANBus SWERVE_CANBUS = new CANBus("SwerveCANivore");
+        public static final String SWERVE_CANBUS_NAME = "SwerveCANivore";
+        public static final com.ctre.phoenix6.CANBus SWERVE_CANBUS = new com.ctre.phoenix6.CANBus(SWERVE_CANBUS_NAME);
 
         private static final double PID_TOLERANCE = 0.01;
 
@@ -81,14 +72,16 @@ public final class Constants {
                         -TRACK_WIDTH / 2, -TRACK_WIDTH / 2
                 );
 
-        public static final double MAX_MODULE_VEL = 3.5;
-        public static final double MAX_VEL = 2.5;
+        public static final double WHEEL_RADIUS_METERS = 0.0508;
+        public static final double PIGEON_OFFSET = 0;
+        public static final double MAX_MODULE_VEL = 4;
+        public static final double MAX_VEL = 5;
 
         public static final double MAX_FRONT_ACC = 1;
         public static final double MAX_SIDE_ACC = 1;
         public static final double MAX_SKID_ACC = 1;
         public static final double MAX_FORWARD_ACC = 1;
-        public static final double MAX_OMEGA_RAD_PER_SEC = 1.5;
+        public static final double MAX_OMEGA_RAD_PER_SEC = 11.5;
         public static final double MAX_OMEGA_RAD_PER_SEC_SQUARE = 1;
 
         public static final PathConstraints MAX_PATH_CONSTRAINTS = new PathConstraints(
@@ -100,87 +93,25 @@ public final class Constants {
                 false
         );
 
-        public static final CANcoder FRONT_RIGHT_ABS_ENCODER = new CANcoder(11, SWERVE_CANBUS);
-        private static final CANcoder FRONT_LEFT_ABS_ENCODER = new CANcoder(21, SWERVE_CANBUS);
-        private static final CANcoder BACK_LEFT_ABS_ENCODER = new CANcoder(31, SWERVE_CANBUS);
-        private static final CANcoder BACK_RIGHT_ABS_ENCODER = new CANcoder(41, SWERVE_CANBUS);
+        public static final int FRONT_RIGHT_ABS_ENCODER_ID = 11;
+        public static final int FRONT_LEFT_ABS_ENCODER_ID = 21;
+        public static final int BACK_LEFT_ABS_ENCODER_ID = 31;
+        public static final int BACK_RIGHT_ABS_ENCODER_ID = 41;
 
-        private static final double VELOCITY_CONVERSION_FACTOR = Units.inchesToMeters(4) * Math.PI / 5.27;
-        private static final double POSITION_CONVERSION_FACTOR = Units.inchesToMeters(4) * Math.PI / 5.27;
-        private static final double ROTATION_VELOCITY_CONVERSION_FACTOR = (2 * Math.PI) / (26.09090909090909);
+        public static final double VELOCITY_CONVERSION_FACTOR = Units.inchesToMeters(4) * Math.PI / 5.27;
+        public static final double POSITION_CONVERSION_FACTOR = Units.inchesToMeters(4) * Math.PI / 5.27;
+        public static final double ROTATION_VELOCITY_CONVERSION_FACTOR = (2 * Math.PI) / (26.09090909090909);
 
-        public static final PIDConstants TRANSLATION_PID_PP_CONSTANTS = new PIDConstants(10.0, 0.0, 0.0); //TODO
-        public static final PIDConstants ANGLE_PID_PP_CONSTANTS = new PIDConstants(5.0, 0.0, 0.0);
-        public static final Gains ANGLE_PID_GAINS = new Gains();
-        public static final Gains TRANSLATION_PID_GAINS = new Gains();
-
-        private static final IMU GYRO = new Pigeon(GYRO_ID, SWERVE_CANBUS.getName(), new Rotation3d(0, 0, Math.PI / 2));
-
-        public static Swerve configureSwerve(Pose2d initialPose) {
-            return new Swerve(
-                    new ModulesHolder(
-                            new SwerveModule(
-                                    new TalonFXMotor(FRONT_LEFT_DRIVE_ID, SWERVE_CANBUS),
-                                    new TalonFXMotor(FRONT_LEFT_ROTATION_ID, SWERVE_CANBUS),
-                                    new Gains(5.2, 0, 0, 0, 0, 0, 0),
-                                    new Gains(0, 0, 0, 0.2, 2.008314, 0, 0),
-                                    PID_TOLERANCE,
-                                    FRONT_LEFT_TRANSLATION,
-                                    () -> FRONT_LEFT_ABS_ENCODER.getAbsolutePosition().getValueAsDouble() * 2 * Math.PI,
-                                    MAX_MODULE_VEL,
-                                    VELOCITY_CONVERSION_FACTOR,
-                                    POSITION_CONVERSION_FACTOR,
-                                    ROTATION_VELOCITY_CONVERSION_FACTOR,
-                                    false
-                            ),
-                            new SwerveModule(
-                                    new TalonFXMotor(FRONT_RIGHT_DRIVE_ID, SWERVE_CANBUS),
-                                    new TalonFXMotor(FRONT_RIGHT_ROTATION_ID, SWERVE_CANBUS),
-                                    new Gains(5.2, 0, 0, 0, 0, 0, 0),
-                                    new Gains(0, 0, 0, 0.2, 2.008314, 0, 0),
-                                    PID_TOLERANCE,
-                                    FRONT_RIGHT_TRANSLATION,
-                                    () -> FRONT_RIGHT_ABS_ENCODER.getAbsolutePosition().getValueAsDouble() * 2 * Math.PI,
-                                    MAX_MODULE_VEL,
-                                    VELOCITY_CONVERSION_FACTOR,
-                                    POSITION_CONVERSION_FACTOR,
-                                    ROTATION_VELOCITY_CONVERSION_FACTOR,
-                                    false
-                            ),
-                            new SwerveModule(
-                                    new TalonFXMotor(BACK_LEFT_DRIVE_ID, SWERVE_CANBUS),
-                                    new TalonFXMotor(BACK_LEFT_ROTATION_ID, SWERVE_CANBUS),
-                                    new Gains(5.2, 0, 0, 0, 0, 0, 0),
-                                    new Gains(0, 0, 0, 0.42, 2.1496566873600003, 0, 0),
-                                    PID_TOLERANCE,
-                                    BACK_LEFT_TRANSLATION,
-                                    () -> BACK_LEFT_ABS_ENCODER.getAbsolutePosition().getValueAsDouble() * 2 * Math.PI,
-                                    MAX_MODULE_VEL,
-                                    VELOCITY_CONVERSION_FACTOR,
-                                    POSITION_CONVERSION_FACTOR,
-                                    ROTATION_VELOCITY_CONVERSION_FACTOR,
-                                    false
-                            ),
-                            new SwerveModule(
-                                    new TalonFXMotor(BACK_RIGHT_DRIVE_ID, SWERVE_CANBUS),
-                                    new TalonFXMotor(BACK_RIGHT_ROTATION_ID, SWERVE_CANBUS),
-                                    new Gains(5.2, 0, 0, 0, 0, 0, 0),
-                                    new Gains(0, 0, 0, 0.42, 2.065 * 0.976, 0, 0),
-                                    PID_TOLERANCE,
-                                    BACK_RIGHT_TRANSLATION,
-                                    () -> BACK_RIGHT_ABS_ENCODER.getAbsolutePosition().getValueAsDouble() * 2 * Math.PI,
-                                    MAX_MODULE_VEL,
-                                    VELOCITY_CONVERSION_FACTOR,
-                                    POSITION_CONVERSION_FACTOR,
-                                    ROTATION_VELOCITY_CONVERSION_FACTOR,
-                                    false
-                            )),
-                    GYRO,
-                    initialPose
-            );
-        }
-
+        public static final com.pathplanner.lib.config.PIDConstants TRANSLATION_PID_PP_CONSTANTS = new com.pathplanner.lib.config.PIDConstants(10.0, 0.0, 0.0);
+        public static final com.pathplanner.lib.config.PIDConstants ANGLE_PID_PP_CONSTANTS = new com.pathplanner.lib.config.PIDConstants(5.0, 0.0, 0.0);
+        // Gains tuned for simulation with correct unit conversion chain
+        // ANGLE: Kp controls how fast modules steer to target angle (rad → V)
+        // TRANSLATION: Kp corrects velocity error, Kv provides feedforward (m/s → V)
+        //   Kv ≈ 12V / max_speed ≈ 12 / 6.0 ≈ 2.0
+        public static final Gains ANGLE_PID_GAINS = new Gains(3.0, 0.0, 0.05, 0.0, 0.0, 0.0, 0.0);
+        public static final Gains TRANSLATION_PID_GAINS = new Gains(0.8, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0);
     }
+
 
     public static class FieldConstants {
         // all the units of length are in meters
@@ -211,9 +142,9 @@ public final class Constants {
 
         public static final double FUEL_DIAMETER = 0.15;
 
-        public static double FRONT_TRENCH_SIDEX_LINE_DIST_METERS = 3.9624;
-        public static double BACK_TRENCH_SIDEX_LINE_DIST_METERS = 5.1;
-        public static double TRENCH_SIDEY_LINE_DIST_METERS = 1.5;
+        public static final double FRONT_TRENCH_SIDEX_LINE_DIST_METERS = 3.9624;
+        public static final double BACK_TRENCH_SIDEX_LINE_DIST_METERS = 5.1;
+        public static final double TRENCH_SIDEY_LINE_DIST_METERS = 1.5;
 
     }
 

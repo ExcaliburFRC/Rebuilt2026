@@ -22,6 +22,11 @@ public class Turret extends SubsystemBase implements Logged {
     private final TurretIO io;
     private final TurretIOInputsAutoLogged inputs = new TurretIOInputsAutoLogged();
 
+    @Log.NT
+    private double currentSetpoint = 0.0;
+    @Log.NT
+    private double currentWantedSetpoint = 0.0;
+
     public final frc.excalib.mechanisms.turret.Turret turretMechanism;
 
     /** Reads encoder position from logged inputs for correct replay behaviour. */
@@ -58,12 +63,12 @@ public class Turret extends SubsystemBase implements Logged {
                     if (turretTarget.equals(Target.IDLE)) {
                         return true;
                     } else if (turretTarget.equals(Target.HUB) || turretTarget.equals(Target.DELIVERY)) {
-                        return Math.abs(
-                                turretMechanism.getPosition().getRadians() -
-                                        SOFT_LIMIT.limit(
-                                                TURRET_CONTINUOUS_SOFTLIMIT.getSetpoint(
-                                                        turretAngleSupplier.getAsDouble(),
-                                                        turretRelativeAngleToTarget.getAsDouble()))) < PID_TOLERANCE;
+                        double current = turretMechanism.getPosition().getRadians();
+                        double target = SOFT_LIMIT.limit(
+                                TURRET_CONTINUOUS_SOFTLIMIT.getSetpoint(
+                                        turretAngleSupplier.getAsDouble(),
+                                        turretRelativeAngleToTarget.getAsDouble()));
+                        return edu.wpi.first.math.MathUtil.isNear(target, current, PID_TOLERANCE);
                     }
                     return false;
                 }
@@ -74,28 +79,34 @@ public class Turret extends SubsystemBase implements Logged {
     public void periodic() {
         io.updateInputs(inputs);
         Logger.processInputs("Turret", inputs);
+
+        if (turretTarget.equals(Target.IDLE)) {
+            turretMechanism.setVoltage(0);
+        } else if (!turretTarget.equals(Target.MANUAL)) {
+            double wanted = (turretTarget == Target.HUB || turretTarget == Target.DELIVERY) ? 
+                            turretRelativeAngleToTarget.getAsDouble() : 0.0;
+            currentWantedSetpoint = wanted;
+            double smart = TURRET_CONTINUOUS_SOFTLIMIT.getSetpoint(turretAngleSupplier.getAsDouble(), wanted);
+            currentSetpoint = SOFT_LIMIT.limit(smart);
+            turretMechanism.setPosition(Rotation2d.fromRadians(currentSetpoint));
+        }
+    }
+
+    public void setTargetAngle(double angleRadians) {
+        this.turretTarget = Target.MANUAL;
+        this.currentSetpoint = SOFT_LIMIT.limit(angleRadians);
+        turretMechanism.setPosition(Rotation2d.fromRadians(currentSetpoint));
     }
 
     public Command defaultCommand() {
-        Command c = new ConditionalCommand(
-                Commands.none(),
-                setPositionCommand(
-                        () -> Rotation2d.fromRadians(
-                                SOFT_LIMIT.limit(
-                                        TURRET_CONTINUOUS_SOFTLIMIT.getSetpoint(
-                                                turretAngleSupplier.getAsDouble(),
-                                                turretRelativeAngleToTarget.getAsDouble())
-                                )
-                        )
-                ),
-                () -> turretTarget.equals(Target.IDLE)
-        );
-        c.addRequirements(this);
-        return c;
+        return Commands.idle(this).withName("TurretDefaultCommand");
     }
 
     public Command setPositionCommand(Supplier<Rotation2d> position) {
-        return turretMechanism.setPositionCommand(position, this);
+        return Commands.sequence(
+                Commands.runOnce(() -> turretTarget = Target.MANUAL),
+                turretMechanism.setPositionCommand(position, this)
+        ).withName("TurretManualSetPosition");
     }
 
     public Command setPositionFieldRelativeCommand(Supplier<Rotation2d> angle) {
@@ -107,15 +118,15 @@ public class Turret extends SubsystemBase implements Logged {
     }
 
     public Command targetHubCommand() {
-        return new InstantCommand(() -> turretTarget = Target.HUB, this);
+        return Commands.runOnce(() -> turretTarget = Target.HUB, this);
     }
 
     public Command targetDeliveryCommand() {
-        return new InstantCommand(() -> turretTarget = Target.DELIVERY, this);
+        return Commands.runOnce(() -> turretTarget = Target.DELIVERY, this);
     }
 
     public Command idleCommand() {
-        return new InstantCommand(() -> turretTarget = Target.IDLE, this);
+        return Commands.runOnce(() -> turretTarget = Target.IDLE, this);
     }
 
     @AutoLogOutput(key = "Turret/EncoderPositionRad")

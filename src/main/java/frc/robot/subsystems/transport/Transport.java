@@ -35,6 +35,14 @@ public class Transport extends SubsystemBase implements Logged {
         return drumMechanism.manualCommand(output, this);
     }
 
+    public Command stopCommand() {
+        return drumMechanism.manualCommand(() -> 0.0, this);
+    }
+
+    public Command rollerManualCommand(double voltage) {
+        return drumMechanism.manualCommand(() -> voltage, this);
+    }
+
     public Command transportFuelCommand() {
         return drumMechanism.manualCommand(() -> TRANSPORT_FUEL_VOLTAGE, this);
     }

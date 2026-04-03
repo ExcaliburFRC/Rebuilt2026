@@ -10,7 +10,6 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.excalib.additional_utilities.LEDs;
 import frc.excalib.control.math.periodics.PeriodicScheduler;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
-import frc.excalib.additional_utilities.PerformanceMetricsTracker;
 import frc.robot.util.AuroraPoseGetter;
 import frc.robot.util.GameDataClient;
 import monologue.Monologue;
@@ -18,6 +17,7 @@ import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
+import frc.robot.util.TelemetryManager;
 
 /**
  * Main robot class that extends LoggedRobot.
@@ -27,7 +27,7 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 public class Robot extends LoggedRobot {
     private Command autonomousCommand;
     private final RobotContainer robotContainer;
-    private final PerformanceMetricsTracker performanceMetricsTracker;
+    private final TelemetryManager telemetryManager;
 
     public Robot() {
         // --- AdvantageKit Logger Setup ---
@@ -54,11 +54,11 @@ public class Robot extends LoggedRobot {
         Logger.start();
 
         // --- Robot Initialization ---
+        telemetryManager = new TelemetryManager();
         AuroraPoseGetter.periodic();
 
-        robotContainer = new RobotContainer();
+        robotContainer = new RobotContainer(telemetryManager);
 
-        performanceMetricsTracker = robotContainer.getPerformanceMetricsTracker();
         LEDs.getInstance().restoreLEDs();
 
         Monologue.setupMonologue(robotContainer, "Robot", false, false);
@@ -71,11 +71,12 @@ public class Robot extends LoggedRobot {
     @Override
     public void robotPeriodic() {
         // Record loop start time for performance tracking
-        performanceMetricsTracker.recordLoopStart();
+        telemetryManager.recordLoopStart();
 
         AuroraPoseGetter.periodic();
 
         GameDataClient.updateGameData();
+        telemetryManager.update();
         robotContainer.periodic();
         PeriodicScheduler.PERIOD.MILLISECONDS_20.run();
 
@@ -85,7 +86,7 @@ public class Robot extends LoggedRobot {
         Monologue.updateAll();
         TalonFXMotor.refreshAll();
 
-        performanceMetricsTracker.recordLoopEnd();
+        telemetryManager.recordLoopEnd();
     }
 
     @Override
@@ -114,7 +115,7 @@ public class Robot extends LoggedRobot {
             System.err.println("WARNING: No autonomous command selected!");
         }
 
-        performanceMetricsTracker.reset();
+        telemetryManager.getMetricsTracker().reset();
     }
 
     @Override
@@ -127,7 +128,7 @@ public class Robot extends LoggedRobot {
     @Override
     public void autonomousExit() {
         // Print performance summary after autonomous period
-        performanceMetricsTracker.printSummary();
+        telemetryManager.getMetricsTracker().printSummary();
     }
 
     /**
@@ -148,7 +149,7 @@ public class Robot extends LoggedRobot {
 
     @Override
     public void teleopExit() {
-        performanceMetricsTracker.printSummary();
+        telemetryManager.getMetricsTracker().printSummary();
     }
 
     /**

@@ -32,6 +32,8 @@ public class Intake extends SubsystemBase implements Logged {
     public final DoubleSupplier angleSupplier;
     public final Trigger atPositionTrigger;
     public IntakeState currentState;
+    private double targetAngle = 0;
+    private double rollerVoltage = 0;
 
     public Intake(IntakeIO io) {
         this.io = io;
@@ -59,6 +61,34 @@ public class Intake extends SubsystemBase implements Logged {
     public void periodic() {
         io.updateInputs(inputs);
         Logger.processInputs("Intake", inputs);
+
+        // Drive mechanisms based on state
+        if (currentState == CLOSE) {
+            targetAngle = INTAKE_MIN_ANGLE;
+            rollerVoltage = 0;
+        } else if (currentState == OPEN) {
+            targetAngle = INTAKE_MAX_ANGLE;
+            // rollerVoltage is managed separately
+        }
+
+        // Apply PID control for the arm
+        fourBarMechanism.setVoltage(
+            fourBarMechanism.getPIDForAngle(() -> intakeAngleLimit.limit(targetAngle))
+        );
+        rollerMotorMechanism.setVoltage(rollerVoltage);
+    }
+
+    public void setClosed() {
+        this.currentState = CLOSE;
+    }
+
+    public void setIntake() {
+        this.currentState = OPEN;
+        this.rollerVoltage = 7.0;
+    }
+
+    public void setRollerVoltage(double voltage) {
+        this.rollerVoltage = voltage;
     }
 
     public Command setAnglePosition(IntakeState targetPosition) {
@@ -68,7 +98,7 @@ public class Intake extends SubsystemBase implements Logged {
     public Command setPositionCommand(double angle) {
         return fourBarMechanism.goToAngleCommand(
                 intakeAngleLimit.limit(angle),
-                (at) -> at = false,
+                at -> {},
                 0
         );
     }
@@ -96,11 +126,11 @@ public class Intake extends SubsystemBase implements Logged {
     }
 
     public Command defaultCommand() {
-        Command c = new ConditionalCommand(
-                Commands.none(),
+        Command c = Commands.either(
+                Commands.idle(this),
                 fourBarMechanism.anglePositionControlCommand(
                         () -> intakeAngleLimit.limit(currentState.radPosition),
-                        at -> at = false,
+                        at -> {},
                         MAX_OFFSET
                 ),
                 () -> currentState.equals(IDLE)

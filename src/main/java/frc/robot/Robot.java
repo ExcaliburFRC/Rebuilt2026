@@ -5,60 +5,32 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj.Threads;
+import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.excalib.additional_utilities.LEDs;
 import frc.excalib.control.math.periodics.PeriodicScheduler;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
+import frc.excalib.additional_utilities.PerformanceMetricsTracker;
 import frc.robot.util.AuroraPoseGetter;
 import frc.robot.util.GameDataClient;
 import monologue.Monologue;
-import org.littletonrobotics.junction.LoggedRobot;
-import org.littletonrobotics.junction.Logger;
-import org.littletonrobotics.junction.networktables.NT4Publisher;
-import org.littletonrobotics.junction.wpilog.WPILOGWriter;
-import frc.robot.util.TelemetryManager;
 
 /**
- * Main robot class that extends LoggedRobot.
+ * Main robot class that extends TimedRobot.
  * Manages the overall robot initialization, periodic updates, and game mode transitions.
- * AdvantageKit's LoggedRobot handles the logging loop timing automatically.
  */
-public class Robot extends LoggedRobot {
+public class Robot extends TimedRobot {
     private Command autonomousCommand;
     private final RobotContainer robotContainer;
-    private final TelemetryManager telemetryManager;
+    private final PerformanceMetricsTracker performanceMetricsTracker;
 
     public Robot() {
-        // --- AdvantageKit Logger Setup ---
-        // Must be configured before any subsystems are instantiated.
-        Logger.recordMetadata("ProjectName", "Rebuilt2026");
-        Logger.recordMetadata("RuntimeType", getRuntimeType().toString());
-
-        switch (Constants.CURRENT_MODE) {
-            case REAL:
-                // Log to USB drive on the RoboRIO and publish over NT4
-                Logger.addDataReceiver(new WPILOGWriter());
-                Logger.addDataReceiver(new NT4Publisher());
-                break;
-            case SIM:
-                // Only publish over NT4 in sim
-                Logger.addDataReceiver(new NT4Publisher());
-                break;
-            case REPLAY:
-                // No receivers needed; replay source would be set separately
-                setUseTiming(false);
-                break;
-        }
-
-        Logger.start();
-
-        // --- Robot Initialization ---
-        telemetryManager = new TelemetryManager();
         AuroraPoseGetter.periodic();
 
-        robotContainer = new RobotContainer(telemetryManager);
+        robotContainer = new RobotContainer();
 
+        performanceMetricsTracker = robotContainer.getPerformanceMetricsTracker();
         LEDs.getInstance().restoreLEDs();
 
         Monologue.setupMonologue(robotContainer, "Robot", false, false);
@@ -71,12 +43,11 @@ public class Robot extends LoggedRobot {
     @Override
     public void robotPeriodic() {
         // Record loop start time for performance tracking
-        telemetryManager.recordLoopStart();
+        performanceMetricsTracker.recordLoopStart();
 
         AuroraPoseGetter.periodic();
 
         GameDataClient.updateGameData();
-        telemetryManager.update();
         robotContainer.periodic();
         PeriodicScheduler.PERIOD.MILLISECONDS_20.run();
 
@@ -86,7 +57,7 @@ public class Robot extends LoggedRobot {
         Monologue.updateAll();
         TalonFXMotor.refreshAll();
 
-        telemetryManager.recordLoopEnd();
+        performanceMetricsTracker.recordLoopEnd();
     }
 
     @Override
@@ -115,7 +86,7 @@ public class Robot extends LoggedRobot {
             System.err.println("WARNING: No autonomous command selected!");
         }
 
-        telemetryManager.getMetricsTracker().reset();
+        performanceMetricsTracker.reset();
     }
 
     @Override
@@ -128,7 +99,7 @@ public class Robot extends LoggedRobot {
     @Override
     public void autonomousExit() {
         // Print performance summary after autonomous period
-        telemetryManager.getMetricsTracker().printSummary();
+        performanceMetricsTracker.printSummary();
     }
 
     /**
@@ -149,7 +120,7 @@ public class Robot extends LoggedRobot {
 
     @Override
     public void teleopExit() {
-        telemetryManager.getMetricsTracker().printSummary();
+        performanceMetricsTracker.printSummary();
     }
 
     /**

@@ -18,11 +18,8 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.PrintCommand;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
+import edu.wpi.first.wpilibj2.command.*;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.excalib.additional_utilities.*;
 import frc.excalib.control.math.Vector2D;
 import frc.excalib.swerve.Swerve;
@@ -31,7 +28,7 @@ import frc.robot.subsystems.intake.IntakeStates;
 import frc.robot.superstructure.RobotState;
 import frc.robot.superstructure.Superstructure;
 import frc.robot.util.HubTimerSubsystem;
-import monologue.Annotations.Log.NT;
+import frc.robot.util.TelemetryManager;
 import monologue.Logged;
 
 import static frc.robot.Constants.*;
@@ -40,46 +37,41 @@ import static frc.robot.Constants.SwerveConstants.MAX_VEL;
 
 public class RobotContainer implements Logged {
 
-    // ===== System Constants =====
-    private static final double BATTERY_VOLTAGE_WARNING_THRESHOLD = 12.0; // Volts
-    private static final double BATTERY_VOLTAGE_HYSTERESIS = 0.5; // Volts (to prevent alert flickering)
+    private static final double CONTROLLER_DEADBAND = 0.09;
 
-    private final LoggablePS5Controller primary = new LoggablePS5Controller(PRIMARY_CONTROLLER_PORT);
+    private final CommandXboxController primary;
+    private final boolean isSim;
 
-    private final Swerve swerve = Constants.SwerveConstants.configureSwerve(Constants.INITIAL_POSE);
-    private final PowerDistribution powerDistributionHub = new PowerDistribution(PDH_PORT, PowerDistribution.ModuleType.kRev);
+    @monologue.Annotations.Log.NT
+    private final Swerve swerve = frc.robot.util.SwerveFactory.createSwerve(Constants.INITIAL_POSE);
 
     private final SendableChooser<String> autoChooser = new SendableChooser<>();
-    private final HubTimerSubsystem hubTimer = new HubTimerSubsystem();
+    // HubTimer removed as part of architecture cleanup
 
     private final LEDs leds = LEDs.getInstance();
+    @monologue.Annotations.Log.NT
+    private final Superstructure superstructure = new Superstructure(swerve);
+
+    private final TelemetryManager telemetryManager;
 
     // ===== Alerts =====
-    private final Alert primaryDisconnected = new Alert("Primary controller disconnected (port 0).", Alert.AlertType.kWarning);
     private final Alert autoNotChosen = new Alert("!!! AUTO NOT SET !!!", Alert.AlertType.kError);
-    private final Alert lowBatteryAlert = new Alert("Battery voltage is low", Alert.AlertType.kWarning);
-    private final Trigger lowBatteryTrigger = new Trigger(lowBatteryAlert::get);
-    private
-    Trigger shouldDeliverTrigger = new Trigger(()-> false);
 
-    private final NetworkTable table = NetworkTableInstance.getDefault().getTable("Tab1");
-    NetworkTableEntry flywheelVel = table.getEntry("flywheelVel");
-    NetworkTableEntry hoodAngle = table.getEntry("hoodAngle");
+    private final ControllerStateTracker primaryControllerTracker;
 
-    // ===== Vision System State =====
-    private boolean batteryLow = false;
 
-    //    private final RobotDiagnostics robotDiagnostics = new RobotDiagnostics(powerDistributionHub);
-    private final CANHealthMonitor canHealthMonitor = new CANHealthMonitor();
-    private final ControllerStateTracker primaryControllerTracker =
-            new ControllerStateTracker(primary.getHID(), "Primary Controller");
-    private final PerformanceMetricsTracker performanceMetricsTracker =
-            new PerformanceMetricsTracker();
-        private final Intake intake = new Intake();
-     private final Superstructure superstructure = new Superstructure(swerve, primary.R1(), primary.circle(), shouldDeliverTrigger);
-
-    public RobotContainer() {
-//        lowBatteryTrigger.onTrue(leds.setPattern(BLINKING, ORANGE.color).withInterruptBehavior(kCancelIncoming));
+    public RobotContainer(TelemetryManager telemetryManager) {
+        this.telemetryManager = telemetryManager;
+        this.isSim = edu.wpi.first.wpilibj.RobotBase.isSimulation();
+        primary = new CommandXboxController(PRIMARY_CONTROLLER_PORT);
+        primaryControllerTracker = new ControllerStateTracker(primary.getHID(), "Primary Controller");
+        if (this.isSim) {
+            // Simulator fallbacks (if any) go here
+        }
+        
+        new edu.wpi.first.wpilibj2.command.button.Trigger(telemetryManager::isBatteryLow)
+            .onTrue(leds.setPattern(frc.excalib.additional_utilities.LEDs.LEDPattern.BLINKING, frc.excalib.additional_utilities.Color.Colors.ORANGE.color)
+            .withInterruptBehavior(edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior.kCancelIncoming));
 
         flywheelVel.setDouble(0);
         hoodAngle.setDouble(0);
@@ -90,46 +82,24 @@ public class RobotContainer implements Logged {
     }
 
     private void configureBindings() {
-        // Driver Control
-
-        primary.options().onTrue(swerve.resetOdometryCommand(
-                new Pose2d(
-                        new Translation2d(
-                                FieldConstants.BLUE_HUB_CENTER_POSE.get().getX() - Units.inchesToMeters(22.5) - 0.69 / 2,
-                                FieldConstants.BLUE_HUB_CENTER_POSE.get().getY()),
-                        Rotation2d.kZero)
-        ).ignoringDisable(true));
-
-
-
-
-      //  primary.touchpad().onTrue(superstructure.coastCommand());
-
-//        primary.povUp().onTrue(
-//                swerve.driveToPoseWithOverrideCommand(
-//                        swerve.getPose2D().getY() > AllianceUtils.FIELD_WIDTH_METERS / 2
-//                                ? new Pose2d(10.63, 5.63, swerve.getRotation2D())
-//                                : new Pose2d(10.69, 2.51, swerve.getRotation2D()),
-//                        MAX_BUMP_CONSTRAINTS,
-//                        () -> true,
-//                        () -> new Vector2D(
-//                                applyDeadband(-primary.getLeftY()) * MAX_VEL,
-//                                applyDeadband(-primary.getLeftX()) * MAX_VEL),
-//                        () -> -applyDeadband(primary.getRightX()) * MAX_OMEGA_RAD_PER_SEC
-//                )
-//        );
-          primary.cross().onTrue((intake.setStateCommand((IntakeStates.CLOSE))));
-          primary.triangle().onTrue(intake.setStateCommand(IntakeStates.OPEN));
-
-          primary.square().onTrue(new InstantCommand(()->shouldDeliverTrigger = shouldDeliverTrigger.negate()));
+        // Driver Controls
+        primary.x().toggleOnTrue(superstructure.trackHubCommand().alongWith(new PrintCommand("X Button Pressed (Track)")));
+        primary.y().toggleOnTrue(superstructure.shootToHubCommand().alongWith(new PrintCommand("Y Button Pressed (Shoot)")));
+    
+        // Use both keyboard AND controller securely in simulation, or just controller on robot
         swerve.setDefaultCommand(
-                swerve.driveCommand(
-                        () -> new Vector2D(
-                                applyDeadband(-primary.getLeftY()) * MAX_VEL,
-                                applyDeadband(-primary.getLeftX()) * MAX_VEL),
-                        () -> -applyDeadband(primary.getRightX()) * MAX_OMEGA_RAD_PER_SEC,
-                        () -> true
-                ).unless(() -> DISABLE_SWERVE)
+            swerve.driveCommand(
+                () -> {
+                    double fwd = -applyDeadband(primary.getLeftY());
+                    double str = -applyDeadband(primary.getLeftX());
+                    return new Vector2D(fwd * MAX_VEL, str * MAX_VEL);
+                },
+                () -> {
+                    double rot = -applyDeadband(primary.getRightX());
+                    return rot * MAX_OMEGA_RAD_PER_SEC;
+                },
+                () -> true
+            )
         );
     }
 
@@ -163,29 +133,17 @@ public class RobotContainer implements Logged {
     }
 
     public void periodic() {
+        superstructure.periodic();
+        Pose2d visionPose = AuroraPoseGetter.getPose2d();
+        if (!visionPose.equals(new Pose2d())) {
+            swerve.m_odometry.addVisionMeasurement(AuroraPoseGetter.getPose2d(), edu.wpi.first.wpilibj.Timer.getFPGATimestamp());
+        }
 
-//        robotDiagnostics.update();
-//        canHealthMonitor.update();
         primaryControllerTracker.update();
-        primaryDisconnected.set(!DriverStation.isJoystickConnected(primary.getHID().getPort()));
 
         autoNotChosen.set(autoChooser.getSelected() == null ||
                 autoChooser.getSelected().equals("/ null Auto"));
-
-        double voltage = powerDistributionHub.getVoltage();
-        if (voltage < BATTERY_VOLTAGE_WARNING_THRESHOLD - BATTERY_VOLTAGE_HYSTERESIS) {
-            batteryLow = true;
-        } else if (voltage > BATTERY_VOLTAGE_WARNING_THRESHOLD + BATTERY_VOLTAGE_HYSTERESIS) {
-            batteryLow = false;
-        }
-        lowBatteryAlert.set(batteryLow);
-
-        performanceMetricsTracker.recordPowerConsumption(powerDistributionHub.getTotalPower());
-    }
-
-    public PerformanceMetricsTracker getPerformanceMetricsTracker() {
-        return performanceMetricsTracker;
-    }
+            }
 
     @NT
     public double getInterpolationFlywheelVel() {

@@ -1,6 +1,5 @@
 package frc.robot.subsystems.shooter;
 
-import com.ctre.phoenix6.hardware.CANcoder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
@@ -14,14 +13,14 @@ import frc.excalib.additional_utilities.LEDs;
 import frc.excalib.control.limits.SoftLimit;
 import frc.excalib.control.math.EMAFilter;
 import frc.excalib.control.math.periodics.PeriodicScheduler;
+import frc.excalib.control.motor.controllers.Motor;
 import frc.excalib.control.motor.controllers.MotorGroup;
-import frc.excalib.control.motor.controllers.TalonFXMotor;
-import frc.excalib.control.motor.motor_specs.DirectionState;
-import frc.excalib.control.motor.motor_specs.IdleState;
 import frc.excalib.mechanisms.Mechanism;
 import frc.excalib.mechanisms.fly_wheel.FlyWheel;
 import frc.excalib.mechanisms.turret.Turret;
 import monologue.Logged;
+import org.littletonrobotics.junction.AutoLogOutput;
+import org.littletonrobotics.junction.Logger;
 
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
@@ -30,19 +29,14 @@ import static frc.excalib.additional_utilities.AllianceUtils.FIELD_LENGTH_METERS
 import static frc.excalib.additional_utilities.AllianceUtils.FIELD_WIDTH_METERS;
 import static frc.robot.Constants.DISABLE_SUBSYSTEMS;
 import static frc.robot.Constants.FieldConstants.*;
-import static frc.robot.Constants.PhysicalConstants.TURRET_OFFSET_TRANSLATION;
-import static frc.robot.Constants.SUBSYSTEMS_CANBUS;
 import static frc.robot.subsystems.shooter.ShooterConstants.*;
-import static frc.robot.subsystems.shooter.ShooterStates.IDLE;
-import static frc.robot.subsystems.shooter.ShooterStates.LOOK_HUB;
-import static frc.robot.subsystems.shooter.TargetHeight.HIGH;
-import static monologue.Annotations.Log.*;
+import static frc.robot.util.Target.*;
 
 public class Shooter extends SubsystemBase implements Logged {
 
-    private final TalonFXMotor hoodMotor, flyWheelMotorTop, flyWheelMotorLow, turretMotor;
-    private final MotorGroup shooterMotorGroup;
-    private final CANcoder hoodEncoder, turretEncoder;
+    private final ShooterIO io;
+    private final ShooterIOInputsAutoLogged inputs = new ShooterIOInputsAutoLogged();
+
     private final PIDController angleController;
 
     public final Turret turretMechanism;
@@ -59,114 +53,73 @@ public class Shooter extends SubsystemBase implements Logged {
     private final SoftLimit hoodSoftLimit;
 
     private final Supplier<Pose2d> robotPositionSupplier;
-
     private final DoubleSupplier turretRelativeDistanceFromTarget;
 
-    public Supplier<Translation2d> turretToHubVector;
-
-    private DoubleSupplier flywheelVelocitySetpoint;
-    private DoubleSupplier hoodAngleSetpoint;
+    private double flywheelVelocitySetpoint = 0.0;
+    private double hoodAngleSetpoint = 0.0;
 
     private final EMAFilter flywheelVelocityFilter;
 
-    private final InterpolatingDoubleTreeMap highAngleDistanceMap;
-    private final InterpolatingDoubleTreeMap highVelocityDistanceMap;
-    private final InterpolatingDoubleTreeMap highDistanceTimeOfFlightMap;
+    private static final InterpolatingDoubleTreeMap ANGLE_DISTANCE_MAP = new InterpolatingDoubleTreeMap();
+    private static final InterpolatingDoubleTreeMap VELOCITY_DISTANCE_MAP = new InterpolatingDoubleTreeMap();
 
-    private final InterpolatingDoubleTreeMap lowAngleDistanceMap;
-    private final InterpolatingDoubleTreeMap lowVelocityDistanceMap;
-    private final InterpolatingDoubleTreeMap lowDistanceTimeOfFlightMap;
+    static {
+        ANGLE_DISTANCE_MAP.put(1.947, 0.0);
+        ANGLE_DISTANCE_MAP.put(2.58, 0.08);
+        ANGLE_DISTANCE_MAP.put(3.19, 0.13);
+        ANGLE_DISTANCE_MAP.put(3.48, 0.18);
+        ANGLE_DISTANCE_MAP.put(3.96, 0.225);
+        ANGLE_DISTANCE_MAP.put(4.0, 0.22);
+        ANGLE_DISTANCE_MAP.put(4.81, 0.32);
+        ANGLE_DISTANCE_MAP.put(5.07, 0.4);
+
+        VELOCITY_DISTANCE_MAP.put(1.948, 35.0);
+        VELOCITY_DISTANCE_MAP.put(2.58, 37.3);
+        VELOCITY_DISTANCE_MAP.put(3.19, 39.0);
+        VELOCITY_DISTANCE_MAP.put(3.48, 39.5);
+        VELOCITY_DISTANCE_MAP.put(3.96, 41.0);
+        VELOCITY_DISTANCE_MAP.put(4.0, 43.0);
+        VELOCITY_DISTANCE_MAP.put(4.81, 44.0);
+        VELOCITY_DISTANCE_MAP.put(5.07, 44.0);
+    }
 
     private final Trigger volatileTrenchHoodTrigger;
 
-    private final Trigger activateLedsTrigger;
-    private final Trigger flyWheelReadyTrigger;
-    private final Trigger hoodAdjustedTrigger;
-    public final Trigger isTurretAligned;
+    private Target shooterTarget = HUB;
+    private boolean shootingMode = false;
 
     public final Trigger shooterReady;
 
     private Supplier<ChassisSpeeds> swerveSpeeds;
 
-    public Shooter(Supplier<Pose2d> poseSupplier, Supplier<ChassisSpeeds> swerveSpeeds) {
-        hoodMotor = new TalonFXMotor(HOOD_MOTOR_ID, SUBSYSTEMS_CANBUS);
-        flyWheelMotorLow = new TalonFXMotor(FLYWHEEL_MOTOR_LOW_ID, SUBSYSTEMS_CANBUS);
-        flyWheelMotorTop = new TalonFXMotor(FLYWHEEL_MOTOR_TOP_ID, SUBSYSTEMS_CANBUS);
-        hoodEncoder = new CANcoder(HOOD_ENCODER_ID, SUBSYSTEMS_CANBUS);
+    public Shooter(ShooterIO io, DoubleSupplier turretRelativeDistanceFromTarget, Supplier<Pose2d> poseSupplier) {
+        this.io = io;
+        this.turretRelativeDistanceFromTarget = turretRelativeDistanceFromTarget;
 
-        this.swerveSpeeds = swerveSpeeds;
-        shooterMotorGroup = new MotorGroup(flyWheelMotorLow, flyWheelMotorTop);
-        shooterMotorGroup.setIdleState(IdleState.BRAKE);
-        shooterMotorGroup.setMotorPosition(0);
-        shooterMotorGroup.setVelocityConversionFactor((double) 40 / 48);
-        shooterMotorGroup.setPositionConversionFactor((double) 40 / 48);
+        Motor hoodMotor = io.getHoodMotor();
+        Motor flywheelMotorLow = io.getFlywheelMotorLow();
+        Motor flywheelMotorTop = io.getFlywheelMotorTop();
+        Motor transportMotor = io.getTransportMotor();
 
-        flyWheelMotorLow.setInverted(DirectionState.FORWARD);
-        flyWheelMotorTop.setInverted(DirectionState.FORWARD);
+        MotorGroup shooterMotorGroup = new MotorGroup(flywheelMotorLow, flywheelMotorTop);
 
-        currentState = LOOK_HUB;
-
-        flyWheelMotorTop.setCurrentLimit(120, 80);
-        flyWheelMotorLow.setCurrentLimit(120, 80);
-
-        turretMotor = new TalonFXMotor(TURRET_MOTOR_ID, SUBSYSTEMS_CANBUS);
-        turretEncoder = new CANcoder(TURRET_ENCODER_ID, SUBSYSTEMS_CANBUS);
-        turretEncoder.setPosition(turretEncoder.getAbsolutePosition().getValueAsDouble());
-        turretAngleSupplier = () -> turretEncoder.getPosition().getValueAsDouble() * ENCODER_POSITION_CONVERSION_FACTOR;
-        turretMotor.setMotorPosition(turretEncoder.getPosition().getValueAsDouble());
-
-        turretMotor.setCurrentLimit(120, 80);
-        this.turretRelativeAngleToTarget = () -> getTurretToTargetVector().get().getAngle().getRadians();
-        turretMotor.setInverted(DirectionState.REVERSE);
-
-        turretMotor.setIdleState(IdleState.BRAKE);
-        turretMotor.setMotorPosition(turretAngleSupplier.getAsDouble());
-        turretMotor.setPositionConversionFactor(MOTOR_POSITION_CONVERSION_FACTOR);
-        turretMotor.setVelocityConversionFactor(MOTOR_POSITION_CONVERSION_FACTOR);
-
-        turretMechanism = new frc.excalib.mechanisms.turret.Turret(
-                turretMotor,
-                TURRET_CONTINUOUS_SOFTLIMIT,
-                TURRET_GAINS,
-                PID_TOLERANCE,
-                turretMotor::getMotorPosition,
-                new TrapezoidProfile.Constraints(Math.PI * 2, Math.PI * 100)
-        );
-
-        isTurretAligned = new Trigger(
-                () -> Math.abs(
-                        turretMechanism.getPosition().getRadians() -
-                                SOFT_LIMIT.limit(
-                                        TURRET_CONTINUOUS_SOFTLIMIT.getSetpoint(
-                                                turretAngleSupplier.getAsDouble(),
-                                                turretRelativeAngleToTarget.getAsDouble()))) < PID_TOLERANCE
-
-        );
-
-        hoodEncoder.setPosition(hoodEncoder.getAbsolutePosition().getValueAsDouble());
-
-        highDistanceTimeOfFlightMap = new InterpolatingDoubleTreeMap();
+        // hoodAngleSupplier reads from logged inputs for proper replay
+        hoodAngleSupplier = () -> inputs.hoodEncoderPositionRotations * POSITION_CONVERSION_FACTOR;
 
         turretToHubVector = getTurretToTargetVector();
 
         angleController = new PIDController(HOOD_GAINS.kp, HOOD_GAINS.ki, HOOD_GAINS.kd);
         angleController.setTolerance(0.01);
 
-        hoodMotor.setIdleState(IdleState.BRAKE);
-        hoodMotor.setInverted(DirectionState.FORWARD);
-        hoodAngleSupplier = () -> (hoodEncoder.getPosition().getValueAsDouble() * POSITION_CONVERSION_FACTOR);
-
-        hoodMotor.setPositionConversionFactor(POSITION_CONVERSION_FACTOR * ((double) -0.208 / 1.497) * 1.0231);
-        hoodMotor.setMotorPosition(hoodAngleSupplier.getAsDouble());
-
-        flywheelVelocitySetpoint = () -> 0;
-        hoodAngleSetpoint = () -> 0;
-        hoodMotor.setIdleState(IdleState.COAST);
+        flywheelVelocitySetpoint = 0;
+        hoodAngleSetpoint = 0;
 
         flyWheelMechanism = new FlyWheel(shooterMotorGroup, FLYWHEEL_MAX_ACCELERATION, FLYWHEEL_MAX_JERK, FLYWHEEL_GAINS);
+        transportMechanism = new Mechanism(transportMotor);
+        hoodMechanism = new Mechanism(hoodMotor);
 
         flywheelVelocityFilter = new EMAFilter(
-                flyWheelMechanism::getVelocity,
+                () -> inputs.flywheelVelocityRotPerSec,
                 0.05,
                 PeriodicScheduler.PERIOD.MILLISECONDS_20);
 
@@ -175,31 +128,30 @@ public class Shooter extends SubsystemBase implements Logged {
 
         robotPositionSupplier = poseSupplier;
 
-        highAngleDistanceMap = new InterpolatingDoubleTreeMap();
-        initAngleMap();
+        flyWheelReadyTrigger = new Trigger(
+                () -> Math.abs(flywheelVelocityFilter.getValue() - flywheelVelocitySetpoint) < FLYWHEEL_TOLERANCE);
 
-        highVelocityDistanceMap = new InterpolatingDoubleTreeMap();
-        initVelocityMap();
-
-        lowAngleDistanceMap = new InterpolatingDoubleTreeMap();
-        lowDistanceTimeOfFlightMap = new InterpolatingDoubleTreeMap();
-        lowVelocityDistanceMap = new InterpolatingDoubleTreeMap();
-
-        flyWheelReadyTrigger = new Trigger(() -> Math.abs(flywheelVelocityFilter.getValue() - flywheelVelocitySetpoint.getAsDouble()) < FLYWHEEL_TOLERANCE);
-
-        hoodAdjustedTrigger = new Trigger(() -> Math.abs(hoodAngleSupplier.getAsDouble() - hoodAngleSetpoint.getAsDouble()) < HOOD_TOLERANCE);
+        hoodAdjustedTrigger = new Trigger(
+                () -> Math.abs(hoodAngleSupplier.getAsDouble() - hoodAngleSetpoint) < HOOD_TOLERANCE);
 
         activateLedsTrigger = new Trigger(() -> flyWheelMechanism.getVelocity() > 3);
         activateLedsTrigger.onTrue(LEDs.getInstance().setPattern(LEDs.LEDPattern.BLINKING, Color.Colors.ORANGE.color).andThen(LEDs.getInstance().restoreLEDs()));
 
-        volatileTrenchHoodTrigger = new Trigger(() -> {
-            Pose2d pose = poseSupplier.get();
-            if (AllianceUtils.isBlueAlliance()) {
-                return (pose.getX() > FRONT_TRENCH_SIDEX_LINE_DIST_METERS && pose.getY() < TRENCH_SIDEY_LINE_DIST_METERS) && (pose.getX() < BACK_TRENCH_SIDEX_LINE_DIST_METERS);
-            } else {
-                return (pose.getX() < FIELD_LENGTH_METERS - FRONT_TRENCH_SIDEX_LINE_DIST_METERS && pose.getY() > FIELD_WIDTH_METERS - TRENCH_SIDEY_LINE_DIST_METERS) && (pose.getX() > FIELD_LENGTH_METERS - BACK_TRENCH_SIDEX_LINE_DIST_METERS);
-            }
-        });
+        volatileTrenchHoodTrigger = new Trigger(
+                () -> {
+                    Pose2d pose = poseSupplier.get();
+                    if (AllianceUtils.isBlueAlliance()) {
+                        return isWithinBounds(pose.getX(), pose.getY(), 
+                                FRONT_TRENCH_SIDEX_LINE_DIST_METERS, BACK_TRENCH_SIDEX_LINE_DIST_METERS, 
+                                -Double.MAX_VALUE, TRENCH_SIDEY_LINE_DIST_METERS);
+                    } else {
+                        return isWithinBounds(pose.getX(), pose.getY(), 
+                                FIELD_LENGTH_METERS - BACK_TRENCH_SIDEX_LINE_DIST_METERS, 
+                                FIELD_LENGTH_METERS - FRONT_TRENCH_SIDEX_LINE_DIST_METERS, 
+                                FIELD_WIDTH_METERS - TRENCH_SIDEY_LINE_DIST_METERS, Double.MAX_VALUE);
+                    }
+                }
+        );
 
         hoodMechanism = new Mechanism(hoodMotor);
 
@@ -225,180 +177,51 @@ public class Shooter extends SubsystemBase implements Logged {
         setDefaultCommand(defaultCommand().unless(() -> DISABLE_SUBSYSTEMS));
     }
 
-    private void initDistanceTimeOfFlightMap() {
-        highDistanceTimeOfFlightMap.put(0.0, 0.0); //v0
-        highDistanceTimeOfFlightMap.put(1.626, 0.746); //v0
-        highDistanceTimeOfFlightMap.put(2.04, 1.038); //v0
-        highDistanceTimeOfFlightMap.put(2.277, 1.116); //v0
-        highDistanceTimeOfFlightMap.put(2.321, 1.1433); //v0
-        highDistanceTimeOfFlightMap.put(2.595, 1.178); //v0
-        highDistanceTimeOfFlightMap.put(2.672, 1.166); //v0
-        highDistanceTimeOfFlightMap.put(2.87, 1.21); //v0
-        highDistanceTimeOfFlightMap.put(3.038, 1.144); //v0
-        highDistanceTimeOfFlightMap.put(3.419, 1.452); //v0
-        highDistanceTimeOfFlightMap.put(3.5, 1.165); //v0
+    @Override
+    public void periodic() {
+        io.updateInputs(inputs);
+        Logger.processInputs("Shooter", inputs);
+
+        if (shooterTarget == HUB) {
+            double distance = turretRelativeDistanceFromTarget.getAsDouble();
+            flywheelVelocitySetpoint = VELOCITY_DISTANCE_MAP.get(distance);
+            hoodAngleSetpoint = hoodSoftLimit.limit(ANGLE_DISTANCE_MAP.get(distance));
+        } else if (shooterTarget == DELIVERY) {
+            // Add delivery specific setpoints if needed
+        }
+
+        if (shootingMode && shooterTarget != IDLE) {
+            flyWheelMechanism.setDynamicVelocity(flywheelVelocitySetpoint);
+            hoodMechanism.setVoltage(getPIDForAngle(() -> hoodAngleSetpoint));
+            transportMechanism.setVoltage(TRANSPORT_VOLTAGE);
+        } else {
+            flyWheelMechanism.setVoltage(0);
+            hoodMechanism.setVoltage(0);
+            transportMechanism.setVoltage(0);
+        }
     }
 
-    public void initAngleMap() {
-        highAngleDistanceMap.put(0.0, 0.0);
-        highAngleDistanceMap.put(2.041, 0.0);
-        highAngleDistanceMap.put(2.359, 0.0);
-        highAngleDistanceMap.put(2.538, 0.0);
-        highAngleDistanceMap.put(2.816, 0.05);
-        highAngleDistanceMap.put(2.995, 0.1);
-        highAngleDistanceMap.put(3.293, 0.15);
-        highAngleDistanceMap.put(3.53, 0.175);
-        highAngleDistanceMap.put(3.695, 0.2);
-        highAngleDistanceMap.put(3.98, 0.3);
-        highAngleDistanceMap.put(4.215, 0.3);
-        highAngleDistanceMap.put(4.42, 0.3);
-        highAngleDistanceMap.put(4.66, 0.3);
-        highAngleDistanceMap.put(4.83, 0.3);
-        highAngleDistanceMap.put(5.303, 0.4);
-        highAngleDistanceMap.put(5.49, 0.4);
-        highAngleDistanceMap.put(5.798, 0.46);
-        highAngleDistanceMap.put(6.0, 0.5);
-        highAngleDistanceMap.put(6.334, 0.52);
-        highAngleDistanceMap.put(6.738, 0.56);
-        highAngleDistanceMap.put(7.658, 0.56);
+    public void setTarget(Target target) {
+        this.shooterTarget = target;
     }
 
-    public void initVelocityMap() {
-//          velocityDistanceMapTable.put(distance[meters], flywheel velocity);
-        highVelocityDistanceMap.put(0.0, 0.0);
-        highVelocityDistanceMap.put(2.041, 33.0);
-        highVelocityDistanceMap.put(2.359, 36.0);
-        highVelocityDistanceMap.put(2.538, 37.5);
-        highVelocityDistanceMap.put(2.816, 37.5);
-        highVelocityDistanceMap.put(2.995, 38.0);
-        highVelocityDistanceMap.put(3.293, 38.0);
-        highVelocityDistanceMap.put(3.53, 38.5);
-        highVelocityDistanceMap.put(3.695, 39.0);
-        highVelocityDistanceMap.put(3.98, 39.5);
-        highVelocityDistanceMap.put(4.215, 40.0);
-        highVelocityDistanceMap.put(4.42, 41.0);
-        highVelocityDistanceMap.put(4.66, 43.0);
-        highVelocityDistanceMap.put(4.82, 44.5);
-        highVelocityDistanceMap.put(5.303, 44.75);
-        highVelocityDistanceMap.put(5.49, 45.0);
-        highVelocityDistanceMap.put(5.798, 46.0);
-        highVelocityDistanceMap.put(6.0, 47.1);
-        highVelocityDistanceMap.put(6.334, 49.0);
-        highVelocityDistanceMap.put(6.738, 49.5);
-        highVelocityDistanceMap.put(7.65, 53.0);
+    public void setShootingMode(boolean shooting) {
+        this.shootingMode = shooting;
     }
 
-    private void initLowMaps() {
-        lowAngleDistanceMap.put(2.0, 1.0);
-        lowAngleDistanceMap.put(3.0, 1.0);
-        lowAngleDistanceMap.put(4.0, 0.925);
-        lowAngleDistanceMap.put(5.0, 0.874);
-        lowAngleDistanceMap.put(6.0, 0.841);
-        lowAngleDistanceMap.put(7.0, 0.819);
-        lowAngleDistanceMap.put(8.0, 0.802);
-        lowAngleDistanceMap.put(9.0, 0.789);
-        lowAngleDistanceMap.put(10.0, 0.779);
-
-        lowVelocityDistanceMap.put(2.0, 13.25247);
-        lowVelocityDistanceMap.put(3.0, 15.852848);
-        lowVelocityDistanceMap.put(4.0, 18.51587);
-        lowVelocityDistanceMap.put(5.0, 20.92826);
-        lowVelocityDistanceMap.put(6.0, 23.09001);
-        lowVelocityDistanceMap.put(7.0, 25.063791);
-        lowVelocityDistanceMap.put(8.0, 26.91224);
-        lowVelocityDistanceMap.put(9.0, 28.635382);
-        lowVelocityDistanceMap.put(10.0, 30.26452);
-
-        lowDistanceTimeOfFlightMap.put(2.0, 0.64);
-        lowDistanceTimeOfFlightMap.put(3.0, 0.72);
-        lowDistanceTimeOfFlightMap.put(4.0, 0.84);
-        lowDistanceTimeOfFlightMap.put(5.0, 0.96);
-        lowDistanceTimeOfFlightMap.put(6.0, 1.06);
-        lowDistanceTimeOfFlightMap.put(7.0, 1.15);
-        lowDistanceTimeOfFlightMap.put(8.0, 1.24);
-        lowDistanceTimeOfFlightMap.put(9.0, 1.32);
-        lowDistanceTimeOfFlightMap.put(10.0, 1.39);
+    public void setManualSetpoints(double velocity, double angle) {
+        this.flywheelVelocitySetpoint = velocity;
+        this.hoodAngleSetpoint = angle;
     }
 
-    public Command setStateCommand(ShooterStates stateToSet) {
-        return new InstantCommand(() -> this.currentState = stateToSet);
-    }
-
-    public Command setTurretPositionCommand(Supplier<Rotation2d> position) {
-        return turretMechanism.setPositionCommand(position);
+    public void setIdle() {
+        this.shooterTarget = IDLE;
+        this.shootingMode = false;
     }
 
 
-    public Command defaultCommand() {
-        Command defaultCommand = new ConditionalCommand(
-                new ParallelCommandGroup(
-                        setHoodAngleCommand(() -> 0),
-                        flyWheelMechanism.setDynamicVelocityCommand(() -> {
-                            flywheelVelocitySetpoint = () -> 0;
-                            return 0;
-                        }),
-                        setTurretPositionCommand(Rotation2d::new)
-                ).until(() -> !this.currentState.equals(IDLE)),
-                new ParallelCommandGroup(
-                        setAdjustedHoodAngleCommand(),
-                        adjustFlyWheelVelocityCommand(),
-                        setAdjustedTurretAngle()
-                ).until(() -> this.currentState.equals(IDLE)),
-                () -> this.currentState.equals(IDLE));
-        defaultCommand.addRequirements(this);
-        return defaultCommand;
-
-    }
-
-    public Command setAdjustedTurretAngle() {
-        return setTurretPositionCommand(() -> getTurretToTargetVector().get().getAngle());
-    }
-
-
-    public Supplier<Translation2d> getTurretToTargetVector() {
-        return () -> {
-
-            ChassisSpeeds robotSpeeds = swerveSpeeds.get();
-
-            Pose2d robotPose = robotPositionSupplier.get();
-            Rotation2d robotRot = robotPose.getRotation();
-
-            Translation2d turretField =
-                    getTurretOnField().getTranslation();
-
-            Translation2d fieldVector =
-                    currentState.targetTranslation.minus(turretField);
-
-
-            Translation2d turretToTarget = fieldVector.rotateBy(robotRot.unaryMinus());
-
-            return turretToTarget;
-//            Translation2d virtualTargetOffset = new Translation2d(
-//                    robotSpeeds.vxMetersPerSecond
-//                            - TURRET_OFFSET_TRANSLATION.getY() * robotSpeeds.omegaRadiansPerSecond,
-//
-//                    robotSpeeds.vyMetersPerSecond
-//                            + TURRET_OFFSET_TRANSLATION.getX() * robotSpeeds.omegaRadiansPerSecond
-//            ).times(getInterpolatingTimeOfFlightMap().get(turretToTarget.getNorm()));
-//
-//
-//            Translation2d virtualTurretToTarget = turretToTarget.minus(virtualTargetOffset);
-//            return virtualTurretToTarget;
-        };
-    }
-
-
-    @NT
-    public Pose2d getTurretOnField() {
-        Pose2d robotPose = robotPositionSupplier.get();
-        Translation2d robotTranslation = robotPose.getTranslation();
-        Rotation2d robotRot = robotPose.getRotation();
-
-        // turret position in field coordinates
-        Translation2d turretField =
-                robotTranslation.plus(TURRET_OFFSET_TRANSLATION.rotateBy(robotRot));
-
-        return new Pose2d(turretField, robotPositionSupplier.get().getRotation().minus(turretMechanism.getPosition().unaryMinus()));
+    private static boolean isWithinBounds(double x, double y, double minX, double maxX, double minY, double maxY) {
+        return x > minX && x < maxX && y > minY && y < maxY;
     }
 
     public Command setHoodAngleCommand(DoubleSupplier angleSetpoint) {
@@ -406,18 +229,99 @@ public class Shooter extends SubsystemBase implements Logged {
     }
 
 
-    public Command adjustFlyWheelVelocityCommand() {
-        return flyWheelMechanism.setDynamicVelocityCommand(
+    public Command setAdjustedFlyWheelVelocity() {
+        return Commands.run(
                 () -> {
                     double distance = turretRelativeDistanceFromTarget.getAsDouble();
-                    double velocity = currentState.isShooting ? getInterpolatingVelocityMap().get(distance) : 0;
-                    flywheelVelocitySetpoint = () -> velocity;
-                    return velocity;
+                    double velocity = VELOCITY_DISTANCE_MAP.get(distance);
+                    flywheelVelocitySetpoint = velocity;
+                    flyWheelMechanism.setDynamicVelocity(velocity);
                 }
         );
     }
 
-    public Command setAdjustedHoodAngleCommand() {
+    public Command setAdjustedHoodAngle() {
+        return Commands.run(
+                () -> {
+                    double distance = turretRelativeDistanceFromTarget.getAsDouble();
+                    hoodAngleSetpoint = hoodSoftLimit.limit(ANGLE_DISTANCE_MAP.get(distance));
+                    hoodMechanism.setVoltage(
+                            getPIDForAngle(
+                                    () -> hoodAngleSetpoint
+                            )
+                    );
+                }
+        );
+    }
+
+    public Command setAdjustedTransportBehavior() {
+//        return Commands.either(
+//                transportMechanism.manualCommand(() -> TRANSPORT_VOLTAGE),
+//                transportMechanism.manualCommand(() -> 0),
+//                () -> shootingMode
+//        );
+        return transportMechanism.manualCommand(() -> TRANSPORT_VOLTAGE);
+    }
+
+    public Command defaultCommand() {
+        Command c = Commands.either(
+                idleCommand(),
+                Commands.parallel(
+                        setAdjustedFlyWheelVelocity(),
+                        setAdjustedHoodAngle(),
+                        setAdjustedTransportBehavior()
+                ),
+                () -> shooterTarget.equals(IDLE)
+        );
+        c.addRequirements(this);
+        return c;
+    }
+
+    public double getPIDForAngle(DoubleSupplier angleSetpoint) {
+        return angleController.calculate(inputs.hoodMotorPositionConverted, angleSetpoint.getAsDouble());
+    }
+
+
+    public Command setTargetCommand(Target targetToSet) {
+        return Commands.runOnce(() -> shooterTarget = targetToSet, this);
+    }
+
+    public Command turnOnShootingCommand() {
+        return Commands.runOnce(() -> shootingMode = true);
+    }
+
+    public Command turnOffShootingCommand() {
+        return Commands.runOnce(() -> shootingMode = false);
+    }
+
+    public Command shootToHubCommand() {
+        return Commands.startEnd(
+                () -> {
+                    shooterTarget = HUB;
+                    shootingMode = true;
+                },
+                () -> {
+                    shooterTarget = IDLE;
+                    shootingMode = false;
+                }
+        );
+    }
+
+    public Command trackHubCommand() {
+        return Commands.startEnd(
+                () -> CommandScheduler.getInstance().schedule(setTargetCommand(HUB)),
+                () -> CommandScheduler.getInstance().schedule(setTargetCommand(IDLE))
+        );
+    }
+
+    public Command shootToDeliveryCommand() {
+        return Commands.startEnd(
+                () -> CommandScheduler.getInstance().schedule(setTargetCommand(DELIVERY).andThen(turnOnShootingCommand())),
+                () -> CommandScheduler.getInstance().schedule(setTargetCommand(IDLE).andThen(turnOffShootingCommand()))
+        );
+    }
+
+    public Command idleCommand() {
         return new RunCommand(() -> {
             double distance = turretRelativeDistanceFromTarget.getAsDouble();
             hoodAngleSetpoint = () -> hoodSoftLimit.limit(getInterpolatingAngleMap().get(distance));
@@ -434,80 +338,34 @@ public class Shooter extends SubsystemBase implements Logged {
         return pid + Math.signum(pid) * -0.25;
     }
 
-
-    @NT
+    @AutoLogOutput(key = "Shooter/FlyWheelVelocitySetpoint")
     public double getFlyWheelVelocitySetpoint() {
-        return flywheelVelocitySetpoint.getAsDouble();
+        return flywheelVelocitySetpoint < 0.01 ? 0 : flywheelVelocitySetpoint;
     }
 
-    @NT
+    @AutoLogOutput(key = "Shooter/FlyWheelVelocity")
     public double getFlyWheelVelocity() {
         return flywheelVelocityFilter.getValue();
     }
 
-    @NT
+    @AutoLogOutput(key = "Shooter/HoodAngleSetpoint")
     public double getHoodAngleSetpoint() {
-        return hoodAngleSetpoint.getAsDouble();
+        return hoodAngleSetpoint;
     }
 
-    @NT
+    @AutoLogOutput(key = "Shooter/HoodAngle")
     public double getHoodAngleSupplier() {
         return hoodAngleSupplier.getAsDouble();
     }
 
-    @NT
+    @AutoLogOutput(key = "Shooter/FlyWheelReady")
     public boolean flyWheelReadyTrigger() {
         return flyWheelReadyTrigger.getAsBoolean();
     }
 
-    @NT
+    @AutoLogOutput(key = "Shooter/HoodAdjusted")
     public boolean hoodAdjustedTrigger() {
         return hoodAdjustedTrigger.getAsBoolean();
     }
 
-    @NT
-    public double getLimitedHoodAngle() {
-        return hoodSoftLimit.limit(hoodAngleSetpoint.getAsDouble());
-    }
-
-    @NT
-    public boolean volatileTrenchHoodTrigger() {
-        return volatileTrenchHoodTrigger.getAsBoolean();
-    }
-
-    @NT
-    public String getCurrentShooterState() {
-        return currentState.name();
-    }
-
-    public Trigger isShooterReady() {
-        return shooterReady;
-    }
-
-    @NT
-    public Pose2d getHubOnFieldAfterCalc() {
-        Pose2d turretOnField = getTurretOnField();
-        return new Pose2d(turretOnField.getTranslation().plus(turretToHubVector.get().rotateBy(robotPositionSupplier.get().getRotation())), new Rotation2d());
-    }
-
-    @NT
-    public double getDistanceFromHubTarget() {
-        return getTurretToTargetVector().get().getNorm();
-    }
-
-    public Command setFlyWheelVelocity(DoubleSupplier rps) {
-        return flyWheelMechanism.setDynamicVelocityCommand(rps);
-    }
-
-    public InterpolatingDoubleTreeMap getInterpolatingTimeOfFlightMap() {
-        return currentState.targetHeight.equals(HIGH) ? highDistanceTimeOfFlightMap : lowDistanceTimeOfFlightMap;
-    }
-
-    public InterpolatingDoubleTreeMap getInterpolatingVelocityMap() {
-        return currentState.targetHeight.equals(HIGH) ? highVelocityDistanceMap : lowVelocityDistanceMap;
-    }
-
-    public InterpolatingDoubleTreeMap getInterpolatingAngleMap() {
-        return currentState.targetHeight.equals(HIGH) ? highAngleDistanceMap : lowAngleDistanceMap;
-    }
 }

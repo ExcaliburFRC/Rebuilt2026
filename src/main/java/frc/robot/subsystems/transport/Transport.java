@@ -2,32 +2,45 @@ package frc.robot.subsystems.transport;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.excalib.control.motor.controllers.TalonFXMotor;
-import frc.excalib.mechanisms.Mechanism;
 import frc.excalib.mechanisms.fly_wheel.FlyWheel;
 import monologue.Logged;
+import org.littletonrobotics.junction.Logger;
 
 import java.util.function.DoubleSupplier;
 
-import static frc.robot.Constants.SUBSYSTEMS_CANBUS;
 import static frc.robot.subsystems.transport.TransportConstants.*;
 
 public class Transport extends SubsystemBase implements Logged {
     private static final double TRANSPORT_FUEL_VOLTAGE = -3.0;
-    private final TalonFXMotor drumMotor;
+
+    private final TransportIO io;
+    private final TransportIOInputsAutoLogged inputs = new TransportIOInputsAutoLogged();
+
     public FlyWheel drumMechanism;
 
-    public Transport() {
-        drumMotor = new TalonFXMotor(DRUM_MOTOR_ID, SUBSYSTEMS_CANBUS);
-        drumMechanism = new FlyWheel(drumMotor, MAX_ACCELERATION, MAX_JERK, GAINS);
+    public Transport(TransportIO io) {
+        this.io = io;
+        drumMechanism = new FlyWheel(io.getDrumMotor(), MAX_ACCELERATION, MAX_JERK, GAINS);
 
-        drumMotor.setCurrentLimit(120,70);
         setDefaultCommand(transportFuelCommand());
     }
 
+    @Override
+    public void periodic() {
+        io.updateInputs(inputs);
+        Logger.processInputs("Transport", inputs);
+    }
 
     public Command manualCommand(DoubleSupplier output) {
         return drumMechanism.manualCommand(output, this);
+    }
+
+    public Command stopCommand() {
+        return drumMechanism.manualCommand(() -> 0.0, this);
+    }
+
+    public Command rollerManualCommand(double voltage) {
+        return drumMechanism.manualCommand(() -> voltage, this);
     }
 
     public Command transportFuelCommand() {

@@ -1,7 +1,6 @@
 package frc.robot.subsystems.turret;
 
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -14,6 +13,8 @@ import org.littletonrobotics.junction.Logger;
 
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
+
+import frc.robot.subsystems.turret.TurretConstants.*;
 
 import static frc.robot.subsystems.turret.TurretConstants.*;
 
@@ -54,8 +55,8 @@ public class Turret extends SubsystemBase implements Logged {
                 TURRET_CONTINUOUS_SOFTLIMIT,
                 TURRET_GAINS,
                 PID_TOLERANCE,
-                this::getEncoderPosition,
-                new TrapezoidProfile.Constraints(Math.PI * 60, Math.PI * 100)
+                this::getEncoderPosition
+                // No SimConfig → real robot, physics not simulated here
         );
 
         isTurretAlligned = new Trigger(

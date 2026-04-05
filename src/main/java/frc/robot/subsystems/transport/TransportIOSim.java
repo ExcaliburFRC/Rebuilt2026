@@ -1,41 +1,46 @@
 package frc.robot.subsystems.transport;
 
 import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.math.system.plant.LinearSystemId;
-
-import edu.wpi.first.wpilibj.simulation.FlywheelSim;
+import frc.excalib.control.gains.Gains;
 import frc.excalib.control.motor.controllers.Motor;
 import frc.excalib.control.motor.controllers.SimMotor;
+import frc.excalib.mechanisms.fly_wheel.FlyWheel;
 
 /**
  * Simulated implementation of TransportIO.
+ *
+ * <p>Physics delegated to {@link FlyWheel.SimConfig} inside the mechanism.
+ * This class is thin — no WPILib sim code.
  */
 public class TransportIOSim implements TransportIO {
+
     private final SimMotor drumMotor = new SimMotor(TransportConstants.DRUM_MOTOR_ID);
 
-    private final FlywheelSim drumSim = new FlywheelSim(
-            LinearSystemId.createFlywheelSystem(DCMotor.getFalcon500(1), 0.01, 10.0),
-            DCMotor.getFalcon500(1),
-            10.0
-    );
+    /** Drum flywheel mechanism owns the FlywheelSim internally. */
+    private final FlyWheel drumMechanism;
 
-    private double drumSimPositionRaw = 0.0;
+    public TransportIOSim() {
+        drumMechanism = new FlyWheel(
+                drumMotor,
+                100, 0,
+                new Gains(),
+                new FlyWheel.SimConfig(
+                        DCMotor.getFalcon500(1),
+                        0.01,    // MOI (kg·m²)
+                        10.0     // gear ratio
+                )
+        );
+    }
 
     @Override
     public Motor getDrumMotor() { return drumMotor; }
 
     @Override
     public void updateInputs(TransportIOInputs inputs) {
-        drumSim.setInputVoltage(drumMotor.getAppliedVoltage());
-        drumSim.update(0.020);
+        drumMechanism.simulateStep(0.020);
 
-        double rotPerSec = drumSim.getAngularVelocityRadPerSec() / (2 * Math.PI);
-        drumSimPositionRaw += rotPerSec * 0.020;
-        drumMotor.setSimulatedState(drumSimPositionRaw, rotPerSec, drumSim.getCurrentDrawAmps());
-
-        inputs.drumMotorVelocityRotPerSec = rotPerSec;
-        inputs.drumMotorAppliedVolts = drumMotor.getAppliedVoltage();
-        inputs.drumMotorCurrentAmps = drumSim.getCurrentDrawAmps();
-        drumMotor.setSimulatedState(0, drumSim.getAngularVelocityRadPerSec(), drumSim.getCurrentDrawAmps());
+        inputs.drumMotorVelocityRotPerSec = drumMotor.getMotorVelocity();
+        inputs.drumMotorAppliedVolts      = drumMotor.getAppliedVoltage();
+        inputs.drumMotorCurrentAmps       = drumMechanism.getSimCurrentAmps();
     }
 }

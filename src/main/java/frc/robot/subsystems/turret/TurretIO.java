@@ -1,7 +1,7 @@
 package frc.robot.subsystems.turret;
 
 import frc.excalib.control.motor.controllers.Motor;
-import frc.robot.util.VoidMotor;
+import frc.excalib.control.motor.controllers.VoidMotor;
 import frc.robot.util.Target;
 import monologue.Annotations.Log;
 import monologue.Logged;

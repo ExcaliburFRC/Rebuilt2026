@@ -1,7 +1,7 @@
 package frc.robot.subsystems.transport;
 
 import frc.excalib.control.motor.controllers.Motor;
-import frc.robot.util.VoidMotor;
+import frc.excalib.control.motor.controllers.VoidMotor;
 import org.littletonrobotics.junction.AutoLog;
 
 /**

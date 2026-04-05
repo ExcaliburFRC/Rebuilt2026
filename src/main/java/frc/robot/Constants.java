@@ -48,8 +48,7 @@ public final class Constants {
         public static final int BACK_RIGHT_ROTATION_ID = 42;
 
         public static final int GYRO_ID = 2;
-        public static final String SWERVE_CANBUS_NAME = "SwerveCANivore";
-        public static final com.ctre.phoenix6.CANBus SWERVE_CANBUS = new com.ctre.phoenix6.CANBus(SWERVE_CANBUS_NAME);
+        public static final com.ctre.phoenix6.CANBus SWERVE_CANBUS = new com.ctre.phoenix6.CANBus("SwerveCANivore");
 
         private static final double PID_TOLERANCE = 0.01;
 

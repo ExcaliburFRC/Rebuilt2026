@@ -46,7 +46,7 @@ public class RobotContainer implements Logged {
 
     private final LoggablePS5Controller primary = new LoggablePS5Controller(PRIMARY_CONTROLLER_PORT);
 
-    private final Swerve swerve = Constants.SwerveConstants.configureSwerve(Constants.INITIAL_POSE);
+    public final Swerve swerve = Constants.SwerveConstants.configureSwerve(Constants.INITIAL_POSE);
     private final PowerDistribution powerDistributionHub = new PowerDistribution(PDH_PORT, PowerDistribution.ModuleType.kRev);
 
     private final SendableChooser<String> autoChooser = new SendableChooser<>();
@@ -60,7 +60,7 @@ public class RobotContainer implements Logged {
     private final Alert lowBatteryAlert = new Alert("Battery voltage is low", Alert.AlertType.kWarning);
     private final Trigger lowBatteryTrigger = new Trigger(lowBatteryAlert::get);
     private
-    Trigger shouldDeliverTrigger = new Trigger(()-> false);
+    Trigger shouldDeliverTrigger = new Trigger(() -> false);
 
     private final NetworkTable table = NetworkTableInstance.getDefault().getTable("Tab1");
     NetworkTableEntry flywheelVel = table.getEntry("flywheelVel");
@@ -75,8 +75,7 @@ public class RobotContainer implements Logged {
             new ControllerStateTracker(primary.getHID(), "Primary Controller");
     private final PerformanceMetricsTracker performanceMetricsTracker =
             new PerformanceMetricsTracker();
-        private final Intake intake = new Intake();
-     private final Superstructure superstructure = new Superstructure(swerve, primary.R1(), primary.circle(), shouldDeliverTrigger);
+    private final Superstructure superstructure = new Superstructure(swerve, primary.R1(), primary.circle(), shouldDeliverTrigger);
 
     public RobotContainer() {
 //        lowBatteryTrigger.onTrue(leds.setPattern(BLINKING, ORANGE.color).withInterruptBehavior(kCancelIncoming));
@@ -101,9 +100,7 @@ public class RobotContainer implements Logged {
         ).ignoringDisable(true));
 
 
-
-
-      //  primary.touchpad().onTrue(superstructure.coastCommand());
+        primary.touchpad().onTrue(superstructure.coastCommand());
 
 //        primary.povUp().onTrue(
 //                swerve.driveToPoseWithOverrideCommand(
@@ -118,10 +115,17 @@ public class RobotContainer implements Logged {
 //                        () -> -applyDeadband(primary.getRightX()) * MAX_OMEGA_RAD_PER_SEC
 //                )
 //        );
-          primary.cross().onTrue((intake.setStateCommand((IntakeStates.CLOSE))));
-          primary.triangle().onTrue(intake.setStateCommand(IntakeStates.OPEN));
 
-          primary.square().onTrue(new InstantCommand(()->shouldDeliverTrigger = shouldDeliverTrigger.negate()));
+        primary.cross().onTrue(new InstantCommand(() -> shouldDeliverTrigger = shouldDeliverTrigger.negate()));
+
+//        superstructure.shooter.setDefaultCommand(
+//                superstructure.shooter.yoavHatesThisCommandCommand(
+//                        () -> hoodAngle.getDouble(0),
+//                        () -> flywheelVel.getDouble(0)
+//
+//                )
+//        );
+
         swerve.setDefaultCommand(
                 swerve.driveCommand(
                         () -> new Vector2D(
@@ -150,7 +154,6 @@ public class RobotContainer implements Logged {
         NamedCommands.registerCommand("shoot", superstructure.setStateCommand(RobotState.NO_INTAKE_SHOOT_HUB).alongWith(new PrintCommand("shoot")));
         NamedCommands.registerCommand("intake", superstructure.setStateCommand(RobotState.INTAKE_AIM_HUB).alongWith(new PrintCommand("intake")));
     }
-
 
 
     public void setAutoChooser() {

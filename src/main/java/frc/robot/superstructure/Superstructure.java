@@ -21,9 +21,9 @@ import static frc.robot.superstructure.RobotState.*;
 public class Superstructure implements Logged {
     private RobotState currentRobotState;
 
-    private final Shooter shooter;
+    public final Shooter shooter;
     private final Transport transport;
-//    public final Intake intake;
+    public final Intake intake;
     private final LEDs leds;
 
     private final Trigger robotAtState, ourAllianceShiftActivate;
@@ -44,6 +44,7 @@ public class Superstructure implements Logged {
 
         shooter = new Shooter(swerve::getPose2D, swerve::getRobotRelativeSpeeds);
         transport = new Transport(()-> true);
+        intake = new Intake();
 //        intake = new Intake();
         leds = LEDs.getInstance();
 
@@ -53,26 +54,32 @@ public class Superstructure implements Logged {
 
         this.ourAllianceShiftActivate = new Trigger(ourAllianceShiftActivate);
 
-        inAllianceZone = new Trigger(
-                () -> {
-                    if (AllianceUtils.isBlueAlliance()) {
-                        return shooter.getTurretOnField().getTranslation().getX()
-                                < (4.02 - 0.2);
-                    }
-                    return shooter.getTurretOnField().getTranslation().getX()
-                            > (12.51 + 0.2);
-                }
+//        inAllianceZone = new Trigger(
+//                () -> {
+//                    if (AllianceUtils.isBlueAlliance()) {
+//                        return shooter.getTurretOnField().getTranslation().getX()
+//                                < (4.02 - 0.2);
+//                    }
+//                    return shooter.getTurretOnField().getTranslation().getX()
+//                            > (12.51 + 0.2);
+//                }
+//
+//        ); //tag 26 x
 
-        ); //tag 26 x
+        inAllianceZone = new Trigger(()-> true);
 
-        inIntermediateZone = new Trigger(
-                () -> {
-                    if (AllianceUtils.isBlueAlliance()){
-                        return shooter.getTurretOnField().getTranslation().getX() < (5.22 + 0.2);
-                    }
-                    return shooter.getTurretOnField().getTranslation().getX() > (11.3 - 0.2);
-                })
-                .and(inAllianceZone.negate());
+
+
+//        inIntermediateZone = new Trigger(
+//                () -> {
+//                    if (AllianceUtils.isBlueAlliance()){
+//                        return shooter.getTurretOnField().getTranslation().getX() < (5.22 + 0.2);
+//                    }
+//                    return shooter.getTurretOnField().getTranslation().getX() > (11.3 - 0.2);
+//                })
+//                .and(inAllianceZone.negate());
+
+        inIntermediateZone = new Trigger(()-> false);
 
         inNeutralZone = (inAllianceZone.or(inIntermediateZone)).negate();
 
@@ -88,7 +95,7 @@ public class Superstructure implements Logged {
 
         overBumpTrigger = inIntermediateZone.and(underTrenchTrigger.negate());
         intakeRequested = intakeButton;
-        this.shouldDeliver = shouldDeliver;
+        this.shouldDeliver = new Trigger(()-> false);
 
 //        LEDs.getInstance().setDefaultCommand();
 
@@ -171,8 +178,8 @@ public class Superstructure implements Logged {
         return new ParallelCommandGroup(
                 new InstantCommand(() -> currentRobotState = robotStateToSet),
                 shooter.setStateCommand(robotStateToSet.shooterState),
-                transport.setStateCommand(robotStateToSet.transportState)
-//                intake.setStateCommand(robotStateToSet.intakeState),
+                transport.setStateCommand(robotStateToSet.transportState),
+                intake.setStateCommand(robotStateToSet.intakeState)
         );
     }
 

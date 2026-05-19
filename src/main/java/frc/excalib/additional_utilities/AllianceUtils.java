@@ -6,6 +6,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.TimedRobot;
 
 import static edu.wpi.first.wpilibj.DriverStation.Alliance.Blue;
 
@@ -94,4 +95,29 @@ public class AllianceUtils {
         public Pose2d get() {
             return toAlliancePose(pose);
         }
-    }}
+    }
+
+    public static class AllianceTranslation {
+        private Translation2d translation2d;
+
+        public AllianceTranslation(double x, double y) {
+            this.translation2d = new Translation2d(x, y);
+        }
+
+        public AllianceTranslation() {
+            this.translation2d = new Translation2d();
+        }
+
+        public AllianceTranslation(Translation2d translation) {
+            this.translation2d = translation;
+        }
+
+        public Translation2d get() {
+            if (isBlueAlliance()) return this.translation2d;
+            return new Translation2d(
+                    FIELD_LENGTH_METERS - this.translation2d.getX(),
+                    FIELD_WIDTH_METERS - this.translation2d.getY());
+        }
+    }
+
+}

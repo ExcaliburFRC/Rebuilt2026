@@ -29,7 +29,7 @@ public final class Constants {
     public static final int PRIMARY_CONTROLLER_PORT = 0;
     public static final int PDH_PORT = 1;
 
-    public static final double CONTROLLER_DEADBAND = 0.09;
+    public static final double CONTROLLER_DEADBAND = 0.2;
     public static final boolean DISABLE_SUBSYSTEMS = false;
     public static final boolean DISABLE_SWERVE = false;
 
@@ -173,12 +173,12 @@ public final class Constants {
 
     public static class FieldConstants {
         // all the units of length are in meters
-        public static final AllianceUtils.AlliancePose BLUE_HUB_CENTER_POSE = new
-                AllianceUtils.AlliancePose(4.69115, 4.03, 0);
-        public static final AllianceUtils.AlliancePose DELIVERY_FAR_POSE = new
-                AllianceUtils.AlliancePose(2, 7.41, 0);
-        public static final AllianceUtils.AlliancePose DELIVERY_CLOSE_POSE = new
-                AllianceUtils.AlliancePose(2, 0.63, 0);
+        public static final AllianceUtils.AllianceTranslation BLUE_HUB_CENTER_POSE = new
+                AllianceUtils.AllianceTranslation(4.69115, 4.03);
+        public static final AllianceUtils.AllianceTranslation DELIVERY_FAR_POSE = new
+                AllianceUtils.AllianceTranslation(2, 7.41);
+        public static final AllianceUtils.AllianceTranslation DELIVERY_CLOSE_POSE = new
+                AllianceUtils.AllianceTranslation(2, 0.63);
         public static final AllianceUtils.AlliancePose NET_END_RIGHT_POSE = new
                 AllianceUtils.AlliancePose(4.62, 3.29, 0);
         public static final AllianceUtils.AlliancePose NET_END_LEFT_POSE = new

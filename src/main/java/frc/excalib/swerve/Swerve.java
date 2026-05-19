@@ -11,6 +11,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -24,6 +25,8 @@ import frc.excalib.control.gains.SysidConfig;
 import frc.excalib.control.imu.IMU;
 import frc.excalib.control.math.Vector2D;
 import frc.excalib.slam.mapper.Odometry;
+import frc.robot.LimelightHelpers;
+import frc.robot.util.TurretOffsetGetter;
 import monologue.Logged;
 import org.json.simple.parser.ParseException;
 
@@ -94,6 +97,7 @@ public class Swerve extends SubsystemBase implements Logged {
 
         initAutoBuilder();
         initElastic();
+
     }
 
     /**
@@ -496,10 +500,9 @@ public class Swerve extends SubsystemBase implements Logged {
         modules.periodic();
         field.setRobotPose(getPose2D());
         updateOdometry();
-        Pose2d arrPose = getAuroraPose2d();
-        if (!((arrPose.getX() == 0) && (arrPose.getY() == 0) && (arrPose.getRotation().getRadians() == 0))) {
-            m_odometry.resetOdometry(modules.getModulesPositions(), getAuroraPose2d());
-        }
+//        Pose2d arrPose = getAuroraPose2d();
+        var arrPose = LimelightHelpers.getBotPoseEstimate_wpiBlue("limelight-turret");
+        if (arrPose.tagCount >= 1 && !TurretOffsetGetter.instance.isFast()) m_odometry.addVisionMeasurement(turretToRobot(arrPose.pose), arrPose.timestampSeconds);
 
 
     }
@@ -536,7 +539,11 @@ public class Swerve extends SubsystemBase implements Logged {
         return auroraPose;
     }
 
-    ;
+    private Pose2d turretToRobot(Pose2d turretPose){
+        Rotation2d robotRot = turretPose.getRotation().minus(TurretOffsetGetter.instance.getTurretOffset());
+        Translation2d robotTranslation = turretPose.getTranslation().plus(new Translation2d(0.215,robotRot));
+        return new Pose2d(robotTranslation, robotRot);
+    }
 
     @Log.NT
     public boolean isAtPosition() {
@@ -556,6 +563,10 @@ public class Swerve extends SubsystemBase implements Logged {
     @Log.NT
     public boolean isAtAnglePosition() {
         return angleController.atSetpoint();
+    }
+    @Log.NT
+    public boolean sawTagRecently(){
+        return Timer.getFPGATimestamp() - m_odometry.getLastTimeStamp() < 2.5;
     }
 
 }

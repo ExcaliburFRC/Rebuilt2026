@@ -14,6 +14,7 @@ import frc.excalib.mechanisms.Mechanism;
 import monologue.Annotations.Log;
 import monologue.Logged;
 
+import java.sql.SQLOutput;
 import java.util.function.DoubleSupplier;
 
 import static frc.robot.Constants.SUBSYSTEMS_CANBUS;
@@ -98,15 +99,6 @@ public class Intake extends SubsystemBase implements Logged {
         );
     }
 
-
-    public Command turnOnRoller() {
-        return rollerManualCommand(() -> 2);
-    }
-
-    public Command turnOffRoller() {
-        return rollerManualCommand(() -> 0);
-    }
-
     public Command fowardIntake() {
         return fourBarMechanism.manualCommand(() -> 0.5, this);
     }
@@ -120,28 +112,25 @@ public class Intake extends SubsystemBase implements Logged {
         return isIntakeOpen;
     }
 
-    public Command rollerManualCommand(DoubleSupplier voltage) {
-        return rollerMechanism.manualCommand(voltage, this);
-    }
-
     public Command defaultCommand() {
         Command defaultCommand =
                 new ConditionalCommand(
                         new ParallelCommandGroup(
                                 rollerMechanism.manualCommand(() -> this.currentState.voltage),
-                                setPositionCommand(() -> currentState.angle)).until(()-> currentState.equals(PUMP)),
-                        new SequentialCommandGroup(
-                                rollerMechanism.manualCommand(() -> this.currentState.voltage),
-                                setPositionCommand(() -> 0.1).withTimeout(0.2),
-                                setPositionCommand(() -> 0.7).withTimeout(0.2)
-                        ).repeatedly().until(() -> !currentState.equals(PUMP)),
-                        () -> currentState.equals(PUMP)
-
+                                setPositionCommand(() -> currentState.angle)
+                        ).until(() -> currentState.equals(PUMP)),
+                        rollerMechanism.manualCommand(() -> this.currentState.voltage)
+                                .alongWith(
+                                        new SequentialCommandGroup(
+                                                setPositionCommand(() -> 2).withTimeout(0.5),
+                                                setPositionCommand(() -> 0).withTimeout(0.5))
+                                                .repeatedly())
+                                .until(() -> !currentState.equals(PUMP)),
+                        () -> !currentState.equals(PUMP)
                 );
         defaultCommand.addRequirements(this);
         return defaultCommand;
     }
-
 
     @Log.NT
     public boolean atPositionTrigger() {

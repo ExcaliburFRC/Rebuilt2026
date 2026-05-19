@@ -11,6 +11,7 @@ import java.util.function.Supplier;
 public class Odometry extends SwerveDrivePoseEstimator {
     private final Supplier<Rotation2d> m_YAW_SUPPLIER;
     private Pose2d m_robotPose;
+    private double lastTimeStamp;
 
     public Odometry(
             SwerveDriveKinematics swerveDrive,
@@ -35,5 +36,13 @@ public class Odometry extends SwerveDrivePoseEstimator {
 
     public void resetOdometry(SwerveModulePosition[] modulesPositions, Pose2d newInitialPose) {
         super.resetPosition(m_YAW_SUPPLIER.get(), modulesPositions, newInitialPose);
+    }
+    @Override
+    public void addVisionMeasurement(Pose2d visionPose, double timeStamp){
+        this.lastTimeStamp = timeStamp;
+        super.addVisionMeasurement(visionPose, timeStamp);
+    }
+    public double getLastTimeStamp(){
+        return this.lastTimeStamp;
     }
 }

@@ -500,7 +500,6 @@ public class Swerve extends SubsystemBase implements Logged {
         modules.periodic();
         field.setRobotPose(getPose2D());
         updateOdometry();
-//        Pose2d arrPose = getAuroraPose2d();
         var arrPose = LimelightHelpers.getBotPoseEstimate_wpiBlue("limelight-turret");
         if (arrPose.tagCount >= 1 && !TurretOffsetGetter.instance.isFast()) m_odometry.addVisionMeasurement(turretToRobot(arrPose.pose), arrPose.timestampSeconds);
 

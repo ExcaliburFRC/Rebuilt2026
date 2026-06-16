@@ -14,6 +14,7 @@ import frc.excalib.mechanisms.Mechanism;
 import monologue.Annotations.Log;
 import monologue.Logged;
 
+import java.sql.SQLOutput;
 import java.util.function.DoubleSupplier;
 
 import static frc.robot.Constants.SUBSYSTEMS_CANBUS;
@@ -71,17 +72,7 @@ public class Intake extends SubsystemBase implements Logged {
 
         atPositionTrigger = new Trigger(() -> (Math.abs(currentState.angle - angleSupplier.getAsDouble()) < INTAKE_ANGLE_TOLERANCE));
 
-        fourBarMechanism = new Arm(
-                this.armMotorGroup,
-                angleSupplier,
-                ARM_VELOCITY_LIMIT,
-                ARM_POSITION_GAINS,
-                new Mass(
-                        () -> Math.cos(angleSupplier.getAsDouble()),
-                        () -> Math.sin(angleSupplier.getAsDouble()),
-                        ARM_MASS
-                )
-        );
+        fourBarMechanism = new Arm(this.armMotorGroup, angleSupplier, ARM_VELOCITY_LIMIT, ARM_POSITION_GAINS, new Mass(() -> Math.cos(angleSupplier.getAsDouble()), () -> Math.sin(angleSupplier.getAsDouble()), ARM_MASS));
 
         setDefaultCommand(defaultCommand());
     }
@@ -91,20 +82,7 @@ public class Intake extends SubsystemBase implements Logged {
     }
 
     public Command setPositionCommand(DoubleSupplier angle) {
-        return fourBarMechanism.anglePositionControlCommand(
-                () -> intakeAngleLimit.limit(angle.getAsDouble()),
-                (at) -> at = false,
-                0
-        );
-    }
-
-
-    public Command turnOnRoller() {
-        return rollerManualCommand(() -> 2);
-    }
-
-    public Command turnOffRoller() {
-        return rollerManualCommand(() -> 0);
+        return fourBarMechanism.anglePositionControlCommand(() -> intakeAngleLimit.limit(angle.getAsDouble()), (at) -> at = false, 0);
     }
 
     public Command fowardIntake() {
@@ -120,28 +98,31 @@ public class Intake extends SubsystemBase implements Logged {
         return isIntakeOpen;
     }
 
-    public Command rollerManualCommand(DoubleSupplier voltage) {
-        return rollerMechanism.manualCommand(voltage, this);
-    }
-
     public Command defaultCommand() {
-        Command defaultCommand =
-                new ConditionalCommand(
-                        new ParallelCommandGroup(
-                                rollerMechanism.manualCommand(() -> this.currentState.voltage),
-                                setPositionCommand(() -> currentState.angle)).until(()-> currentState.equals(PUMP)),
-                        new SequentialCommandGroup(
-                                rollerMechanism.manualCommand(() -> this.currentState.voltage),
-                                setPositionCommand(() -> 0.1).withTimeout(0.2),
-                                setPositionCommand(() -> 0.7).withTimeout(0.2)
-                        ).repeatedly().until(() -> !currentState.equals(PUMP)),
-                        () -> currentState.equals(PUMP)
+        Command defaultCommand = new ConditionalCommand(
+                // Either Open or Close
+                basicGoToCommand().until(() -> currentState.equals(PUMP)),
 
-                );
+                // Pump
+                rollerMechanism.manualCommand(() -> this.currentState.voltage)
+                        .alongWith(pumpCommand())
+                        .until(() -> !currentState.equals(PUMP)),
+
+                () -> !currentState.equals(PUMP)
+        );
         defaultCommand.addRequirements(this);
         return defaultCommand;
     }
 
+    public Command pumpCommand() {
+        return new SequentialCommandGroup(
+                setPositionCommand(() -> 2).withTimeout(0.5), setPositionCommand(() -> 0).withTimeout(0.5)).repeatedly();
+    }
+
+    public Command basicGoToCommand(){
+        return rollerMechanism.manualCommand(() -> this.currentState.voltage)
+                .alongWith(setPositionCommand(() -> currentState.angle));
+    }
 
     @Log.NT
     public boolean atPositionTrigger() {

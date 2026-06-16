@@ -22,6 +22,7 @@ import frc.excalib.mechanisms.Mechanism;
 import frc.excalib.mechanisms.fly_wheel.FlyWheel;
 import frc.excalib.mechanisms.turret.Turret;
 import frc.robot.util.TurretOffsetGetter;
+import frc.robot.BallCounter;
 import monologue.Annotations;
 import monologue.Annotations.Log;
 import monologue.Logged;
@@ -71,6 +72,8 @@ public class Shooter extends SubsystemBase implements Logged {
     private DoubleSupplier hoodAngleSetpoint;
 
     private final EMAFilter flywheelVelocityFilter;
+
+    private final BallCounter ballCounter;
 
     private final InterpolatingDoubleTreeMap highAngleDistanceMap;
     private final InterpolatingDoubleTreeMap highVelocityDistanceMap;
@@ -173,6 +176,10 @@ public class Shooter extends SubsystemBase implements Logged {
                 0.05,
                 PeriodicScheduler.PERIOD.MILLISECONDS_20);
 
+        ballCounter = new BallCounter(
+                () -> flywheelVelocitySetpoint.getAsDouble(),
+                flywheelVelocityFilter::getValue
+        );
 
         PeriodicScheduler.PERIOD.MILLISECONDS_20.add(flywheelVelocityFilter);
 
@@ -505,5 +512,14 @@ public class Shooter extends SubsystemBase implements Logged {
         );
         command.addRequirements(this);
         return command;
+    }
+
+    @NT
+    public int getBallCount() {
+        return ballCounter.getBallCount();
+    }
+
+    public void resetBallCount() {
+        ballCounter.resetCount();
     }
 }

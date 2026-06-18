@@ -23,8 +23,6 @@ import frc.excalib.mechanisms.fly_wheel.FlyWheel;
 import frc.excalib.mechanisms.turret.Turret;
 import frc.robot.util.TurretOffsetGetter;
 import frc.robot.BallCounter;
-import monologue.Annotations;
-import monologue.Annotations.Log;
 import monologue.Logged;
 
 import java.util.function.DoubleSupplier;
@@ -241,21 +239,32 @@ public class Shooter extends SubsystemBase implements Logged {
     }
 
     private void initDistanceTimeOfFlightMap() {
-        highDistanceTimeOfFlightMap.put(0.0, 0.0); //v0
-//        highDistanceTimeOfFlightMap.put(1.626, 0.746); //v0
-//        highDistanceTimeOfFlightMap.put(2.04, 1.038); //v0
-//        highDistanceTimeOfFlightMap.put(2.277, 1.116); //v0
-//        highDistanceTimeOfFlightMap.put(2.321, 1.1433); //v0
-//        highDistanceTimeOfFlightMap.put(2.595, 1.178); //v0
-//        highDistanceTimeOfFlightMap.put(2.672, 1.166); //v0
-//        highDistanceTimeOfFlightMap.put(2.87, 1.21); //v0
-//        highDistanceTimeOfFlightMap.put(3.038, 1.144); //v0
-//        highDistanceTimeOfFlightMap.put(3.419, 1.452); //v0
-//        highDistanceTimeOfFlightMap.put(3.5, 1.165); //v0
+        // Populate empirical time-of-flight map for HIGH goal (fix A1/B1)
+        // The commented values were empirical measurements — restore them so the lead model runs.
+        highDistanceTimeOfFlightMap.put(0.0, 0.0);
+        highDistanceTimeOfFlightMap.put(1.626, 0.746);
+        highDistanceTimeOfFlightMap.put(2.04, 1.038);
+        highDistanceTimeOfFlightMap.put(2.277, 1.116);
+        highDistanceTimeOfFlightMap.put(2.321, 1.1433);
+        highDistanceTimeOfFlightMap.put(2.595, 1.178);
+        highDistanceTimeOfFlightMap.put(2.672, 1.166);
+        highDistanceTimeOfFlightMap.put(2.87, 1.21);
+        highDistanceTimeOfFlightMap.put(3.038, 1.144);
+        highDistanceTimeOfFlightMap.put(3.419, 1.452);
+        highDistanceTimeOfFlightMap.put(3.5, 1.165);
     }
 
     public void initAngleMap() {
-        highAngleDistanceMap.put(0.0, 0.0);
+        // Populate a basic HIGH hood-angle map so the hood moves with distance (fix A3)
+        // These values are initial entries — replace with tuned calibration values when available.
+        highAngleDistanceMap.put(1.77, 0.90);
+        highAngleDistanceMap.put(1.89, 0.92);
+        highAngleDistanceMap.put(2.08, 0.94);
+        highAngleDistanceMap.put(2.23, 0.96);
+        highAngleDistanceMap.put(2.45, 0.98);
+        highAngleDistanceMap.put(2.74, 1.00);
+        highAngleDistanceMap.put(2.83, 1.02);
+        highAngleDistanceMap.put(3.00, 1.04);
     }
 
     public void initVelocityMap() {
@@ -355,17 +364,19 @@ public class Shooter extends SubsystemBase implements Logged {
 
             Translation2d turretToTarget = fieldVector.rotateBy(robotRot.unaryMinus());
 
-            Translation2d virtualTargetOffset = new Translation2d(
-                    robotSpeeds.vxMetersPerSecond
-                            - TURRET_OFFSET_TRANSLATION.getY() * robotSpeeds.omegaRadiansPerSecond,
+            // Use a small fixed-point iteration to converge the (range <-> time-of-flight <-> lead) loop
+            // instead of a single lookup. This implements B1.
+            Translation2d aim = turretToTarget;
+            for (int i = 0; i < 3; i++) {
+                double tof = getInterpolatingTimeOfFlightMap().get(aim.getNorm());
+                Translation2d virtualTargetOffset = new Translation2d(
+                        robotSpeeds.vxMetersPerSecond - TURRET_OFFSET_TRANSLATION.getY() * robotSpeeds.omegaRadiansPerSecond,
+                        robotSpeeds.vyMetersPerSecond + TURRET_OFFSET_TRANSLATION.getX() * robotSpeeds.omegaRadiansPerSecond
+                ).times(tof);
+                aim = turretToTarget.minus(virtualTargetOffset);
+            }
 
-                    robotSpeeds.vyMetersPerSecond
-                            + TURRET_OFFSET_TRANSLATION.getX() * robotSpeeds.omegaRadiansPerSecond
-            ).times(getInterpolatingTimeOfFlightMap().get(turretToTarget.getNorm()));
-
-
-            Translation2d virtualTurretToTarget = turretToTarget.minus(virtualTargetOffset);
-            return virtualTurretToTarget;
+            return aim;
         };
     }
 
@@ -488,15 +499,15 @@ public class Shooter extends SubsystemBase implements Logged {
     }
 
     public InterpolatingDoubleTreeMap getInterpolatingTimeOfFlightMap() {
-        return currentState.targetHeight.equals(HIGH) ? highDistanceTimeOfFlightMap : highDistanceTimeOfFlightMap;
+        return currentState.targetHeight.equals(HIGH) ? highDistanceTimeOfFlightMap : lowDistanceTimeOfFlightMap;
     }
 
     public InterpolatingDoubleTreeMap getInterpolatingVelocityMap() {
-        return currentState.targetHeight.equals(HIGH) ? highVelocityDistanceMap : highVelocityDistanceMap;
+        return currentState.targetHeight.equals(HIGH) ? highVelocityDistanceMap : lowVelocityDistanceMap;
     }
 
     public InterpolatingDoubleTreeMap getInterpolatingAngleMap() {
-        return currentState.targetHeight.equals(HIGH) ? highAngleDistanceMap : highAngleDistanceMap;
+        return currentState.targetHeight.equals(HIGH) ? highAngleDistanceMap : lowAngleDistanceMap;
     }
 
     @NT

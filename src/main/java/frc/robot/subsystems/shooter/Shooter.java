@@ -22,7 +22,7 @@ import frc.excalib.mechanisms.Mechanism;
 import frc.excalib.mechanisms.fly_wheel.FlyWheel;
 import frc.excalib.mechanisms.turret.Turret;
 import frc.robot.util.TurretOffsetGetter;
-import frc.robot.BallCounter;
+import frc.robot.util.BallCounter;
 import monologue.Logged;
 
 import java.util.function.DoubleSupplier;
@@ -403,7 +403,7 @@ public class Shooter extends SubsystemBase implements Logged {
         return flyWheelMechanism.setDynamicVelocityCommand(
                 () -> {
                     double distance = turretRelativeDistanceFromTarget.getAsDouble();
-                    double velocity = currentState.isShooting ? getInterpolatingVelocityMap().get(distance) : 0;
+                    double velocity = currentState.isShooting ? getWantedVelocityForDistance(distance) : 0;
                     flywheelVelocitySetpoint = () -> velocity;
                     return velocity;
                 }
@@ -412,8 +412,26 @@ public class Shooter extends SubsystemBase implements Logged {
 
     public double getWantedVelocity(){
         double distance = turretRelativeDistanceFromTarget.getAsDouble();
-        double velocity = currentState.isShooting ? getInterpolatingVelocityMap().get(distance) : 0;
-        return velocity;
+        return currentState.isShooting ? getWantedVelocityForDistance(distance) : 0;
+    }
+
+    private double getWantedVelocityForDistance(double distance) {
+        double nominalVelocity = getInterpolatingVelocityMap().get(distance);
+        Translation2d turretToTarget = getTurretToTargetVector().get();
+        double range = turretToTarget.getNorm();
+        if (range < 1e-9) {
+            return nominalVelocity;
+        }
+
+        Translation2d unitToTarget = turretToTarget.div(range);
+        ChassisSpeeds robotSpeeds = swerveSpeeds.get();
+        Translation2d robotVelocity = new Translation2d(
+                robotSpeeds.vxMetersPerSecond - TURRET_OFFSET_TRANSLATION.getY() * robotSpeeds.omegaRadiansPerSecond,
+                robotSpeeds.vyMetersPerSecond + TURRET_OFFSET_TRANSLATION.getX() * robotSpeeds.omegaRadiansPerSecond
+        );
+
+        double radialVelocity = robotVelocity.getX() * unitToTarget.getX() + robotVelocity.getY() * unitToTarget.getY();
+        return nominalVelocity - radialVelocity;
     }
 
     public Command setAdjustedHoodAngleCommand() {

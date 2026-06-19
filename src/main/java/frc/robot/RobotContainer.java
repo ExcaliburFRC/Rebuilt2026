@@ -31,6 +31,7 @@ import frc.robot.subsystems.intake.IntakeStates;
 import frc.robot.superstructure.RobotState;
 import frc.robot.superstructure.Superstructure;
 import frc.robot.util.HubTimerSubsystem;
+import frc.robot.util.ShiftUtil;
 import monologue.Annotations.Log.NT;
 import monologue.Logged;
 
@@ -75,7 +76,7 @@ public class RobotContainer implements Logged {
             new ControllerStateTracker(primary.getHID(), "Primary Controller");
     private final PerformanceMetricsTracker performanceMetricsTracker =
             new PerformanceMetricsTracker();
-    private final Superstructure superstructure = new Superstructure(swerve, primary.R1(), primary.circle(), shouldDeliverTrigger);
+    private final Superstructure superstructure = new Superstructure(swerve, primary.R1(), new Trigger(ShiftUtil::isOwnHubActive), shouldDeliverTrigger);
 
     public RobotContainer() {
 //        lowBatteryTrigger.onTrue(leds.setPattern(BLINKING, ORANGE.color).withInterruptBehavior(kCancelIncoming));

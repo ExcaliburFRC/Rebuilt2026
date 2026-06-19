@@ -500,43 +500,8 @@ public class Swerve extends SubsystemBase implements Logged {
         modules.periodic();
         field.setRobotPose(getPose2D());
         updateOdometry();
-//        Pose2d arrPose = getAuroraPose2d();
         var arrPose = LimelightHelpers.getBotPoseEstimate_wpiBlue("limelight-turret");
         if (arrPose.tagCount >= 1 && !TurretOffsetGetter.instance.isFast()) m_odometry.addVisionMeasurement(turretToRobot(arrPose.pose), arrPose.timestampSeconds);
-
-
-    }
-
-    @Log.NT
-    public Pose2d getAuroraPose2d() {
-        Pose2d auroraPose = new Pose2d(
-                new Translation2d(
-                        NetworkTableInstance.getDefault().getTable("Aurora").getSubTable("robotPose").getEntry("x").getDouble(0),
-                        NetworkTableInstance.getDefault().getTable("Aurora").getSubTable("robotPose").getEntry("y").getDouble(0)
-                ),
-                new Rotation2d(NetworkTableInstance.getDefault().getTable("Aurora").getSubTable("robotPose").getEntry("yaw").getDouble(0)
-                )
-        );
-
-        return auroraPose;
-    }
-
-    @Log.NT
-    public Pose3d getAuroraPose3() {
-        Pose3d auroraPose = new Pose3d(
-                new Translation3d(
-                        NetworkTableInstance.getDefault().getTable("Aurora").getSubTable("robotPose").getEntry("x").getDouble(0),
-                        NetworkTableInstance.getDefault().getTable("Aurora").getSubTable("robotPose").getEntry("y").getDouble(0),
-                        NetworkTableInstance.getDefault().getTable("Aurora").getSubTable("robotPose").getEntry("z").getDouble(0)
-                ),
-                new Rotation3d(
-                        NetworkTableInstance.getDefault().getTable("Aurora").getSubTable("robotPose").getEntry("roll").getDouble(0),
-                        NetworkTableInstance.getDefault().getTable("Aurora").getSubTable("robotPose").getEntry("pitch").getDouble(0),
-                        NetworkTableInstance.getDefault().getTable("Aurora").getSubTable("robotPose").getEntry("yaw").getDouble(0)
-                )
-        );
-
-        return auroraPose;
     }
 
     private Pose2d turretToRobot(Pose2d turretPose){

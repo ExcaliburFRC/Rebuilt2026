@@ -12,8 +12,7 @@ import frc.excalib.additional_utilities.LEDs;
 import frc.excalib.control.math.periodics.PeriodicScheduler;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
 import frc.excalib.additional_utilities.PerformanceMetricsTracker;
-import frc.robot.util.AuroraPoseGetter;
-import frc.robot.util.GameDataClient;
+import frc.robot.util.ShiftUtil;
 import monologue.Monologue;
 
 /**
@@ -26,8 +25,6 @@ public class Robot extends TimedRobot {
     private final PerformanceMetricsTracker performanceMetricsTracker;
 
     public Robot() {
-        AuroraPoseGetter.periodic();
-
         robotContainer = new RobotContainer();
 
         performanceMetricsTracker = robotContainer.getPerformanceMetricsTracker();
@@ -45,9 +42,7 @@ public class Robot extends TimedRobot {
         // Record loop start time for performance tracking
         performanceMetricsTracker.recordLoopStart();
 
-        AuroraPoseGetter.periodic();
-
-        GameDataClient.updateGameData();
+        ShiftUtil.update();
         robotContainer.periodic();
         PeriodicScheduler.PERIOD.MILLISECONDS_20.run();
 
@@ -62,6 +57,7 @@ public class Robot extends TimedRobot {
 
     @Override
     public void disabledInit() {
+        ShiftUtil.reset();
     }
 
     @Override

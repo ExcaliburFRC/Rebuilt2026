@@ -1,6 +1,8 @@
 package frc.excalib.mechanisms.Arm;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -13,15 +15,15 @@ import frc.excalib.mechanisms.Mechanism;
 import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 
-/**
- * This class represents an Arm Mechanism
- */
 public class Arm extends Mechanism {
-    private final Mass m_mass;
-    private final PIDController PIDController;
-    public final DoubleSupplier ANGLE_SUPPLIER;
-    public final double m_kv, m_ks, m_kg;
-    public final SoftLimit velocityLimit;
+
+    private final Mass         m_mass;
+    private final PIDController m_pid;
+    public  final DoubleSupplier ANGLE_SUPPLIER;
+    public  final SoftLimit      velocityLimit;
+    public  final double         m_ks, m_kg, m_kv;
+
+    private static final double MAX_VOLTAGE = 12.0;
 
     public Arm(Motor motor,
                DoubleSupplier angleSupplier,
@@ -31,49 +33,46 @@ public class Arm extends Mechanism {
         super(motor);
         ANGLE_SUPPLIER = angleSupplier;
         this.velocityLimit = velocityLimit;
-        m_kg = gains.kg;
-        m_kv = gains.kv;
-        m_ks = gains.ks;
-        PIDController = new PIDController(gains.kp, gains.ki, gains.kd);
+        m_ks  = gains.ks;
+        m_kg  = gains.kg;
+        m_kv  = gains.kv;
+        m_pid = new PIDController(gains.kp, gains.ki, gains.kd);
         m_mass = mass;
     }
 
     /**
-     * @param setpointSupplier  the dynamic angle setpoint to go to (radians)
-     * @param toleranceConsumer gets updated if the measurement is at tolerance.
-     * @return a command that moves the arm to the specified dynamic setpoint.
+     * Moves the arm to a dynamic angle setpoint (radians).
+     *
+     * Control law:
+     *   1. Compute desired velocity from position error over one loop period.
+     *   2. Clamp velocity to the configured soft limit.
+     *   3. Apply static friction (ks), velocity (kv), and gravity (kg) feedforward.
+     *   4. Add PID correction.
+     *   5. Clamp total output to ±12 V.
      */
     public Command anglePositionControlCommand(
             DoubleSupplier setpointSupplier,
             Consumer<Boolean> toleranceConsumer,
-            double maxOffSet,
+            double maxOffset,
             SubsystemBase... requirements) {
-        final double dutyCycle = 0.02;
-        return new RunCommand(
-                () -> {
-                    double error = setpointSupplier.getAsDouble() - ANGLE_SUPPLIER.getAsDouble();
-                    double velocitySetpoint = error / dutyCycle;
 
-                    velocitySetpoint = velocityLimit.limit(velocitySetpoint);
-                    double phyOutput =
-                            m_ks * Math.signum(velocitySetpoint) +
-                                    m_kg * m_mass.getCenterOfMass().getX();
-                    double pid = PIDController.calculate(ANGLE_SUPPLIER.getAsDouble(), setpointSupplier.getAsDouble());
-                    double output = phyOutput + pid;
-//                    System.out.println("PID:  "+pid);
-//                    System.out.println("Angle:  " + ANGLE_SUPPLIER.getAsDouble());
-//                    System.out.println("Setpoint:  "+ setPointSupplier.getAsDouble());
-                    super.setVoltage(velocityLimit.limit(output));
-                    toleranceConsumer.accept(Math.abs(error) < maxOffSet);
-                }, requirements);
+        return new RunCommand(() -> {
+            double error           = setpointSupplier.getAsDouble() - ANGLE_SUPPLIER.getAsDouble();
+            double velocitySetpoint = velocityLimit.limit(error / TimedRobot.kDefaultPeriod);
+
+            double phyOutput = m_ks * Math.signum(velocitySetpoint)
+                             + m_kv * velocitySetpoint
+                             + m_kg * m_mass.getCenterOfMass().getX();
+
+            double pid    = m_pid.calculate(ANGLE_SUPPLIER.getAsDouble(), setpointSupplier.getAsDouble());
+            double output = MathUtil.clamp(phyOutput + pid, -MAX_VOLTAGE, MAX_VOLTAGE);
+
+            super.setVoltage(output);
+            toleranceConsumer.accept(Math.abs(error) < maxOffset);
+        }, requirements);
     }
 
-    /**
-     * @param angle             the angle setpoint to go to (radians)
-     * @param toleranceConsumer gets updated if the measurement is at tolerance.
-     * @return a command that moves the arm to the specified setpoint.
-     */
-    public Command goToAngleCommand(double angle, Consumer<Boolean> toleranceConsumer, double maxOffSet, SubsystemBase... requirements) {
-        return anglePositionControlCommand(() -> angle, toleranceConsumer, maxOffSet, requirements);
+    public Command goToAngleCommand(double angle, Consumer<Boolean> toleranceConsumer, double maxOffset, SubsystemBase... requirements) {
+        return anglePositionControlCommand(() -> angle, toleranceConsumer, maxOffset, requirements);
     }
 }

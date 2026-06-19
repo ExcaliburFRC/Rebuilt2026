@@ -5,7 +5,7 @@ import frc.excalib.control.motor.motor_specs.IdleState;
 
 public class MotorGroup implements Motor {
 
-    private Motor[] m_motors;
+    private final Motor[] m_motors;
 
     public MotorGroup(Motor... motors) {
         this.m_motors = motors;
@@ -13,134 +13,103 @@ public class MotorGroup implements Motor {
 
     @Override
     public void stopMotor() {
-        for (Motor motor : m_motors) {
-            motor.stopMotor();
-        }
+        for (Motor m : m_motors) m.stopMotor();
     }
 
     @Override
     public void setMotorVoltage(double voltage) {
-        for (Motor motor : m_motors) {
-            motor.setMotorVoltage(voltage);
-        }
+        for (Motor m : m_motors) m.setMotorVoltage(voltage);
     }
 
     @Override
     public void setPercentage(double percentage) {
-        for (Motor motor : m_motors) motor.setPercentage(percentage);
+        for (Motor m : m_motors) m.setPercentage(percentage);
     }
 
     @Override
     public void setFollower(int mainMotorID) {
-        for (Motor motor : m_motors) {
-            if (motor.getDeviceID() != mainMotorID) motor.setFollower(mainMotorID);
+        for (Motor m : m_motors) {
+            if (m.getDeviceID() != mainMotorID) m.setFollower(mainMotorID);
         }
     }
 
     @Override
     public void setIdleState(IdleState idleMode) {
-        for (Motor motor : m_motors) {
-            motor.setIdleState(idleMode);
-        }
-    }
-
-    @Override
-    public IdleState getIdleState() {
-        return m_motors[0].getIdleState();
-    }
-
-    @Override
-    public int getDeviceID() {
-        return m_motors.length > 0 ? m_motors[0].getDeviceID() : -1;
-    }
-
-    @Override
-    public double getMotorPosition() {
-        double totalPosition = 0;
-        for (Motor motor : m_motors) {
-            totalPosition += motor.getMotorPosition();
-        }
-        return totalPosition / m_motors.length;
-    }
-
-    @Override
-    public double getMotorVelocity() {
-        double totalVelocity = 0;
-        for (Motor motor : m_motors) {
-            totalVelocity += motor.getMotorVelocity();
-        }
-        return totalVelocity / m_motors.length;
-    }
-
-    @Override
-    public double getCurrent() {
-        double totalCurrent = 0;
-        for (Motor motor : m_motors) {
-            totalCurrent += motor.getCurrent();
-        }
-        return totalCurrent / m_motors.length;
-    }
-
-    @Override
-    public double getVoltage() {
-        double totalVoltage = 0;
-        for (Motor motor : m_motors) {
-            totalVoltage += motor.getVoltage();
-        }
-        return totalVoltage / m_motors.length;
-    }
-
-    @Override
-    public double getTemperature() {
-        double maxTemperature = Double.MIN_VALUE;
-        for (Motor motor : m_motors) {
-            double motorTemperature = motor.getTemperature();
-            if (motorTemperature > maxTemperature) {
-                maxTemperature = motorTemperature;
-            }
-        }
-        return maxTemperature;
+        for (Motor m : m_motors) m.setIdleState(idleMode);
     }
 
     @Override
     public void setSoftLimit(DirectionState directionState, float limit) {
-        for (Motor motor : m_motors) {
-            motor.setSoftLimit(directionState, limit);
-        }
+        for (Motor m : m_motors) m.setSoftLimit(directionState, limit);
     }
 
     @Override
     public void setInverted(DirectionState mode) {
-        for (Motor motor : m_motors) {
-            motor.setInverted(mode);
-        }
+        for (Motor m : m_motors) m.setInverted(mode);
     }
 
     @Override
     public void setPositionConversionFactor(double conversionFactor) {
-        for (Motor motor : m_motors) {
-            motor.setPositionConversionFactor(conversionFactor);
-        }
+        for (Motor m : m_motors) m.setPositionConversionFactor(conversionFactor);
     }
 
     @Override
     public void setVelocityConversionFactor(double conversionFactor) {
-        for (Motor motor : m_motors) {
-            motor.setVelocityConversionFactor(conversionFactor);
-        }
+        for (Motor m : m_motors) m.setVelocityConversionFactor(conversionFactor);
     }
 
     @Override
     public void setCurrentLimit(int stator, int supply) {
-        for (Motor motor : m_motors) {
-            motor.setCurrentLimit(stator, supply);
-        }
+        for (Motor m : m_motors) m.setCurrentLimit(stator, supply);
     }
 
     @Override
     public void setMotorPosition(double position) {
-        for (Motor motor : m_motors) {
-            motor.setMotorPosition(position);
-        }
+        for (Motor m : m_motors) m.setMotorPosition(position);
+    }
+
+    @Override public IdleState getIdleState()  { return m_motors[0].getIdleState(); }
+    @Override public int       getDeviceID()   { return m_motors.length > 0 ? m_motors[0].getDeviceID() : -1; }
+
+    @Override
+    public double getMotorPosition() {
+        double sum = 0;
+        for (Motor m : m_motors) sum += m.getMotorPosition();
+        return sum / m_motors.length;
+    }
+
+    @Override
+    public double getMotorVelocity() {
+        double sum = 0;
+        for (Motor m : m_motors) sum += m.getMotorVelocity();
+        return sum / m_motors.length;
+    }
+
+    @Override
+    public double getCurrent() {
+        double sum = 0;
+        for (Motor m : m_motors) sum += m.getCurrent();
+        return sum / m_motors.length;
+    }
+
+    @Override
+    public double getMotorStatorCurrent() {
+        double sum = 0;
+        for (Motor m : m_motors) sum += m.getMotorStatorCurrent();
+        return sum / m_motors.length;
+    }
+
+    @Override
+    public double getVoltage() {
+        double sum = 0;
+        for (Motor m : m_motors) sum += m.getVoltage();
+        return sum / m_motors.length;
+    }
+
+    @Override
+    public double getTemperature() {
+        double max = Double.MIN_VALUE;
+        for (Motor m : m_motors) max = Math.max(max, m.getTemperature());
+        return max;
     }
 }

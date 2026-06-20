@@ -6,6 +6,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.PrintCommand;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.excalib.control.math.Vector2D;
 import monologue.Logged;
@@ -126,8 +127,15 @@ public class ModulesHolder implements Logged {
      * @return A command to set the velocities.
      */
     public Command setVelocitiesCommand(Supplier<Vector2D> translationalVel, DoubleSupplier omega) {
-        DoubleSupplier ratioLimit = () -> calcVelocityRatioLimit(translationalVel.get(), omega.getAsDouble());
+        double[] cachedRatioLimit = {1.0};
+        // RunCommand is first so ParallelCommandGroup (LinkedHashMap insertion order) executes it
+        // before any module reads the cached value in the same tick.
+        Command updateCache = new RunCommand(
+                () -> cachedRatioLimit[0] = calcVelocityRatioLimit(translationalVel.get(), omega.getAsDouble())
+        );
+        DoubleSupplier ratioLimit = () -> cachedRatioLimit[0];
         return new ParallelCommandGroup(
+                updateCache,
                 m_frontLeft.setVelocityCommand(translationalVel, omega, ratioLimit),
                 m_frontRight.setVelocityCommand(translationalVel, omega, ratioLimit),
                 m_backLeft.setVelocityCommand(translationalVel, omega, ratioLimit),

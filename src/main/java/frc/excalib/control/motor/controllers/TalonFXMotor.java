@@ -3,10 +3,12 @@ package frc.excalib.control.motor.controllers;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.ClosedLoopRampsConfigs;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
-import com.ctre.phoenix6.controls.DutyCycleOut;
+import com.ctre.phoenix6.configs.OpenLoopRampsConfigs;
 import com.ctre.phoenix6.controls.Follower;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -39,6 +41,7 @@ public class TalonFXMotor extends TalonFX implements Motor {
         m_positionConversionFactor = 1;
         m_velocityConversionFactor = 1;
         setIdleState(IdleState.BRAKE);
+        applyRampRates(0.1, 0.05);
         poseSignal = super.getPosition();
         velocitySignal = super.getVelocity();
         currentSignal = super.getSupplyCurrent();
@@ -64,6 +67,7 @@ public class TalonFXMotor extends TalonFX implements Motor {
         m_positionConversionFactor = 1;
         m_velocityConversionFactor = 1;
         setIdleState(IdleState.BRAKE);
+        applyRampRates(0.1, 0.05);
 
         poseSignal = super.getPosition();
         velocitySignal = super.getVelocity();
@@ -105,7 +109,30 @@ public class TalonFXMotor extends TalonFX implements Motor {
 
     @Override
     public void setPercentage(double percentage) {
-        super.setControl(new DutyCycleOut(percentage));
+        // VoltageOut normalizes against measured battery voltage, giving consistent
+        // motor output regardless of battery state (equivalent to voltage compensation).
+        super.setControl(new VoltageOut(percentage * 12.0));
+    }
+
+    /**
+     * Override the default ramp rates set in the constructor.
+     * @param openLoopSeconds  seconds to ramp from 0 to full output in open-loop control
+     * @param closedLoopSeconds seconds to ramp from 0 to full output in closed-loop control
+     */
+    public void setRampRates(double openLoopSeconds, double closedLoopSeconds) {
+        applyRampRates(openLoopSeconds, closedLoopSeconds);
+    }
+
+    private void applyRampRates(double openLoopSeconds, double closedLoopSeconds) {
+        var configurator = super.getConfigurator();
+        var openRamp = new OpenLoopRampsConfigs()
+                .withVoltageOpenLoopRampPeriod(openLoopSeconds)
+                .withDutyCycleOpenLoopRampPeriod(openLoopSeconds);
+        var closedRamp = new ClosedLoopRampsConfigs()
+                .withVoltageClosedLoopRampPeriod(closedLoopSeconds)
+                .withDutyCycleClosedLoopRampPeriod(closedLoopSeconds);
+        configurator.apply(openRamp);
+        configurator.apply(closedRamp);
     }
 
     @Override

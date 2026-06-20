@@ -20,27 +20,58 @@ public class FlyWheel extends Mechanism {
     private final SimpleMotorFeedforward     m_ff;
     private final Gains                      m_gains;
     private final TrapezoidProfile           m_profile;
-    private final TrapezoidProfile.Constraints m_constraints;
 
+    // ── Acceleration estimation ───────────────────────────────────────────────
+    //
+    // Two modes:
+    //
+    //   CURRENT-BASED (preferred):
+    //     Physics: τ = kt × I_stator,  α = τ / J  →  α = (kt/J) × I_stator
+    //     Advantages: instantaneous, no noise amplification, no one-loop delay.
+    //     Set m_accelerationPerAmp = kt / J  (mechanism units·s⁻² / A).
+    //     Determine from SysId ka result: accelerationPerAmp ≈ 1 / (ka × J_effective).
+    //
+    //   TIME-BASED (fallback):
+    //     α = Δv / Δt  — numerical differentiation of velocity.
+    //     Noisy and delayed; only used when accelerationPerAmp is not supplied.
+    //
+    private final double m_accelerationPerAmp;   // 0 → time-based fallback
     private double m_lastTime;
     private double m_lastVelocity;
 
+    /**
+     * Time-based acceleration estimation (fallback).
+     * Prefer the overload that takes {@code accelerationPerAmp} when kt/J is known.
+     */
     public FlyWheel(Motor motor, double maxAcceleration, double maxJerk, Gains gains) {
-        super(motor);
-        m_gains       = gains;
-        m_pid         = new PIDController(gains.kp, gains.ki, gains.kd);
-        m_ff          = new SimpleMotorFeedforward(gains.ks, gains.kv, gains.ka);
-        m_constraints = new TrapezoidProfile.Constraints(maxAcceleration, maxJerk);
-        m_profile     = new TrapezoidProfile(m_constraints);
+        this(motor, maxAcceleration, maxJerk, gains, 0.0);
+    }
 
-        // Initialize with current time so the first acceleration sample is valid
+    /**
+     * Current-based acceleration estimation.
+     *
+     * @param accelerationPerAmp  kt / J — angular acceleration (mechanism units/s²) per amp of
+     *                            stator current.  Find this via SysId: run the quasistatic routine,
+     *                            then {@code accelerationPerAmp ≈ 1 / (ka × effective_inertia)}.
+     *                            You can also compute it from motor specs:
+     *                            {@code kt} (N·m/A) ÷ {@code J} (kg·m²) converted to your velocity units.
+     */
+    public FlyWheel(Motor motor, double maxAcceleration, double maxJerk, Gains gains, double accelerationPerAmp) {
+        super(motor);
+        m_gains              = gains;
+        m_pid                = new PIDController(gains.kp, gains.ki, gains.kd);
+        m_ff                 = new SimpleMotorFeedforward(gains.ks, gains.kv, gains.ka);
+        m_profile            = new TrapezoidProfile(new TrapezoidProfile.Constraints(maxAcceleration, maxJerk));
+        m_accelerationPerAmp = accelerationPerAmp;
+
+        // Only needed for time-based fallback, but initialized regardless
         m_lastTime     = Timer.getFPGATimestamp();
         m_lastVelocity = motor.getMotorVelocity();
     }
 
     /**
-     * Smooth velocity control using a pre-allocated TrapezoidProfile (no per-loop object allocation).
-     * Requires {@link #periodic()} to be called every loop from the subsystem.
+     * Smooth velocity control using a pre-allocated TrapezoidProfile.
+     * Call {@link #periodic()} every loop when using time-based mode.
      */
     public Command smartVelocityCommand(DoubleSupplier velocitySupplier, SubsystemBase... requirements) {
         return new RunCommand(() -> {
@@ -49,7 +80,6 @@ public class FlyWheel extends Mechanism {
                     new TrapezoidProfile.State(m_motor.getMotorVelocity(), getAcceleration()),
                     new TrapezoidProfile.State(velocitySupplier.getAsDouble(), 0));
 
-            // Manual FF to avoid deprecated calculate(v, a) overload
             double ff  = m_gains.ks * Math.signum(state.position)
                        + m_gains.kv * state.position
                        + m_gains.ka * state.velocity;
@@ -69,19 +99,31 @@ public class FlyWheel extends Mechanism {
         super.setVoltage(pid + ff);
     }
 
-    /** Must be called once per robot loop (e.g., from the subsystem's periodic()). */
+    /**
+     * Update time-based acceleration state.
+     * Only required when NOT using current-based mode (i.e., accelerationPerAmp was not set).
+     * Call once per robot loop from the owning subsystem's periodic().
+     */
     public void periodic() {
         m_lastTime     = Timer.getFPGATimestamp();
         m_lastVelocity = m_motor.getMotorVelocity();
     }
 
-    public double getVelocity() {
-        return m_motor.getMotorVelocity();
-    }
+    public double getVelocity() { return m_motor.getMotorVelocity(); }
+
+    /** Returns true if this instance uses current-based acceleration (preferred). */
+    public boolean isCurrentBased() { return m_accelerationPerAmp > 0; }
+
+    // ── Internal ─────────────────────────────────────────────────────────────
 
     private double getAcceleration() {
+        if (m_accelerationPerAmp > 0) {
+            // α = (kt/J) × I_stator — instantaneous, no noise amplification
+            return m_accelerationPerAmp * m_motor.getMotorStatorCurrent();
+        }
+        // Fallback: numerical differentiation
         double dt = Timer.getFPGATimestamp() - m_lastTime;
-        if (dt < 1e-6) return 0.0;   // guard against divide-by-zero on first call
+        if (dt < 1e-6) return 0.0;
         return (m_motor.getMotorVelocity() - m_lastVelocity) / dt;
     }
 }

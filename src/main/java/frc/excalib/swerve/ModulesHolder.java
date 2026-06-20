@@ -93,12 +93,7 @@ public class ModulesHolder implements Logged {
 
     @Log.NT(key = "angular vel")
     public double getOmegaRadPerSec() {
-        return new SwerveDriveKinematics(
-                m_frontLeft.m_MODULE_LOCATION,
-                m_frontRight.m_MODULE_LOCATION,
-                m_backLeft.m_MODULE_LOCATION,
-                m_backRight.m_MODULE_LOCATION
-        ).toChassisSpeeds(logStates()).omegaRadiansPerSecond;
+        return m_swerveDriveKinematics.toChassisSpeeds(logStates()).omegaRadiansPerSecond;
     }
 
     @Log.NT(key = "swerve velocity")
@@ -131,27 +126,12 @@ public class ModulesHolder implements Logged {
      * @return A command to set the velocities.
      */
     public Command setVelocitiesCommand(Supplier<Vector2D> translationalVel, DoubleSupplier omega) {
+        DoubleSupplier ratioLimit = () -> calcVelocityRatioLimit(translationalVel.get(), omega.getAsDouble());
         return new ParallelCommandGroup(
-                m_frontLeft.setVelocityCommand(
-                        translationalVel,
-                        omega,
-                        () -> calcVelocityRatioLimit(translationalVel.get(), omega.getAsDouble())
-                ),
-                m_frontRight.setVelocityCommand(
-                        translationalVel,
-                        omega,
-                        () -> calcVelocityRatioLimit(translationalVel.get(), omega.getAsDouble())
-                ),
-                m_backLeft.setVelocityCommand(
-                        translationalVel,
-                        omega,
-                        () -> calcVelocityRatioLimit(translationalVel.get(), omega.getAsDouble())
-                ),
-                m_backRight.setVelocityCommand(
-                        translationalVel,
-                        omega,
-                        () -> calcVelocityRatioLimit(translationalVel.get(), omega.getAsDouble())
-                )
+                m_frontLeft.setVelocityCommand(translationalVel, omega, ratioLimit),
+                m_frontRight.setVelocityCommand(translationalVel, omega, ratioLimit),
+                m_backLeft.setVelocityCommand(translationalVel, omega, ratioLimit),
+                m_backRight.setVelocityCommand(translationalVel, omega, ratioLimit)
         );
     }
 

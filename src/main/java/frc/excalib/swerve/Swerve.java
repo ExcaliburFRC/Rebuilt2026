@@ -111,10 +111,8 @@ public class Swerve extends SubsystemBase implements Logged {
     public Command driveCommand(
             Supplier<Vector2D> velocityMPS, DoubleSupplier omegaRadPerSec, BooleanSupplier fieldOriented) {
 
-        // Precompute values to avoid redundant calculations
         Supplier<Vector2D> adjustedVelocitySupplier = () -> {
-            Vector2D velocity = velocityMPS.get();
-//            Vector2D velocity = SwerveAccUtils.getSmartTranslationalVelocitySetpoint(getVelocity(), velocityMPS.get());
+            Vector2D velocity = SwerveAccUtils.getSmartTranslationalVelocitySetpoint(getVelocity(), velocityMPS.get());
             if (fieldOriented.getAsBoolean()) {
                 Rotation2d yaw = getRotation2D().unaryMinus();
                 if (!AllianceUtils.isBlueAlliance()) yaw = yaw.plus(pi);
@@ -129,11 +127,10 @@ public class Swerve extends SubsystemBase implements Logged {
                         omegaRadPerSec
                 ),
                 new RunCommand(
-                        () -> m_desiredChassisSpeeds = new ChassisSpeeds(
-                                adjustedVelocitySupplier.get().getX(),
-                                adjustedVelocitySupplier.get().getY(),
-                                omegaRadPerSec.getAsDouble()
-                        )
+                        () -> {
+                            Vector2D v = adjustedVelocitySupplier.get();
+                            m_desiredChassisSpeeds = new ChassisSpeeds(v.getX(), v.getY(), omegaRadPerSec.getAsDouble());
+                        }
                 )
         );
 
@@ -399,13 +396,13 @@ public class Swerve extends SubsystemBase implements Logged {
             builder.addDoubleProperty("Front Left Velocity", () -> modules.m_frontLeft.getVelocity().getDistance(), null);
 
             builder.addDoubleProperty("Front Right Angle", () -> modules.m_frontRight.getPosition().getRadians(), null);
-            builder.addDoubleProperty("Front Right Velocity", () -> modules.m_frontLeft.getVelocity().getDistance(), null);
+            builder.addDoubleProperty("Front Right Velocity", () -> modules.m_frontRight.getVelocity().getDistance(), null);
 
             builder.addDoubleProperty("Back Left Angle", () -> modules.m_backLeft.getPosition().getRadians(), null);
-            builder.addDoubleProperty("Back Left Velocity", () -> modules.m_frontLeft.getVelocity().getDistance(), null);
+            builder.addDoubleProperty("Back Left Velocity", () -> modules.m_backLeft.getVelocity().getDistance(), null);
 
             builder.addDoubleProperty("Back Right Angle", () -> modules.m_backRight.getPosition().getRadians(), null);
-            builder.addDoubleProperty("Back Right Velocity", () -> modules.m_frontLeft.getVelocity().getDistance(), null);
+            builder.addDoubleProperty("Back Right Velocity", () -> modules.m_backRight.getVelocity().getDistance(), null);
 
             builder.addDoubleProperty("Robot Angle", () -> getRotation2D().getRadians(), null);
         });
@@ -501,7 +498,10 @@ public class Swerve extends SubsystemBase implements Logged {
         field.setRobotPose(getPose2D());
         updateOdometry();
         var arrPose = LimelightHelpers.getBotPoseEstimate_wpiBlue("limelight-turret");
-        if (arrPose.tagCount >= 1 && !TurretOffsetGetter.instance.isFast()) m_odometry.addVisionMeasurement(turretToRobot(arrPose.pose), arrPose.timestampSeconds);
+        boolean visionReliable = arrPose.tagCount >= 1
+                && !TurretOffsetGetter.instance.isFast()
+                && (arrPose.rawFiducials.length == 0 || arrPose.rawFiducials[0].ambiguity < 0.3);
+        if (visionReliable) m_odometry.addVisionMeasurement(turretToRobot(arrPose.pose), arrPose.timestampSeconds);
     }
 
     private Pose2d turretToRobot(Pose2d turretPose){

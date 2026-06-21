@@ -28,7 +28,7 @@ public class TurretOffsetGetter {
     }
 
     public boolean isFast() {
-        return this.robotRotationalVelSup.getAsDouble() + this.turretRotationalVelSup.getAsDouble() > 3.14;
+        return this.robotRotationalVelSup.getAsDouble() + this.turretRotationalVelSup.getAsDouble() > Math.PI;
     }
 
     public void setRobotRotationalVel(DoubleSupplier robotRotationalVel) {
@@ -36,7 +36,6 @@ public class TurretOffsetGetter {
     }
 
     public void setTurretRotationalVelSup(DoubleSupplier turretRotationalVelSup) {
-        // Correctly store the turret rotational velocity supplier (fix A4)
         this.turretRotationalVelSup = turretRotationalVelSup;
     }
 

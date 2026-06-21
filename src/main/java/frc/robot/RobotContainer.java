@@ -26,8 +26,6 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.excalib.additional_utilities.*;
 import frc.excalib.control.math.Vector2D;
 import frc.excalib.swerve.Swerve;
-import frc.robot.subsystems.intake.Intake;
-import frc.robot.subsystems.intake.IntakeStates;
 import frc.robot.superstructure.RobotState;
 import frc.robot.superstructure.Superstructure;
 import frc.robot.util.HubTimerSubsystem;

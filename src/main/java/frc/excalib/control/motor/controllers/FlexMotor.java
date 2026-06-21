@@ -1,7 +1,5 @@
 package frc.excalib.control.motor.controllers;
 
-import com.revrobotics.PersistMode;
-import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import frc.excalib.control.motor.motor_specs.DirectionState;
@@ -20,20 +18,18 @@ public class FlexMotor extends SparkFlex implements Motor {
         super(deviceId, type);
     }
 
-    @Override
-    public void stopMotor() {
-        super.stopMotor();
-    }
-
-    @Override
-    public void setMotorVoltage(double voltage) {
-        super.setVoltage(voltage);
-    }
-
-    @Override
-    public void setPercentage(double percentage) {
-        super.set(percentage);
-    }
+    @Override public void stopMotor()                               { super.stopMotor(); }
+    @Override public void setMotorVoltage(double voltage)          { super.setVoltage(voltage); }
+    @Override public void setPercentage(double percentage)         { super.set(percentage); }
+    @Override public int  getDeviceID()                            { return super.getDeviceId(); }
+    @Override public double getMotorPosition()                     { return this.getEncoder().getPosition(); }
+    @Override public double getMotorVelocity()                     { return this.getEncoder().getVelocity() / 60.0; }
+    @Override public double getCurrent()                           { return super.getOutputCurrent(); }
+    @Override public double getMotorStatorCurrent()                { return super.getOutputCurrent(); }
+    @Override public double getVoltage()                           { return getBusVoltage() * getAppliedOutput(); }
+    @Override public double getTemperature()                       { return getMotorTemperature(); }
+    @Override public IdleState getIdleState()                      { return configAccessor.getIdleMode() == kCoast ? COAST : BRAKE; }
+    @Override public void setMotorPosition(double position)        { super.getEncoder().setPosition(position); }
 
     @Override
     public void setFollower(int mainMotorID) {
@@ -48,48 +44,9 @@ public class FlexMotor extends SparkFlex implements Motor {
     }
 
     @Override
-    public int getDeviceID() {
-        return super.getDeviceId();
-    }
-
-    @Override
-    public double getMotorPosition() {
-        return this.getEncoder().getPosition();
-    }
-
-    @Override
-    public double getMotorVelocity() {
-        return this.getEncoder().getVelocity() / 60; //we divide by 60 to get it in RPS
-    }
-
-    @Override
-    public double getCurrent() {
-        return super.getOutputCurrent();
-    }
-
-    @Override
-    public double getVoltage() {
-        return getBusVoltage() * getAppliedOutput();
-    }
-
-    @Override
-    public IdleState getIdleState() {
-        return configAccessor.getIdleMode() == kCoast ? COAST : BRAKE;
-    }
-
-    @Override
-    public double getTemperature() {
-        return getMotorTemperature();
-    }
-
-
-    @Override
     public void setSoftLimit(DirectionState directionState, float limit) {
-        if (directionState == DirectionState.FORWARD) {
-            config.softLimit.forwardSoftLimit(limit);
-        } else {
-            config.softLimit.reverseSoftLimit(limit);
-        }
+        if (directionState == FORWARD) config.softLimit.forwardSoftLimit(limit);
+        else                           config.softLimit.reverseSoftLimit(limit);
         configure();
     }
 
@@ -117,13 +74,7 @@ public class FlexMotor extends SparkFlex implements Motor {
         configure();
     }
 
-    @Override
-    public void setMotorPosition(double position) {
-        super.getEncoder().setPosition(position);
-    }
-
     private void configure() {
         super.configure(config, com.revrobotics.ResetMode.kResetSafeParameters, com.revrobotics.PersistMode.kPersistParameters);
     }
-
 }

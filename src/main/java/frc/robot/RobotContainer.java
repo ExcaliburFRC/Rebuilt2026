@@ -74,7 +74,8 @@ public class RobotContainer implements Logged {
             new ControllerStateTracker(primary.getHID(), "Primary Controller");
     private final PerformanceMetricsTracker performanceMetricsTracker =
             new PerformanceMetricsTracker();
-    private final Superstructure superstructure = new Superstructure(swerve, primary.R1(), new Trigger(ShiftUtil::isOwnHubActive), shouldDeliverTrigger);
+//    private final Superstructure superstructure = new Superstructure(swerve, primary.R1(), new Trigger(ShiftUtil::isOwnHubActive), shouldDeliverTrigger);
+    private final Superstructure superstructure = new Superstructure(swerve, primary.R1(), primary.square(), shouldDeliverTrigger);
 
     public RobotContainer() {
 //        lowBatteryTrigger.onTrue(leds.setPattern(BLINKING, ORANGE.color).withInterruptBehavior(kCancelIncoming));
@@ -93,7 +94,7 @@ public class RobotContainer implements Logged {
         primary.options().onTrue(swerve.resetOdometryCommand(
                 new Pose2d(
                         new Translation2d(
-                                FieldConstants.BLUE_HUB_CENTER_POSE.get().getX() - Units.inchesToMeters(22.5) - 0.69 / 2,
+                                1,
                                 FieldConstants.BLUE_HUB_CENTER_POSE.get().getY()),
                         Rotation2d.kZero)
         ).ignoringDisable(true));

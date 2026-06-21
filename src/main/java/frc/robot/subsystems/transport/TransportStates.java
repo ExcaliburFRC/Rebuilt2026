@@ -1,7 +1,7 @@
 package frc.robot.subsystems.transport;
 
 public enum TransportStates {
-    TRANSPORT(10),
+    TRANSPORT(20),
     IDLE(0);
 
     final double linearVelocity;

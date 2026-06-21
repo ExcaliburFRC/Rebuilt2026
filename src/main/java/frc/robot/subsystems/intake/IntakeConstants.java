@@ -32,6 +32,27 @@ public class IntakeConstants {
     // ==== Intake Angles and Tolerances ==== //
     public static final double INTAKE_ANGLE_TOLERANCE = 0.003;
 
+    // ==== Per-state setpoints (consumed by IntakeStates) ==== //
+    public static final double OPEN_ANGLE = 0;
+    public static final double OPEN_ROLLER_VOLTAGE = 0.75;
+    public static final double CLOSE_ANGLE = 2;
+    public static final double CLOSE_ROLLER_VOLTAGE = 0;
+    public static final double PUMP_ANGLE = 0;
+    public static final double PUMP_ROLLER_VOLTAGE = 0.8;
+
+    // ==== Manual / pump motion ==== //
+    public static final double MANUAL_INTAKE_VOLTAGE = 0.5;
+    public static final double PUMP_EXTENDED_ANGLE = 2;
+    public static final double PUMP_RETRACTED_ANGLE = 0;
+    public static final double PUMP_STEP_TIMEOUT_SEC = 0.5;
+
+    // ==== Drivetrain conversion / calibration ==== //
+    // armMotorGroup gear reduction: one full output rotation per 14.14 motor rotations.
+    public static final double ARM_GEAR_RATIO = 14.14;
+    public static final double ARM_POSITION_CONVERSION_FACTOR = 2 * Math.PI / ARM_GEAR_RATIO;
+    // Absolute angle the arm boots at (mechanical hard stop), measured empirically.
+    public static final double ARM_STARTING_ANGLE = Math.PI - 0.732601 - 0.159;
+
     // ==== Other ====//
     public static final double ROTATION_TO_RAD = 2 * Math.PI;
     public static final SoftLimit ARM_VELOCITY_LIMIT = new SoftLimit(

@@ -9,6 +9,7 @@ import frc.excalib.control.math.physics.Mass;
 import frc.excalib.control.motor.controllers.MotorGroup;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
 import frc.excalib.control.motor.motor_specs.DirectionState;
+import frc.excalib.control.motor.motor_specs.IdleState;
 import frc.excalib.mechanisms.Arm.Arm;
 import frc.excalib.mechanisms.Mechanism;
 import monologue.Annotations.Log;
@@ -55,7 +56,7 @@ public class Intake extends SubsystemBase implements Logged {
         angleEncoder = new CANcoder(ANGLE_ENCODER_ID, SUBSYSTEMS_CANBUS);
 
         rollerMotor = new TalonFXMotor(ROLLER_MOTOR_ID, SUBSYSTEMS_CANBUS);
-        rollerMotor.setCurrentLimit(80, 80);
+        rollerMotor.setCurrentLimit(80, 30);
 
         rollerMechanism = new Mechanism(rollerMotor);
 
@@ -64,6 +65,7 @@ public class Intake extends SubsystemBase implements Logged {
 
         this.armMotorGroup = new MotorGroup(fourBarMotorLeft, fourBarMotorRight);
 
+        armMotorGroup.setIdleState(IdleState.COAST);
         this.armMotorGroup.setPositionConversionFactor(2 * Math.PI / 14.14);
         this.armMotorGroup.setVelocityConversionFactor(2 * Math.PI / 14.14);
 

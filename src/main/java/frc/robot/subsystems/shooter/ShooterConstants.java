@@ -50,6 +50,26 @@ public class ShooterConstants {
     public static final double ENCODER_POSITION_CONVERSION_FACTOR = -0.2 * 2 * Math.PI * 0.9823;
     public static final double MOTOR_POSITION_CONVERSION_FACTOR = 0.102434 * 2 * Math.PI / 5 * 0.9875*0.9919; //
 
+    // ===== Flywheel group =====
+    // Driven/driving sprocket ratio for the top+low flywheel MotorGroup.
+    public static final double FLYWHEEL_GROUP_CONVERSION_FACTOR = (double) 40 / 48;
+    public static final double FLYWHEEL_EMA_ALPHA = 0.05;
+    // Flywheel surface speed above which the "spinning" LED pattern fires.
+    public static final double LED_ACTIVATION_VELOCITY = 3;
+
+    // ===== Hood control =====
+    // Full hood motor position conversion (encoder factor x gearbox correction x empirical scale).
+    public static final double HOOD_MOTOR_POSITION_CONVERSION_FACTOR =
+            POSITION_CONVERSION_FACTOR * ((double) -0.208 / 1.497) * 1.0231;
+    public static final double HOOD_PID_TOLERANCE = 0.01;
+    // Static-friction feedforward, asymmetric between raising and lowering the hood.
+    public static final double HOOD_KS_RAISING = 0.375;
+    public static final double HOOD_KS_LOWERING = -0.25;
+
+    // ===== Turret motion profile =====
+    public static final double TURRET_PROFILE_MAX_VELOCITY = Math.PI * 2;
+    public static final double TURRET_PROFILE_MAX_ACCELERATION = Math.PI * 100;
+
 }
 
 

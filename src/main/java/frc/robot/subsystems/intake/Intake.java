@@ -1,9 +1,10 @@
 package frc.robot.subsystems.intake;
 
 import com.ctre.phoenix6.hardware.CANcoder;
-import edu.wpi.first.wpilibj2.command.*;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.ConditionalCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.excalib.control.gains.Gains;
 import frc.excalib.control.limits.SoftLimit;
 import frc.excalib.control.math.physics.Mass;
 import frc.excalib.control.motor.controllers.MotorGroup;
@@ -12,38 +13,33 @@ import frc.excalib.control.motor.motor_specs.DirectionState;
 import frc.excalib.control.motor.motor_specs.IdleState;
 import frc.excalib.mechanisms.Arm.Arm;
 import frc.excalib.mechanisms.Mechanism;
+import frc.robot.lib.StateMachineSubsystem;
 import monologue.Annotations.Log;
-import monologue.Logged;
 
-import java.sql.SQLOutput;
 import java.util.function.DoubleSupplier;
 
 import static frc.robot.Constants.SUBSYSTEMS_CANBUS;
 import static frc.robot.subsystems.intake.IntakeConstants.*;
-import static frc.robot.subsystems.intake.IntakeConstants.ARM_VELOCITY_LIMIT;
-import static frc.robot.subsystems.intake.IntakeStates.CLOSE;
-import static frc.robot.subsystems.intake.IntakeStates.PUMP;
 
-public class Intake extends SubsystemBase implements Logged {
+/**
+ * Four-bar arm + roller intake. Either holds its state's arm goal while running the roller, or — in
+ * the PUMP state — repeatedly strokes the arm to dislodge stuck fuel.
+ */
+public class Intake extends StateMachineSubsystem<IntakeStates> {
+    private final TalonFXMotor fourBarMotorLeft, fourBarMotorRight, rollerMotor;
+    private final MotorGroup armMotorGroup;
+    private final CANcoder angleEncoder;
 
-    public final TalonFXMotor fourBarMotorLeft, fourBarMotorRight;
-    public final TalonFXMotor rollerMotor;
-    public final MotorGroup armMotorGroup;
+    private final Mechanism rollerMechanism;
+    private final Arm fourBarMechanism;
+    private final SoftLimit intakeAngleLimit;
+    private final DoubleSupplier angleSupplier;
+    private final Trigger atPositionTrigger;
 
-    public final Mechanism rollerMechanism;
-    public final Arm fourBarMechanism;
-
-    public final CANcoder angleEncoder;
-
-    public final SoftLimit intakeAngleLimit;
-    public boolean isIntakeOpen = false;
-    public final DoubleSupplier angleSupplier;
-    public final Trigger atPositionTrigger;
-
-    public IntakeStates currentState;
+    private boolean isIntakeOpen = false;
 
     public Intake() {
-        currentState = CLOSE;
+        super(IntakeStates.CLOSE);
 
         fourBarMotorLeft = new TalonFXMotor(LEFT_FOUR_BAR_MOTOR_ID, SUBSYSTEMS_CANBUS);
         fourBarMotorLeft.setInverted(DirectionState.FORWARD);
@@ -57,75 +53,77 @@ public class Intake extends SubsystemBase implements Logged {
 
         rollerMotor = new TalonFXMotor(ROLLER_MOTOR_ID, SUBSYSTEMS_CANBUS);
         rollerMotor.setCurrentLimit(80, 30);
-
         rollerMechanism = new Mechanism(rollerMotor);
 
         intakeAngleLimit = new SoftLimit(() -> INTAKE_MIN_ANGLE, () -> INTAKE_MAX_ANGLE);
 
-
-        this.armMotorGroup = new MotorGroup(fourBarMotorLeft, fourBarMotorRight);
-
+        armMotorGroup = new MotorGroup(fourBarMotorLeft, fourBarMotorRight);
         armMotorGroup.setIdleState(IdleState.COAST);
-        this.armMotorGroup.setPositionConversionFactor(2 * Math.PI / 14.14);
-        this.armMotorGroup.setVelocityConversionFactor(2 * Math.PI / 14.14);
-
-        this.armMotorGroup.setMotorPosition(Math.PI - 0.732601 - 0.159);
+        armMotorGroup.setPositionConversionFactor(ARM_POSITION_CONVERSION_FACTOR);
+        armMotorGroup.setVelocityConversionFactor(ARM_POSITION_CONVERSION_FACTOR);
+        armMotorGroup.setMotorPosition(ARM_STARTING_ANGLE);
 
         angleSupplier = armMotorGroup::getMotorPosition;
+        atPositionTrigger = new Trigger(
+                () -> Math.abs(state().goalAngle() - angleSupplier.getAsDouble()) < INTAKE_ANGLE_TOLERANCE);
 
-
-        atPositionTrigger = new Trigger(() -> (Math.abs(currentState.angle - angleSupplier.getAsDouble()) < INTAKE_ANGLE_TOLERANCE));
-
-        fourBarMechanism = new Arm(this.armMotorGroup, angleSupplier, ARM_VELOCITY_LIMIT, ARM_POSITION_GAINS, new Mass(() -> Math.cos(angleSupplier.getAsDouble()), () -> Math.sin(angleSupplier.getAsDouble()), ARM_MASS), ARM_MAX_OUTPUT_VOLTAGE);
+        fourBarMechanism = new Arm(
+                armMotorGroup,
+                angleSupplier,
+                ARM_VELOCITY_LIMIT,
+                ARM_POSITION_GAINS,
+                new Mass(() -> Math.cos(angleSupplier.getAsDouble()), () -> Math.sin(angleSupplier.getAsDouble()), ARM_MASS),
+                ARM_MAX_OUTPUT_VOLTAGE);
 
         setDefaultCommand(defaultCommand());
     }
 
-    public Command setStateCommand(IntakeStates stateToSet) {
-        return new InstantCommand(() -> this.currentState = stateToSet);
+    public Command defaultCommand() {
+        Command defaultCommand = new ConditionalCommand(
+                runRollerAndPump(),
+                holdStateGoal(),
+                () -> state().isPumping());
+        defaultCommand.addRequirements(this);
+        return defaultCommand;
+    }
+
+    /** Hold the state's arm goal while spinning the roller at the state voltage (OPEN / CLOSE). */
+    private Command holdStateGoal() {
+        return rollerMechanism.manualCommand(() -> state().rollerVoltage())
+                .alongWith(setPositionCommand(() -> state().goalAngle()))
+                .until(() -> state().isPumping());
+    }
+
+    /** Spin the roller while stroking the arm in/out to clear jams (PUMP). */
+    private Command runRollerAndPump() {
+        return rollerMechanism.manualCommand(() -> state().rollerVoltage())
+                .alongWith(pumpCommand())
+                .until(() -> !state().isPumping());
+    }
+
+    private Command pumpCommand() {
+        return new SequentialCommandGroup(
+                setPositionCommand(() -> PUMP_EXTENDED_ANGLE).withTimeout(PUMP_STEP_TIMEOUT_SEC),
+                setPositionCommand(() -> PUMP_RETRACTED_ANGLE).withTimeout(PUMP_STEP_TIMEOUT_SEC)
+        ).repeatedly();
     }
 
     public Command setPositionCommand(DoubleSupplier angle) {
-        return fourBarMechanism.anglePositionControlCommand(() -> intakeAngleLimit.limit(angle.getAsDouble()), (at) -> at = false, 0);
+        return fourBarMechanism.anglePositionControlCommand(
+                () -> intakeAngleLimit.limit(angle.getAsDouble()), at -> {}, MAX_OFFSET);
     }
 
-    public Command fowardIntake() {
-        return fourBarMechanism.manualCommand(() -> 0.5, this);
+    public Command forwardIntake() {
+        return fourBarMechanism.manualCommand(() -> MANUAL_INTAKE_VOLTAGE, this);
     }
 
     public Command reverseIntake() {
-        return fourBarMechanism.manualCommand(() -> -0.5, this);
+        return fourBarMechanism.manualCommand(() -> -MANUAL_INTAKE_VOLTAGE, this);
     }
 
     @Log.NT
     public boolean getIsIntakeOpen() {
         return isIntakeOpen;
-    }
-
-    public Command defaultCommand() {
-        Command defaultCommand = new ConditionalCommand(
-                // Either Open or Close
-                basicGoToCommand().until(() -> currentState.equals(PUMP)),
-
-                // Pump
-                rollerMechanism.manualCommand(() -> this.currentState.voltage)
-                        .alongWith(pumpCommand())
-                        .until(() -> !currentState.equals(PUMP)),
-
-                () -> !currentState.equals(PUMP)
-        );
-        defaultCommand.addRequirements(this);
-        return defaultCommand;
-    }
-
-    public Command pumpCommand() {
-        return new SequentialCommandGroup(
-                setPositionCommand(() -> 2).withTimeout(0.5), setPositionCommand(() -> 0).withTimeout(0.5)).repeatedly();
-    }
-
-    public Command basicGoToCommand(){
-        return rollerMechanism.manualCommand(() -> this.currentState.voltage)
-                .alongWith(setPositionCommand(() -> currentState.angle));
     }
 
     @Log.NT
@@ -140,11 +138,6 @@ public class Intake extends SubsystemBase implements Logged {
 
     @Log.NT
     public String getCurrentIntakeState() {
-        return currentState.name();
-    }
-
-    @Log.NT
-    public double getCurrentVoltage() {
-        return this.currentState.voltage;
+        return currentStateName();
     }
 }

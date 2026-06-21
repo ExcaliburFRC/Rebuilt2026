@@ -22,22 +22,37 @@ public class Arm extends Mechanism {
     public  final DoubleSupplier ANGLE_SUPPLIER;
     public  final SoftLimit      velocityLimit;
     public  final double         m_ks, m_kg, m_kv;
+    private final double         m_maxOutputVoltage;
 
-    private static final double MAX_VOLTAGE = 12.0;
+    /**
+     * @param maxOutputVoltage  peak voltage the arm is allowed to output (V).
+     *                          Use this to limit arm speed independent of the velocity soft-limit.
+     *                          Typical safe starting value: 4–6 V. Max is 12 V.
+     */
+    public Arm(Motor motor,
+               DoubleSupplier angleSupplier,
+               SoftLimit velocityLimit,
+               Gains gains,
+               Mass mass,
+               double maxOutputVoltage) {
+        super(motor);
+        ANGLE_SUPPLIER     = angleSupplier;
+        this.velocityLimit = velocityLimit;
+        m_ks               = gains.ks;
+        m_kg               = gains.kg;
+        m_kv               = gains.kv;
+        m_pid              = new PIDController(gains.kp, gains.ki, gains.kd);
+        m_mass             = mass;
+        m_maxOutputVoltage = Math.abs(maxOutputVoltage);
+    }
 
+    /** Backwards-compatible constructor — defaults to 12 V max output. */
     public Arm(Motor motor,
                DoubleSupplier angleSupplier,
                SoftLimit velocityLimit,
                Gains gains,
                Mass mass) {
-        super(motor);
-        ANGLE_SUPPLIER = angleSupplier;
-        this.velocityLimit = velocityLimit;
-        m_ks  = gains.ks;
-        m_kg  = gains.kg;
-        m_kv  = gains.kv;
-        m_pid = new PIDController(gains.kp, gains.ki, gains.kd);
-        m_mass = mass;
+        this(motor, angleSupplier, velocityLimit, gains, mass, 12.0);
     }
 
     /**
@@ -65,7 +80,7 @@ public class Arm extends Mechanism {
                              + m_kg * m_mass.getCenterOfMass().getX();
 
             double pid    = m_pid.calculate(ANGLE_SUPPLIER.getAsDouble(), setpointSupplier.getAsDouble());
-            double output = MathUtil.clamp(phyOutput + pid, -MAX_VOLTAGE, MAX_VOLTAGE);
+            double output = MathUtil.clamp(phyOutput + pid, -m_maxOutputVoltage, m_maxOutputVoltage);
 
             super.setVoltage(output);
             toleranceConsumer.accept(Math.abs(error) < maxOffset);

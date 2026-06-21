@@ -74,7 +74,7 @@ public class Intake extends SubsystemBase implements Logged {
 
         atPositionTrigger = new Trigger(() -> (Math.abs(currentState.angle - angleSupplier.getAsDouble()) < INTAKE_ANGLE_TOLERANCE));
 
-        fourBarMechanism = new Arm(this.armMotorGroup, angleSupplier, ARM_VELOCITY_LIMIT, ARM_POSITION_GAINS, new Mass(() -> Math.cos(angleSupplier.getAsDouble()), () -> Math.sin(angleSupplier.getAsDouble()), ARM_MASS));
+        fourBarMechanism = new Arm(this.armMotorGroup, angleSupplier, ARM_VELOCITY_LIMIT, ARM_POSITION_GAINS, new Mass(() -> Math.cos(angleSupplier.getAsDouble()), () -> Math.sin(angleSupplier.getAsDouble()), ARM_MASS), ARM_MAX_OUTPUT_VOLTAGE);
 
         setDefaultCommand(defaultCommand());
     }

@@ -16,6 +16,8 @@ public class IntakeConstants {
     // ==== Arm Initialization Constants ==== //
     public static final double ARM_MIN_VELOCITY_LIMIT = -1.5;
     public static final double ARM_MAX_VELOCITY_LIMIT = 1.5;
+    // Max voltage the arm can output — tune this to control arm speed
+    public static final double ARM_MAX_OUTPUT_VOLTAGE = 1.5;
     public static final int ARM_MASS = 1;
     public static final double MAX_OFFSET = 0;
     public static final double INTAKE_MAX_ANGLE = 2.4;

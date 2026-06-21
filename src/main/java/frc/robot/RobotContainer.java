@@ -9,7 +9,6 @@ import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -28,8 +27,6 @@ import frc.excalib.control.math.Vector2D;
 import frc.excalib.swerve.Swerve;
 import frc.robot.superstructure.RobotState;
 import frc.robot.superstructure.Superstructure;
-import frc.robot.util.HubTimerSubsystem;
-import frc.robot.util.ShiftUtil;
 import monologue.Annotations.Log.NT;
 import monologue.Logged;
 
@@ -49,7 +46,6 @@ public class RobotContainer implements Logged {
     private final PowerDistribution powerDistributionHub = new PowerDistribution(PDH_PORT, PowerDistribution.ModuleType.kRev);
 
     private final SendableChooser<String> autoChooser = new SendableChooser<>();
-    private final HubTimerSubsystem hubTimer = new HubTimerSubsystem();
 
     private final LEDs leds = LEDs.getInstance();
 
@@ -57,9 +53,7 @@ public class RobotContainer implements Logged {
     private final Alert primaryDisconnected = new Alert("Primary controller disconnected (port 0).", Alert.AlertType.kWarning);
     private final Alert autoNotChosen = new Alert("!!! AUTO NOT SET !!!", Alert.AlertType.kError);
     private final Alert lowBatteryAlert = new Alert("Battery voltage is low", Alert.AlertType.kWarning);
-    private final Trigger lowBatteryTrigger = new Trigger(lowBatteryAlert::get);
-    private
-    Trigger shouldDeliverTrigger = new Trigger(() -> false);
+    private Trigger shouldDeliverTrigger = new Trigger(() -> false);
 
     private final NetworkTable table = NetworkTableInstance.getDefault().getTable("Tab1");
     NetworkTableEntry flywheelVel = table.getEntry("flywheelVel");
@@ -94,7 +88,7 @@ public class RobotContainer implements Logged {
         primary.options().onTrue(swerve.resetOdometryCommand(
                 new Pose2d(
                         new Translation2d(
-                                1,
+                                3,
                                 FieldConstants.BLUE_HUB_CENTER_POSE.get().getY()),
                         Rotation2d.kZero)
         ).ignoringDisable(true));

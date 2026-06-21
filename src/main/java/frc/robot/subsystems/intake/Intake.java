@@ -46,9 +46,11 @@ public class Intake extends SubsystemBase implements Logged {
 
         fourBarMotorLeft = new TalonFXMotor(LEFT_FOUR_BAR_MOTOR_ID, SUBSYSTEMS_CANBUS);
         fourBarMotorLeft.setInverted(DirectionState.FORWARD);
+        fourBarMotorLeft.setCurrentLimit(80, 60);
 
         fourBarMotorRight = new TalonFXMotor(RIGHT_FOUR_BAR_MOTOR_ID, SUBSYSTEMS_CANBUS);
         fourBarMotorRight.setInverted(DirectionState.REVERSE);
+        fourBarMotorRight.setCurrentLimit(80, 60);
 
         angleEncoder = new CANcoder(ANGLE_ENCODER_ID, SUBSYSTEMS_CANBUS);
 

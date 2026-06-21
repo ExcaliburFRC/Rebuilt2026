@@ -28,7 +28,7 @@ public final class Turret extends Mechanism implements Logged {
 
     // Optional trapezoid profile (null when not used)
     private final TrapezoidProfile       m_profile;
-    private TrapezoidProfile.State       m_profileState = new TrapezoidProfile.State(0, 0);
+    private TrapezoidProfile.State       m_profileState;  // initialized from actual position in constructor
 
     private double smartSetpoint  = 0;
     private double wantedSetpoint = 0;
@@ -60,6 +60,7 @@ public final class Turret extends Mechanism implements Logged {
         m_anglePIDcontroller.setTolerance(PIDtolerance);
         m_POSITION_SUPPLIER  = positionSupplier;
         m_profile            = (constraints != null) ? new TrapezoidProfile(constraints) : null;
+        m_profileState       = new TrapezoidProfile.State(positionSupplier.getAsDouble(), 0);
     }
 
     public Command setPositionCommand(Supplier<Rotation2d> wantedPosition, SubsystemBase... requirements) {

@@ -8,6 +8,12 @@ public class MotorGroup implements Motor {
     private final Motor[] m_motors;
 
     public MotorGroup(Motor... motors) {
+        if (motors == null || motors.length == 0)
+            throw new IllegalArgumentException("MotorGroup requires at least one motor");
+        for (int i = 0; i < motors.length; i++) {
+            if (motors[i] == null)
+                throw new IllegalArgumentException("MotorGroup motor at index " + i + " is null");
+        }
         this.m_motors = motors;
     }
 

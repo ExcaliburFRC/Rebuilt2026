@@ -72,18 +72,21 @@ public class Arm extends Mechanism {
             SubsystemBase... requirements) {
 
         return new RunCommand(() -> {
-            double error           = setpointSupplier.getAsDouble() - ANGLE_SUPPLIER.getAsDouble();
+            double setpoint = setpointSupplier.getAsDouble();
+            double angle    = ANGLE_SUPPLIER.getAsDouble();
+            double error    = setpoint - angle;
+
             double velocitySetpoint = velocityLimit.limit(error / TimedRobot.kDefaultPeriod);
 
             double phyOutput = m_ks * Math.signum(velocitySetpoint)
                              + m_kv * velocitySetpoint
                              + m_kg * m_mass.getCenterOfMass().getX();
 
-            double pid    = m_pid.calculate(ANGLE_SUPPLIER.getAsDouble(), setpointSupplier.getAsDouble());
+            double pid    = m_pid.calculate(angle, setpoint);
             double output = MathUtil.clamp(phyOutput + pid, -m_maxOutputVoltage, m_maxOutputVoltage);
 
             super.setVoltage(output);
-            toleranceConsumer.accept(Math.abs(error) < maxOffset);
+            toleranceConsumer.accept(Math.abs(error) <= maxOffset);
         }, requirements);
     }
 

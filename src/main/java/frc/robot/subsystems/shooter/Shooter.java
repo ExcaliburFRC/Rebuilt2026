@@ -3,7 +3,6 @@ package frc.robot.subsystems.shooter;
 import com.ctre.phoenix6.hardware.CANcoder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.*;
-import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj2.command.*;
@@ -73,13 +72,15 @@ public class Shooter extends SubsystemBase implements Logged {
 
     private final BallCounter ballCounter;
 
-    private final InterpolatingDoubleTreeMap highAngleDistanceMap;
-    private final InterpolatingDoubleTreeMap highVelocityDistanceMap;
-    private final InterpolatingDoubleTreeMap highDistanceTimeOfFlightMap;
-
-    private final InterpolatingDoubleTreeMap lowAngleDistanceMap;
-    private final InterpolatingDoubleTreeMap lowVelocityDistanceMap;
-    private final InterpolatingDoubleTreeMap lowDistanceTimeOfFlightMap;
+    // ===== Physics-based shot solver (replaces the old lookup tables) =====
+    private final BallisticSolver ballisticSolver = new BallisticSolver();
+    /** Latest solved shot, refreshed every periodic() loop. */
+    private BallisticSolver.ShotSolution shotSolution = BallisticSolver.INVALID;
+    /** Latest lead-compensated turret-relative aim vector (horizontal, robot frame). */
+    private Translation2d cachedAimVector = new Translation2d();
+    /** Latest hood encoder-value setpoint and flywheel setpoint derived from the solve. */
+    private double solvedHoodValue = 0.0;
+    private double solvedFlywheelSetpoint = 0.0;
 
     private final Trigger volatileTrenchHoodTrigger;
 
@@ -150,8 +151,6 @@ public class Shooter extends SubsystemBase implements Logged {
 
         hoodEncoder.setPosition(hoodEncoder.getAbsolutePosition().getValueAsDouble());
 
-        highDistanceTimeOfFlightMap = new InterpolatingDoubleTreeMap();
-
         turretToHubVector = getTurretToTargetVector();
 
         angleController = new PIDController(HOOD_GAINS.kp, HOOD_GAINS.ki, HOOD_GAINS.kd);
@@ -184,16 +183,6 @@ public class Shooter extends SubsystemBase implements Logged {
 
         robotPositionSupplier = poseSupplier;
 
-        highAngleDistanceMap = new InterpolatingDoubleTreeMap();
-        initAngleMap();
-
-        highVelocityDistanceMap = new InterpolatingDoubleTreeMap();
-        initVelocityMap();
-
-        lowAngleDistanceMap = new InterpolatingDoubleTreeMap();
-        lowDistanceTimeOfFlightMap = new InterpolatingDoubleTreeMap();
-        lowVelocityDistanceMap = new InterpolatingDoubleTreeMap();
-
         flyWheelReadyTrigger = new Trigger(() -> Math.abs(flywheelVelocityFilter.getValue() - flywheelVelocitySetpoint.getAsDouble()) < FLYWHEEL_TOLERANCE);
 
         hoodAdjustedTrigger = new Trigger(() -> Math.abs(hoodAngleSupplier.getAsDouble() - hoodAngleSetpoint.getAsDouble()) < HOOD_TOLERANCE);
@@ -220,9 +209,6 @@ public class Shooter extends SubsystemBase implements Logged {
         });
 
 
-        initDistanceTimeOfFlightMap();
-
-        initLowMaps();
         this.turretRelativeDistanceFromTarget = () -> getTurretToTargetVector().get().getNorm();
 
         shooterReady = isTurretAligned
@@ -237,60 +223,6 @@ public class Shooter extends SubsystemBase implements Logged {
         TurretOffsetGetter.instance.setRobotRotationalVel(() -> swerveSpeeds.get().omegaRadiansPerSecond);
 
         setDefaultCommand(defaultCommand().unless(() -> DISABLE_SUBSYSTEMS));
-    }
-
-    private void initDistanceTimeOfFlightMap() {
-        // Populate empirical time-of-flight map for HIGH goal (fix A1/B1)
-        // The commented values were empirical measurements — restore them so the lead model runs.
-        highDistanceTimeOfFlightMap.put(0.0, 0.0); //currently not used because of testing, DONT TOUCH!
-    }
-
-    public void initAngleMap() {
-        highAngleDistanceMap.put(0.00, 0.0);
-    }
-
-    public void initVelocityMap() {
-//          velocityDistanceMapTable.put(distance[meters], flywheel velocity);
-        highVelocityDistanceMap.put(1.77, 28.0);
-        highVelocityDistanceMap.put(1.89, 29.0);
-        highVelocityDistanceMap.put(2.08, 29.5);
-        highVelocityDistanceMap.put(2.23, 30.0);
-        highVelocityDistanceMap.put(2.45, 31.0);
-        highVelocityDistanceMap.put(2.74, 31.0);
-        highVelocityDistanceMap.put(2.83, 33.5);
-        highVelocityDistanceMap.put(3.0, 34.0);
-    }
-
-    private void initLowMaps() {
-        lowAngleDistanceMap.put(2.0, 1.0);
-        lowAngleDistanceMap.put(3.0, 1.0);
-        lowAngleDistanceMap.put(4.0, 0.925);
-        lowAngleDistanceMap.put(5.0, 0.874);
-        lowAngleDistanceMap.put(6.0, 0.841);
-        lowAngleDistanceMap.put(7.0, 0.819);
-        lowAngleDistanceMap.put(8.0, 0.802);
-        lowAngleDistanceMap.put(9.0, 0.789);
-        lowAngleDistanceMap.put(10.0, 0.779);
-
-        lowVelocityDistanceMap.put(2.0, 13.25247);
-        lowVelocityDistanceMap.put(3.0, 15.852848);
-        lowVelocityDistanceMap.put(4.0, 18.51587);
-        lowVelocityDistanceMap.put(5.0, 20.92826);
-        lowVelocityDistanceMap.put(6.0, 23.09001);
-        lowVelocityDistanceMap.put(7.0, 25.063791);
-        lowVelocityDistanceMap.put(8.0, 26.91224);
-        lowVelocityDistanceMap.put(9.0, 28.635382);
-        lowVelocityDistanceMap.put(10.0, 30.26452);
-
-        lowDistanceTimeOfFlightMap.put(2.0, 0.64);
-        lowDistanceTimeOfFlightMap.put(3.0, 0.72);
-        lowDistanceTimeOfFlightMap.put(4.0, 0.84);
-        lowDistanceTimeOfFlightMap.put(5.0, 0.96);
-        lowDistanceTimeOfFlightMap.put(6.0, 1.06);
-        lowDistanceTimeOfFlightMap.put(7.0, 1.15);
-        lowDistanceTimeOfFlightMap.put(8.0, 1.24);
-        lowDistanceTimeOfFlightMap.put(9.0, 1.32);
-        lowDistanceTimeOfFlightMap.put(10.0, 1.39);
     }
 
     public Command setStateCommand(ShooterStates stateToSet) {
@@ -328,37 +260,86 @@ public class Shooter extends SubsystemBase implements Logged {
     }
 
 
+    /**
+     * Returns the lead-compensated, turret-relative aim vector (horizontal, robot frame).
+     * The heavy ballistic solve runs once per loop in {@link #periodic()}; this just hands
+     * back the cached result so the many call sites stay cheap.
+     */
     public Supplier<Translation2d> getTurretToTargetVector() {
-        return () -> {
+        return () -> cachedAimVector;
+    }
 
-            ChassisSpeeds robotSpeeds = swerveSpeeds.get();
+    @Override
+    public void periodic() {
+        if (DISABLE_SUBSYSTEMS) return;
+        solveCurrentShot();
+    }
 
-            Pose2d robotPose = robotPositionSupplier.get();
-            Rotation2d robotRot = robotPose.getRotation();
+    /**
+     * The full physics shot solve for the current robot pose / velocity / target.
+     *
+     * <ol>
+     *   <li>Compute the un-led turret-relative vector to the target.</li>
+     *   <li>Fixed-point loop: solve the ballistic trajectory for the current aim to get a
+     *       time-of-flight, then shift the aim point by the robot's velocity * time-of-flight
+     *       (shoot-while-moving / shot lead).</li>
+     *   <li>Cache the aim vector, plus the hood value and flywheel setpoint derived from the
+     *       solved launch angle and exit speed.</li>
+     * </ol>
+     */
+    private void solveCurrentShot() {
+        Translation2d turretToTarget = computeTurretToTargetNoLead();
 
-            Translation2d turretField =
-                    getTurretOnField().getTranslation();
+        ChassisSpeeds robotSpeeds = swerveSpeeds.get();
+        Translation2d robotVelocity = new Translation2d(
+                robotSpeeds.vxMetersPerSecond - TURRET_OFFSET_TRANSLATION.getY() * robotSpeeds.omegaRadiansPerSecond,
+                robotSpeeds.vyMetersPerSecond + TURRET_OFFSET_TRANSLATION.getX() * robotSpeeds.omegaRadiansPerSecond
+        );
 
-            Translation2d fieldVector =
-                    currentState.targetTranslation.get().minus(turretField);
+        double heightDelta = heightDeltaForGoal();
+        double descentAngle = descentAngleForGoal();
 
+        Translation2d aim = turretToTarget;
+        BallisticSolver.ShotSolution solution = BallisticSolver.INVALID;
+        for (int i = 0; i < BallisticConstants.LEAD_ITERATIONS; i++) {
+            solution = ballisticSolver.solve(aim.getNorm(), heightDelta, descentAngle);
+            double tof = solution.valid() ? solution.timeOfFlight() : 0.0;
+            aim = turretToTarget.minus(robotVelocity.times(tof));
+        }
 
-            Translation2d turretToTarget = fieldVector.rotateBy(robotRot.unaryMinus());
+        cachedAimVector = aim;
+        shotSolution = solution;
 
-            // Use a small fixed-point iteration to converge the (range <-> time-of-flight <-> lead) loop
-            // instead of a single lookup. This implements B1.
-            Translation2d aim = turretToTarget;
-            for (int i = 0; i < 3; i++) {
-                double tof = getInterpolatingTimeOfFlightMap().get(aim.getNorm());
-                Translation2d virtualTargetOffset = new Translation2d(
-                        robotSpeeds.vxMetersPerSecond - TURRET_OFFSET_TRANSLATION.getY() * robotSpeeds.omegaRadiansPerSecond,
-                        robotSpeeds.vyMetersPerSecond + TURRET_OFFSET_TRANSLATION.getX() * robotSpeeds.omegaRadiansPerSecond
-                ).times(tof);
-                aim = turretToTarget.minus(virtualTargetOffset);
-            }
+        if (solution.valid()) {
+            solvedHoodValue = BallisticConstants.hoodValueForLaunchAngle(solution.launchAngleRad());
+            solvedFlywheelSetpoint = BallisticConstants.flywheelSetpointForBallSpeed(solution.ballSpeedMps());
+        }
+        // If the solve was invalid (target unreachable), keep the previous setpoints so the
+        // mechanisms hold their last good aim rather than snapping to zero.
+    }
 
-            return aim;
-        };
+    /** Turret-relative (robot-frame) vector to the current target, with no shot-lead applied. */
+    private Translation2d computeTurretToTargetNoLead() {
+        Pose2d robotPose = robotPositionSupplier.get();
+        Rotation2d robotRot = robotPose.getRotation();
+        Translation2d turretField = getTurretOnField().getTranslation();
+        Translation2d fieldVector = currentState.targetTranslation.get().minus(turretField);
+        return fieldVector.rotateBy(robotRot.unaryMinus());
+    }
+
+    /** Target height minus ball exit height for the current goal (meters). */
+    private double heightDeltaForGoal() {
+        double goalHeight = currentState.targetHeight.equals(HIGH)
+                ? BallisticConstants.HIGH_GOAL_HEIGHT_M
+                : BallisticConstants.LOW_GOAL_HEIGHT_M;
+        return goalHeight - BallisticConstants.BALL_EXIT_HEIGHT_M;
+    }
+
+    /** Desired descent angle into the current goal (radians, downward from horizontal). */
+    private double descentAngleForGoal() {
+        return currentState.targetHeight.equals(HIGH)
+                ? BallisticConstants.HIGH_GOAL_DESCENT_ANGLE_RAD
+                : BallisticConstants.LOW_GOAL_DESCENT_ANGLE_RAD;
     }
 
 
@@ -383,8 +364,9 @@ public class Shooter extends SubsystemBase implements Logged {
     public Command adjustFlyWheelVelocityCommand() {
         return flyWheelMechanism.setDynamicVelocityCommand(
                 () -> {
-                    double distance = turretRelativeDistanceFromTarget.getAsDouble();
-                    double velocity = currentState.isShooting ? getWantedVelocityForDistance(distance) : 0;
+                    // The shot lead (robot velocity) is already baked into the solved exit speed
+                    // because solveCurrentShot() aims at the lead-shifted virtual target.
+                    double velocity = currentState.isShooting ? solvedFlywheelSetpoint : 0;
                     flywheelVelocitySetpoint = () -> velocity;
                     return velocity;
                 }
@@ -392,34 +374,13 @@ public class Shooter extends SubsystemBase implements Logged {
     }
 
     public double getWantedVelocity(){
-        double distance = turretRelativeDistanceFromTarget.getAsDouble();
-        return currentState.isShooting ? getWantedVelocityForDistance(distance) : 0;
-    }
-
-    private double getWantedVelocityForDistance(double distance) {
-        double nominalVelocity = getInterpolatingVelocityMap().get(distance);
-        Translation2d turretToTarget = getTurretToTargetVector().get();
-        double range = turretToTarget.getNorm();
-        if (range < 1e-9) {
-            return nominalVelocity;
-        }
-
-        Translation2d unitToTarget = turretToTarget.div(range);
-        ChassisSpeeds robotSpeeds = swerveSpeeds.get();
-        Translation2d robotVelocity = new Translation2d(
-                robotSpeeds.vxMetersPerSecond - TURRET_OFFSET_TRANSLATION.getY() * robotSpeeds.omegaRadiansPerSecond,
-                robotSpeeds.vyMetersPerSecond + TURRET_OFFSET_TRANSLATION.getX() * robotSpeeds.omegaRadiansPerSecond
-        );
-
-        double radialVelocity = robotVelocity.getX() * unitToTarget.getX() + robotVelocity.getY() * unitToTarget.getY();
-        return nominalVelocity - radialVelocity;
+        return currentState.isShooting ? solvedFlywheelSetpoint : 0;
     }
 
     public Command setAdjustedHoodAngleCommand() {
         return new RunCommand(() -> {
-            double distance = turretRelativeDistanceFromTarget.getAsDouble();
-            hoodAngleSetpoint = () -> hoodSoftLimit.limit(getInterpolatingAngleMap().get(distance));
-            hoodMechanism.setVoltage(getControlledOutputForAngle(() -> hoodSoftLimit.limit(getInterpolatingAngleMap().get(distance))));
+            hoodAngleSetpoint = () -> hoodSoftLimit.limit(solvedHoodValue);
+            hoodMechanism.setVoltage(getControlledOutputForAngle(() -> hoodSoftLimit.limit(solvedHoodValue)));
         });
     }
 
@@ -497,21 +458,41 @@ public class Shooter extends SubsystemBase implements Logged {
         return flyWheelMechanism.setDynamicVelocityCommand(rps);
     }
 
-    public InterpolatingDoubleTreeMap getInterpolatingTimeOfFlightMap() {
-        return currentState.targetHeight.equals(HIGH) ? highDistanceTimeOfFlightMap : lowDistanceTimeOfFlightMap;
-    }
-
-    public InterpolatingDoubleTreeMap getInterpolatingVelocityMap() {
-        return currentState.targetHeight.equals(HIGH) ? highVelocityDistanceMap : lowVelocityDistanceMap;
-    }
-
-    public InterpolatingDoubleTreeMap getInterpolatingAngleMap() {
-        return currentState.targetHeight.equals(HIGH) ? highAngleDistanceMap : lowAngleDistanceMap;
-    }
-
     @NT
     public boolean isTurretAligned() {
         return isTurretAligned.getAsBoolean();
+    }
+
+    // ===== Ballistic solver telemetry (handy while tuning BallisticConstants) =====
+
+    @NT
+    public boolean shotSolutionValid() {
+        return shotSolution.valid();
+    }
+
+    @NT
+    public double solvedLaunchAngleDeg() {
+        return Math.toDegrees(shotSolution.launchAngleRad());
+    }
+
+    @NT
+    public double solvedBallSpeedMps() {
+        return shotSolution.ballSpeedMps();
+    }
+
+    @NT
+    public double solvedTimeOfFlight() {
+        return shotSolution.timeOfFlight();
+    }
+
+    @NT
+    public double solvedHoodValue() {
+        return solvedHoodValue;
+    }
+
+    @NT
+    public double solvedFlywheelSetpoint() {
+        return solvedFlywheelSetpoint;
     }
 
     public Command yoavHatesThisCommandCommand(DoubleSupplier hoodAngleSupplier, DoubleSupplier flywheelVelocitySetpoint) {

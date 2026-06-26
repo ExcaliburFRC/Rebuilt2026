@@ -236,17 +236,24 @@ public class Shooter extends SubsystemBase implements Logged {
         TurretOffsetGetter.instance.setTurretRotationalVelSup(turretMechanism::logVelocity);
         TurretOffsetGetter.instance.setRobotRotationalVel(() -> swerveSpeeds.get().omegaRadiansPerSecond);
 
-        setDefaultCommand(defaultCommand().unless(() -> DISABLE_SUBSYSTEMS));
+//        setDefaultCommand(defaultCommand().unless(() -> DISABLE_SUBSYSTEMS));
     }
 
     private void initDistanceTimeOfFlightMap() {
         // Populate empirical time-of-flight map for HIGH goal (fix A1/B1)
         // The commented values were empirical measurements — restore them so the lead model runs.
         highDistanceTimeOfFlightMap.put(0.0, 0.0); //currently not used because of testing, DONT TOUCH!
+        highDistanceTimeOfFlightMap.put(4.01, 1.2); //currently not used because of testing, DONT TOUCH!
+        highDistanceTimeOfFlightMap.put(4.72, 1.21); //currently not used because of testing, DONT TOUCH!
+        highDistanceTimeOfFlightMap.put(5.49, 2.02); //currently not used because of testing, DONT TOUCH!
     }
 
     public void initAngleMap() {
         highAngleDistanceMap.put(0.00, 0.0);
+        highAngleDistanceMap.put(2.00, 0.0);
+        highAngleDistanceMap.put(4.01, 0.3);
+        highAngleDistanceMap.put(4.72, 0.5);
+        highAngleDistanceMap.put(5.49, 0.5);
     }
 
     public void initVelocityMap() {
@@ -259,6 +266,9 @@ public class Shooter extends SubsystemBase implements Logged {
         highVelocityDistanceMap.put(2.74, 31.0);
         highVelocityDistanceMap.put(2.83, 33.5);
         highVelocityDistanceMap.put(3.0, 34.0);
+        highVelocityDistanceMap.put(4.01, 38.0);
+        highVelocityDistanceMap.put(4.72, 38.0);
+        highVelocityDistanceMap.put(5.49, 43.0);
     }
 
     private void initLowMaps() {

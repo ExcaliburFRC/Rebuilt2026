@@ -44,6 +44,7 @@ public class Superstructure implements Logged {
 
         shooter = new Shooter(swerve::getPose2D, swerve::getRobotRelativeSpeeds);
         transport = new Transport(()-> true);
+//        transport = new Transport(shooter.isShooterReady());
         intake = new Intake();
 //        intake = new Intake();
         leds = LEDs.getInstance();
@@ -187,6 +188,7 @@ public class Superstructure implements Logged {
         return switch (state) {
             case NO_INTAKE_SHOOT_HUB,
                  INTAKE_SHOOT_HUB,
+                 NO_INTAKE_SHOOT_HUB_test,
                  NO_INTAKE_SHOOT_CLOSE_DELIVERY,
                  NO_INTAKE_SHOOT_FAR_DELIVERY,
                  INTAKE_SHOOT_CLOSE_DELIVERY,

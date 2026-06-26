@@ -111,7 +111,8 @@ public class Swerve extends SubsystemBase implements Logged {
             Supplier<Vector2D> velocityMPS, DoubleSupplier omegaRadPerSec, BooleanSupplier fieldOriented) {
 
         Supplier<Vector2D> adjustedVelocitySupplier = () -> {
-            Vector2D velocity = SwerveAccUtils.getSmartTranslationalVelocitySetpoint(getVelocity(), velocityMPS.get());
+//            Vector2D velocity = SwerveAccUtils.getSmartTranslationalVelocitySetpoint(getVelocity(), velocityMPS.get());
+            Vector2D velocity = velocityMPS.get();
             if (fieldOriented.getAsBoolean()) {
                 Rotation2d yaw = getRotation2D().unaryMinus();
                 if (!AllianceUtils.isBlueAlliance()) yaw = yaw.plus(pi);

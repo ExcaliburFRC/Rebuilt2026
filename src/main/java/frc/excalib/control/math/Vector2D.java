@@ -155,10 +155,8 @@ public class Vector2D {
     }
 
     public Vector2D limit(Vector2D limit) {
-        Vector2D output = new Vector2D(m_x, m_y);
-        output.rotate(limit.getDirection().unaryMinus());
+        Vector2D output = this.rotate(limit.getDirection().unaryMinus());
         output.setX(MathUtils.limitTo(limit.getDistance(), output.m_x));
-        output.setDirection(this.getDirection());
-        return output;
+        return output.rotate(limit.getDirection());
     }
 }

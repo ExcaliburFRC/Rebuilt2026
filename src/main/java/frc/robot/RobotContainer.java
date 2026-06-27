@@ -51,8 +51,6 @@ public class RobotContainer implements Logged {
 
     // ===== Alerts =====
     private final Alert primaryDisconnected = new Alert("Primary controller disconnected (port 0).", Alert.AlertType.kWarning);
-    private final Alert autoNotChosen = new Alert("!!! AUTO NOT SET !!!", Alert.AlertType.kError);
-    private final Alert lowBatteryAlert = new Alert("Battery voltage is low", Alert.AlertType.kWarning);
     private Trigger shouldDeliverTrigger = new Trigger(() -> false);
 
     private final NetworkTable table = NetworkTableInstance.getDefault().getTable("Tab1");
@@ -69,7 +67,7 @@ public class RobotContainer implements Logged {
     private final PerformanceMetricsTracker performanceMetricsTracker =
             new PerformanceMetricsTracker();
 //    private final Superstructure superstructure = new Superstructure(swerve, primary.R1(), new Trigger(ShiftUtil::isOwnHubActive), shouldDeliverTrigger);
-    private final Superstructure superstructure = new Superstructure(swerve, primary.R1(), primary.square(), shouldDeliverTrigger);
+    private final Superstructure superstructure = new Superstructure(swerve, primary.R2(), primary.square(), primary.circle());
 //
     public RobotContainer() {
 //        lowBatteryTrigger.onTrue(leds.setPattern(BLINKING, ORANGE.color).withInterruptBehavior(kCancelIncoming));
@@ -84,20 +82,15 @@ public class RobotContainer implements Logged {
 
     private void configureBindings() {
         // Driver Control
-
-
         primary.touchpad().onTrue(superstructure.coastCommand());
 
-
-        primary.cross().onTrue(new InstantCommand(() -> shouldDeliverTrigger = shouldDeliverTrigger.negate()));
-
-        superstructure.shooter.setDefaultCommand(
-                superstructure.shooter.yoavHatesThisCommandCommand(
-                        () -> hoodAngle.getDouble(0),
-                        () -> flywheelVel.getDouble(0)
-
-                )
-        );
+//        superstructure.shooter.setDefaultCommand(
+//                superstructure.shooter.yoavHatesThisCommandCommand(
+//                        () -> hoodAngle.getDouble(0),
+//                        () -> flywheelVel.getDouble(0)
+//
+//                )
+//        );
 
         swerve.setDefaultCommand(
                 swerve.driveCommand(

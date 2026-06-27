@@ -34,19 +34,18 @@ public class Superstructure implements Logged {
 
     private Trigger NO_INTAKE_SHOOT_HUB_TRIGGER, INTAKE_SHOOT_HUB_TRIGGER,
             NO_INTAKE_SHOOT_CLOSE_DELIVERY_TRIGGER, NO_INTAKE_SHOOT_FAR_DELIVERY_TRIGGER,
-            INTAKE_SHOOT_CLOSE_DELIVERY_TRIGGER, INTAKE_SHOOT_FAR_DELIVERY_TRIGGER,
-            NO_INTAKE_AIM_HUB_TRIGGER, INTAKE_AIM_HUB_TRIGGER, NO_INTAKE_AIM_CLOSE_DELIVERY_TRIGGER,
-            NO_INTAKE_AIM_FAR_DELIVERY_TRIGGER, INTAKE_AIM_CLOSE_DELIVERY_TRIGGER,
-            INTAKE_AIM_FAR_DELIVERY_TRIGGER;
+            INTAKE_SHOOT_CLOSE_DELIVERY_TRIGGER, INTAKE_SHOOT_FAR_DELIVERY_TRIGGER;
+//            NO_INTAKE_AIM_HUB_TRIGGER, INTAKE_AIM_HUB_TRIGGER, NO_INTAKE_AIM_CLOSE_DELIVERY_TRIGGER,
+//            NO_INTAKE_AIM_FAR_DELIVERY_TRIGGER, INTAKE_AIM_CLOSE_DELIVERY_TRIGGER,
+//            INTAKE_AIM_FAR_DELIVERY_TRIGGER;
 
-    public Superstructure(Swerve swerve, Trigger intakeButton, Trigger ourAllianceShiftActivate, Trigger shouldDeliver) {
+    public Superstructure(Swerve swerve, Trigger intakeButton, Trigger ourAllianceShiftActivate, Trigger deliveryButton) {
         currentRobotState = RobotState.NO_INTAKE_AIM_HUB;
 
         shooter = new Shooter(swerve::getPose2D, swerve::getRobotRelativeSpeeds);
-        transport = new Transport(()-> true);
-//        transport = new Transport(shooter.isShooterReady());
+//        transport = new Transport(()-> true);
+        transport = new Transport(shooter.isShooterReady());
         intake = new Intake();
-//        intake = new Intake();
         leds = LEDs.getInstance();
 
         robotAtState =
@@ -96,9 +95,7 @@ public class Superstructure implements Logged {
 
         overBumpTrigger = inIntermediateZone.and(underTrenchTrigger.negate());
         intakeRequested = intakeButton;
-        this.shouldDeliver = new Trigger(()-> false);
-
-//        LEDs.getInstance().setDefaultCommand();
+        this.shouldDeliver = deliveryButton;
 
         initTriggers();
     }
@@ -115,64 +112,72 @@ public class Superstructure implements Logged {
                 .onTrue(setStateCommand(INTAKE_SHOOT_HUB));
 
         NO_INTAKE_SHOOT_CLOSE_DELIVERY_TRIGGER = intakeRequested.negate()
-                .and(ourAllianceShiftActivate.negate())
-                .and(inNeutralZone)
+//                .and(ourAllianceShiftActivate.negate())
+//                .and(inNeutralZone)
+                .and(shouldDeliver)
                 .and(closerToCloseDeliveryTrigger)
                 .onTrue(setStateCommand(NO_INTAKE_SHOOT_CLOSE_DELIVERY));
 
         NO_INTAKE_SHOOT_FAR_DELIVERY_TRIGGER = intakeRequested.negate()
-                .and(ourAllianceShiftActivate.negate())
-                .and(inNeutralZone)
+//                .and(ourAllianceShiftActivate.negate())
+//                .and(inNeutralZone)
+                .and(shouldDeliver)
                 .and(closerToCloseDeliveryTrigger.negate())
                 .onTrue(setStateCommand(NO_INTAKE_SHOOT_FAR_DELIVERY));
 
         INTAKE_SHOOT_CLOSE_DELIVERY_TRIGGER = intakeRequested
-                .and(ourAllianceShiftActivate.negate())
-                .and(inNeutralZone)
+//                .and(ourAllianceShiftActivate.negate())
+//                .and(inNeutralZone)
+                .and(shouldDeliver)
                 .and(closerToCloseDeliveryTrigger)
                 .onTrue(setStateCommand(INTAKE_SHOOT_CLOSE_DELIVERY));
 
         INTAKE_SHOOT_FAR_DELIVERY_TRIGGER = intakeRequested
-                .and(ourAllianceShiftActivate.negate())
-                .and(inNeutralZone)
+//                .and(ourAllianceShiftActivate.negate())
+//                .and(inNeutralZone)
+                .and(shouldDeliver)
                 .and(closerToCloseDeliveryTrigger.negate())
                 .onTrue(setStateCommand(INTAKE_SHOOT_FAR_DELIVERY));
 
         // also when over bump
-        NO_INTAKE_AIM_HUB_TRIGGER = intakeRequested.negate()
-                .and(ourAllianceShiftActivate.negate())
-                .and(inAllianceZone)
-                .onTrue(setStateCommand(NO_INTAKE_AIM_HUB));
+//        NO_INTAKE_AIM_HUB_TRIGGER = intakeRequested.negate()
+//                .and(ourAllianceShiftActivate.negate())
+//                .and(inAllianceZone)
+//                .onTrue(setStateCommand(NO_INTAKE_AIM_HUB));
 
         // also when under trench
-        INTAKE_AIM_HUB_TRIGGER = intakeRequested
-                .and(ourAllianceShiftActivate.negate())
-                .and(inAllianceZone)
-                .onTrue(setStateCommand(INTAKE_AIM_HUB));
+//        INTAKE_AIM_HUB_TRIGGER = intakeRequested
+//                .and(ourAllianceShiftActivate.negate())
+//                .and(inAllianceZone)
+//                .onTrue(setStateCommand(INTAKE_AIM_HUB));
 
-        NO_INTAKE_AIM_CLOSE_DELIVERY_TRIGGER = intakeRequested.negate()
-                .and(ourAllianceShiftActivate)
-                .and(inNeutralZone)
-                .and(closerToCloseDeliveryTrigger)
-                .onTrue(setStateCommand(NO_INTAKE_AIM_CLOSE_DELIVERY));
+//        NO_INTAKE_AIM_CLOSE_DELIVERY_TRIGGER = intakeRequested.negate()
+//                .and(ourAllianceShiftActivate)
+//                .and(inNeutralZone)
+//                .and(shouldDeliver)
+//                .and(closerToCloseDeliveryTrigger)
+//                .onTrue(setStateCommand(NO_INTAKE_AIM_CLOSE_DELIVERY));
 
-        NO_INTAKE_AIM_FAR_DELIVERY_TRIGGER = intakeRequested.negate()
-                .and(ourAllianceShiftActivate)
-                .and(inNeutralZone)
-                .and(closerToCloseDeliveryTrigger.negate())
-                .onTrue(setStateCommand(NO_INTAKE_AIM_FAR_DELIVERY));
+//        NO_INTAKE_AIM_FAR_DELIVERY_TRIGGER = intakeRequested.negate()
+//                .and(ourAllianceShiftActivate)
+//                .and(inNeutralZone)
+//                .and(shouldDeliver)
+//                .and(closerToCloseDeliveryTrigger.negate())
+//                .onTrue(setStateCommand(NO_INTAKE_AIM_FAR_DELIVERY));
 
-        INTAKE_AIM_CLOSE_DELIVERY_TRIGGER = intakeRequested
-                .and(ourAllianceShiftActivate)
-                .and(inNeutralZone)
-                .and(closerToCloseDeliveryTrigger)
-                .onTrue(setStateCommand(INTAKE_AIM_CLOSE_DELIVERY));
+//        INTAKE_AIM_CLOSE_DELIVERY_TRIGGER = intakeRequested
+//                .and(ourAllianceShiftActivate)
+//                .and(inNeutralZone)
+//                .and(shouldDeliver)
+//                .and(closerToCloseDeliveryTrigger)
+//                .onTrue(setStateCommand(INTAKE_AIM_CLOSE_DELIVERY));
 
-        INTAKE_AIM_FAR_DELIVERY_TRIGGER = intakeRequested
-                .and(ourAllianceShiftActivate)
-                .and(inNeutralZone)
-                .and(closerToCloseDeliveryTrigger.negate())
-                .onTrue(setStateCommand(INTAKE_AIM_FAR_DELIVERY));
+//        INTAKE_AIM_FAR_DELIVERY_TRIGGER = intakeRequested
+//                .and(ourAllianceShiftActivate)
+//                .and(inNeutralZone)
+//                .and(shouldDeliver)
+//                .and(closerToCloseDeliveryTrigger.negate())
+//                .onTrue(setStateCommand(INTAKE_AIM_FAR_DELIVERY));
     }
 
     public Command setStateCommand(RobotState robotStateToSet) {
@@ -282,35 +287,35 @@ public class Superstructure implements Logged {
         return INTAKE_SHOOT_FAR_DELIVERY_TRIGGER.getAsBoolean();
     }
 
-    @Log.NT
-    public boolean getNO_INTAKE_AIM_HUB_TRIGGER() {
-        return NO_INTAKE_AIM_HUB_TRIGGER.getAsBoolean();
-    }
-
-    @Log.NT
-    public boolean getINTAKE_AIM_HUB_TRIGGER() {
-        return INTAKE_AIM_HUB_TRIGGER.getAsBoolean();
-    }
-
-    @Log.NT
-    public boolean getNO_INTAKE_AIM_CLOSE_DELIVERY_TRIGGER() {
-        return NO_INTAKE_AIM_CLOSE_DELIVERY_TRIGGER.getAsBoolean();
-    }
-
-    @Log.NT
-    public boolean getNO_INTAKE_AIM_FAR_DELIVERY_TRIGGER() {
-        return NO_INTAKE_AIM_FAR_DELIVERY_TRIGGER.getAsBoolean();
-    }
-
-    @Log.NT
-    public boolean getINTAKE_AIM_CLOSE_DELIVERY_TRIGGER() {
-        return INTAKE_AIM_CLOSE_DELIVERY_TRIGGER.getAsBoolean();
-    }
-
-    @Log.NT
-    public boolean getINTAKE_AIM_FAR_DELIVERY_TRIGGER() {
-        return INTAKE_AIM_FAR_DELIVERY_TRIGGER.getAsBoolean();
-    }
+//    @Log.NT
+//    public boolean getNO_INTAKE_AIM_HUB_TRIGGER() {
+//        return NO_INTAKE_AIM_HUB_TRIGGER.getAsBoolean();
+//    }
+//
+//    @Log.NT
+//    public boolean getINTAKE_AIM_HUB_TRIGGER() {
+//        return INTAKE_AIM_HUB_TRIGGER.getAsBoolean();
+//    }
+//
+//    @Log.NT
+//    public boolean getNO_INTAKE_AIM_CLOSE_DELIVERY_TRIGGER() {
+//        return NO_INTAKE_AIM_CLOSE_DELIVERY_TRIGGER.getAsBoolean();
+//    }
+//
+//    @Log.NT
+//    public boolean getNO_INTAKE_AIM_FAR_DELIVERY_TRIGGER() {
+//        return NO_INTAKE_AIM_FAR_DELIVERY_TRIGGER.getAsBoolean();
+//    }
+//
+//    @Log.NT
+//    public boolean getINTAKE_AIM_CLOSE_DELIVERY_TRIGGER() {
+//        return INTAKE_AIM_CLOSE_DELIVERY_TRIGGER.getAsBoolean();
+//    }
+//
+//    @Log.NT
+//    public boolean getINTAKE_AIM_FAR_DELIVERY_TRIGGER() {
+//        return INTAKE_AIM_FAR_DELIVERY_TRIGGER.getAsBoolean();
+//    }
 
     public Command coastCommand() {
         return shooter.turretMechanism.coastCommand(this.shooter);

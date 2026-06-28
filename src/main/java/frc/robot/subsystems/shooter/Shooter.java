@@ -258,43 +258,44 @@ public class Shooter extends SubsystemBase implements Logged {
 
     public void initVelocityMap() {
 //          velocityDistanceMapTable.put(distance[meters], flywheel velocity);
-        highVelocityDistanceMap.put(1.77, 28.0);
-        highVelocityDistanceMap.put(1.89, 29.0);
-        highVelocityDistanceMap.put(2.08, 29.5);
-        highVelocityDistanceMap.put(2.23, 30.0);
-        highVelocityDistanceMap.put(2.45, 31.0);
-        highVelocityDistanceMap.put(2.74, 31.0);
-        highVelocityDistanceMap.put(2.83, 33.5);
-        highVelocityDistanceMap.put(3.0, 34.0);
-        highVelocityDistanceMap.put(4.01, 38.0);
-        highVelocityDistanceMap.put(4.72, 38.0);
-        highVelocityDistanceMap.put(5.49, 43.0);
+        double scaler = 0.935;
+        highVelocityDistanceMap.put(1.77, 28.0 * scaler);
+        highVelocityDistanceMap.put(1.89, 29.0 * scaler);
+        highVelocityDistanceMap.put(2.08, 29.5 * scaler);
+        highVelocityDistanceMap.put(2.23, 30.0 * scaler);
+        highVelocityDistanceMap.put(2.45, 31.0 * scaler);
+        highVelocityDistanceMap.put(2.74, 31.0 * scaler);
+        highVelocityDistanceMap.put(2.83, 33.5 * scaler);
+        highVelocityDistanceMap.put(3.0, 34.0 * scaler);
+        highVelocityDistanceMap.put(4.01, 38.0 * scaler);
+        highVelocityDistanceMap.put(4.72, 38.0 * scaler);
+        highVelocityDistanceMap.put(5.49, 43.0 * scaler);
     }
 
     private void initLowMaps() {
-            // Flatter than the high-goal map on purpose -> lower apex.
-            // angle decreases slightly with distance to hold apex roughly constant.
-            lowAngleDistanceMap.put(2.0, 0.7);
-            lowAngleDistanceMap.put(3.0, 0.7);
-            lowAngleDistanceMap.put(4.0, 0.6);
-            lowAngleDistanceMap.put(5.0, 0.5);
-            lowAngleDistanceMap.put(6.0, 0.5);
+        // Flatter than the high-goal map on purpose -> lower apex.
+        // angle decreases slightly with distance to hold apex roughly constant.
+        lowAngleDistanceMap.put(2.0, 0.7);
+        lowAngleDistanceMap.put(3.0, 0.7);
+        lowAngleDistanceMap.put(4.0, 0.6);
+        lowAngleDistanceMap.put(5.0, 0.5);
+        lowAngleDistanceMap.put(6.0, 0.5);
 
-            // Comparable to high-goal speeds (flatter shot needs the horizontal reach).
-            // This is the easy empirical knob: short -> raise, long -> lower.
-            lowVelocityDistanceMap.put(2.0, 22.0);
-            lowVelocityDistanceMap.put(3.0, 26.0);
-            lowVelocityDistanceMap.put(4.0, 31.0);
-            lowVelocityDistanceMap.put(5.0, 36.0);
-            lowVelocityDistanceMap.put(6.0, 41.0);
+        // Comparable to high-goal speeds (flatter shot needs the horizontal reach).
+        // This is the easy empirical knob: short -> raise, long -> lower.
+        lowVelocityDistanceMap.put(2.0, 22.0);
+        lowVelocityDistanceMap.put(3.0, 26.0);
+        lowVelocityDistanceMap.put(4.0, 31.0);
+        lowVelocityDistanceMap.put(5.0, 36.0);
+        lowVelocityDistanceMap.put(6.0, 41.0);
 
-            // Flat shot -> shorter hang time than a high arc. MEASURE these on-robot.
-            lowDistanceTimeOfFlightMap.put(2.0, 0.30);
-            lowDistanceTimeOfFlightMap.put(3.0, 0.42);
-            lowDistanceTimeOfFlightMap.put(4.0, 0.54);
-            lowDistanceTimeOfFlightMap.put(5.0, 0.66);
-            lowDistanceTimeOfFlightMap.put(6.0, 0.78);
-        }
+        // Flat shot -> shorter hang time than a high arc. MEASURE these on-robot.
+        lowDistanceTimeOfFlightMap.put(2.0, 0.30);
+        lowDistanceTimeOfFlightMap.put(3.0, 0.42);
+        lowDistanceTimeOfFlightMap.put(4.0, 0.54);
+        lowDistanceTimeOfFlightMap.put(5.0, 0.66);
+        lowDistanceTimeOfFlightMap.put(6.0, 0.78);
+    }
 
     public Command setStateCommand(ShooterStates stateToSet) {
         return new InstantCommand(() -> this.currentState = stateToSet);
@@ -394,7 +395,7 @@ public class Shooter extends SubsystemBase implements Logged {
         );
     }
 
-    public double getWantedVelocity(){
+    public double getWantedVelocity() {
         double distance = turretRelativeDistanceFromTarget.getAsDouble();
         return currentState.isShooting ? getWantedVelocityForDistance(distance) : 0;
     }

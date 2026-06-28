@@ -61,7 +61,6 @@ public class RobotContainer implements Logged {
     private boolean batteryLow = false;
 
     //    private final RobotDiagnostics robotDiagnostics = new RobotDiagnostics(powerDistributionHub);
-    private final CANHealthMonitor canHealthMonitor = new CANHealthMonitor();
     private final ControllerStateTracker primaryControllerTracker =
             new ControllerStateTracker(primary.getHID(), "Primary Controller");
     private final PerformanceMetricsTracker performanceMetricsTracker =

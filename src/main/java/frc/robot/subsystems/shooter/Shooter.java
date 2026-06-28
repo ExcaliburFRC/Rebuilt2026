@@ -242,11 +242,18 @@ public class Shooter extends SubsystemBase implements Logged {
     private void initDistanceTimeOfFlightMap() {
         // Populate empirical time-of-flight map for HIGH goal (fix A1/B1)
         // The commented values were empirical measurements — restore them so the lead model runs.
-        highDistanceTimeOfFlightMap.put(0.0, 0.0); //currently not used because of testing, DONT TOUCH!
+        highDistanceTimeOfFlightMap.put(0.0, 0.0);
+        highDistanceTimeOfFlightMap.put(4.01, 1.2);
+        highDistanceTimeOfFlightMap.put(4.72, 1.21);
+        highDistanceTimeOfFlightMap.put(5.49, 2.02);
     }
 
     public void initAngleMap() {
         highAngleDistanceMap.put(0.00, 0.0);
+        highAngleDistanceMap.put(2.00, 0.0);
+        highAngleDistanceMap.put(4.01, 0.3);
+        highAngleDistanceMap.put(4.72, 0.5);
+        highAngleDistanceMap.put(5.49, 0.5);
     }
 
     public void initVelocityMap() {
@@ -259,39 +266,35 @@ public class Shooter extends SubsystemBase implements Logged {
         highVelocityDistanceMap.put(2.74, 31.0);
         highVelocityDistanceMap.put(2.83, 33.5);
         highVelocityDistanceMap.put(3.0, 34.0);
+        highVelocityDistanceMap.put(4.01, 38.0);
+        highVelocityDistanceMap.put(4.72, 38.0);
+        highVelocityDistanceMap.put(5.49, 43.0);
     }
 
     private void initLowMaps() {
-        lowAngleDistanceMap.put(2.0, 1.0);
-        lowAngleDistanceMap.put(3.0, 1.0);
-        lowAngleDistanceMap.put(4.0, 0.925);
-        lowAngleDistanceMap.put(5.0, 0.874);
-        lowAngleDistanceMap.put(6.0, 0.841);
-        lowAngleDistanceMap.put(7.0, 0.819);
-        lowAngleDistanceMap.put(8.0, 0.802);
-        lowAngleDistanceMap.put(9.0, 0.789);
-        lowAngleDistanceMap.put(10.0, 0.779);
+            // Flatter than the high-goal map on purpose -> lower apex.
+            // angle decreases slightly with distance to hold apex roughly constant.
+            lowAngleDistanceMap.put(2.0, 0.7);
+            lowAngleDistanceMap.put(3.0, 0.7);
+            lowAngleDistanceMap.put(4.0, 0.6);
+            lowAngleDistanceMap.put(5.0, 0.5);
+            lowAngleDistanceMap.put(6.0, 0.5);
 
-        lowVelocityDistanceMap.put(2.0, 13.25247);
-        lowVelocityDistanceMap.put(3.0, 15.852848);
-        lowVelocityDistanceMap.put(4.0, 18.51587);
-        lowVelocityDistanceMap.put(5.0, 20.92826);
-        lowVelocityDistanceMap.put(6.0, 23.09001);
-        lowVelocityDistanceMap.put(7.0, 25.063791);
-        lowVelocityDistanceMap.put(8.0, 26.91224);
-        lowVelocityDistanceMap.put(9.0, 28.635382);
-        lowVelocityDistanceMap.put(10.0, 30.26452);
+            // Comparable to high-goal speeds (flatter shot needs the horizontal reach).
+            // This is the easy empirical knob: short -> raise, long -> lower.
+            lowVelocityDistanceMap.put(2.0, 22.0);
+            lowVelocityDistanceMap.put(3.0, 26.0);
+            lowVelocityDistanceMap.put(4.0, 31.0);
+            lowVelocityDistanceMap.put(5.0, 36.0);
+            lowVelocityDistanceMap.put(6.0, 41.0);
 
-        lowDistanceTimeOfFlightMap.put(2.0, 0.64);
-        lowDistanceTimeOfFlightMap.put(3.0, 0.72);
-        lowDistanceTimeOfFlightMap.put(4.0, 0.84);
-        lowDistanceTimeOfFlightMap.put(5.0, 0.96);
-        lowDistanceTimeOfFlightMap.put(6.0, 1.06);
-        lowDistanceTimeOfFlightMap.put(7.0, 1.15);
-        lowDistanceTimeOfFlightMap.put(8.0, 1.24);
-        lowDistanceTimeOfFlightMap.put(9.0, 1.32);
-        lowDistanceTimeOfFlightMap.put(10.0, 1.39);
-    }
+            // Flat shot -> shorter hang time than a high arc. MEASURE these on-robot.
+            lowDistanceTimeOfFlightMap.put(2.0, 0.30);
+            lowDistanceTimeOfFlightMap.put(3.0, 0.42);
+            lowDistanceTimeOfFlightMap.put(4.0, 0.54);
+            lowDistanceTimeOfFlightMap.put(5.0, 0.66);
+            lowDistanceTimeOfFlightMap.put(6.0, 0.78);
+        }
 
     public Command setStateCommand(ShooterStates stateToSet) {
         return new InstantCommand(() -> this.currentState = stateToSet);

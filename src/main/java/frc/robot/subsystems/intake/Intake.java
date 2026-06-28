@@ -120,7 +120,7 @@ public class Intake extends SubsystemBase implements Logged {
 
     public Command pumpCommand() {
         return new SequentialCommandGroup(
-                setPositionCommand(() -> 2).withTimeout(0.5), setPositionCommand(() -> 0).withTimeout(0.5)).repeatedly();
+                setPositionCommand(() -> 1.60).withTimeout(0.5), setPositionCommand(() -> 0).withTimeout(0.5)).repeatedly();
     }
 
     public Command basicGoToCommand(){

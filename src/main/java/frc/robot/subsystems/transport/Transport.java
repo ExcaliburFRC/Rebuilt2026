@@ -37,7 +37,7 @@ public class Transport extends SubsystemBase implements Logged {
 
         transportMotor.setIdleState(IdleState.BRAKE);
         drumMotor.setIdleState(IdleState.BRAKE);
-        drumMotor.setInverted(DirectionState.REVERSE);
+        drumMotor.setInverted(DirectionState.FORWARD);
         transportMotor.setInverted(DirectionState.REVERSE);
 
         this.isShooterReadyForTransport = isShooterReadyForTransport;

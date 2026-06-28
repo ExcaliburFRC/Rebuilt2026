@@ -51,8 +51,6 @@ public class RobotContainer implements Logged {
 
     // ===== Alerts =====
     private final Alert primaryDisconnected = new Alert("Primary controller disconnected (port 0).", Alert.AlertType.kWarning);
-    private final Alert autoNotChosen = new Alert("!!! AUTO NOT SET !!!", Alert.AlertType.kError);
-    private final Alert lowBatteryAlert = new Alert("Battery voltage is low", Alert.AlertType.kWarning);
     private Trigger shouldDeliverTrigger = new Trigger(() -> false);
 
     private final NetworkTable table = NetworkTableInstance.getDefault().getTable("Tab1");
@@ -69,8 +67,8 @@ public class RobotContainer implements Logged {
     private final PerformanceMetricsTracker performanceMetricsTracker =
             new PerformanceMetricsTracker();
 //    private final Superstructure superstructure = new Superstructure(swerve, primary.R1(), new Trigger(ShiftUtil::isOwnHubActive), shouldDeliverTrigger);
-    private final Superstructure superstructure = new Superstructure(swerve, primary.R1(), primary.square(), shouldDeliverTrigger);
-
+    private final Superstructure superstructure = new Superstructure(swerve, primary.R2(), primary.square(), primary.circle());
+//
     public RobotContainer() {
 //        lowBatteryTrigger.onTrue(leds.setPattern(BLINKING, ORANGE.color).withInterruptBehavior(kCancelIncoming));
 
@@ -84,33 +82,7 @@ public class RobotContainer implements Logged {
 
     private void configureBindings() {
         // Driver Control
-
-        primary.options().onTrue(swerve.resetOdometryCommand(
-                new Pose2d(
-                        new Translation2d(
-                                3,
-                                FieldConstants.BLUE_HUB_CENTER_POSE.get().getY()),
-                        Rotation2d.kZero)
-        ).ignoringDisable(true));
-
-
         primary.touchpad().onTrue(superstructure.coastCommand());
-
-//        primary.povUp().onTrue(
-//                swerve.driveToPoseWithOverrideCommand(
-//                        swerve.getPose2D().getY() > AllianceUtils.FIELD_WIDTH_METERS / 2
-//                                ? new Pose2d(10.63, 5.63, swerve.getRotation2D())
-//                                : new Pose2d(10.69, 2.51, swerve.getRotation2D()),
-//                        MAX_BUMP_CONSTRAINTS,
-//                        () -> true,
-//                        () -> new Vector2D(
-//                                applyDeadband(-primary.getLeftY()) * MAX_VEL,
-//                                applyDeadband(-primary.getLeftX()) * MAX_VEL),
-//                        () -> -applyDeadband(primary.getRightX()) * MAX_OMEGA_RAD_PER_SEC
-//                )
-//        );
-
-        primary.cross().onTrue(new InstantCommand(() -> shouldDeliverTrigger = shouldDeliverTrigger.negate()));
 
 //        superstructure.shooter.setDefaultCommand(
 //                superstructure.shooter.yoavHatesThisCommandCommand(
@@ -165,17 +137,6 @@ public class RobotContainer implements Logged {
 //        canHealthMonitor.update();
         primaryControllerTracker.update();
         primaryDisconnected.set(!DriverStation.isJoystickConnected(primary.getHID().getPort()));
-
-        autoNotChosen.set(autoChooser.getSelected() == null ||
-                autoChooser.getSelected().equals("/ null Auto"));
-
-        double voltage = powerDistributionHub.getVoltage();
-        if (voltage < BATTERY_VOLTAGE_WARNING_THRESHOLD - BATTERY_VOLTAGE_HYSTERESIS) {
-            batteryLow = true;
-        } else if (voltage > BATTERY_VOLTAGE_WARNING_THRESHOLD + BATTERY_VOLTAGE_HYSTERESIS) {
-            batteryLow = false;
-        }
-        lowBatteryAlert.set(batteryLow);
 
         performanceMetricsTracker.recordPowerConsumption(powerDistributionHub.getTotalPower());
     }

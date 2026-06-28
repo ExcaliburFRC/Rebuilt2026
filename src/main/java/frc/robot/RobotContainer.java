@@ -67,7 +67,7 @@ public class RobotContainer implements Logged {
     private final PerformanceMetricsTracker performanceMetricsTracker =
             new PerformanceMetricsTracker();
 //    private final Superstructure superstructure = new Superstructure(swerve, primary.R1(), new Trigger(ShiftUtil::isOwnHubActive), shouldDeliverTrigger);
-    private final Superstructure superstructure = new Superstructure(swerve, primary.R2(), primary.square(), primary.circle());
+    private final Superstructure superstructure = new Superstructure(swerve, primary.R1(), primary.square(), primary.circle());
 //
     public RobotContainer() {
 //        lowBatteryTrigger.onTrue(leds.setPattern(BLINKING, ORANGE.color).withInterruptBehavior(kCancelIncoming));

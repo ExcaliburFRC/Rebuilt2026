@@ -34,8 +34,9 @@ public class Superstructure implements Logged {
 
     private Trigger NO_INTAKE_SHOOT_HUB_TRIGGER, INTAKE_SHOOT_HUB_TRIGGER,
             NO_INTAKE_SHOOT_CLOSE_DELIVERY_TRIGGER, NO_INTAKE_SHOOT_FAR_DELIVERY_TRIGGER,
-            INTAKE_SHOOT_CLOSE_DELIVERY_TRIGGER, INTAKE_SHOOT_FAR_DELIVERY_TRIGGER;
-//            NO_INTAKE_AIM_HUB_TRIGGER, INTAKE_AIM_HUB_TRIGGER, NO_INTAKE_AIM_CLOSE_DELIVERY_TRIGGER,
+            INTAKE_SHOOT_CLOSE_DELIVERY_TRIGGER, INTAKE_SHOOT_FAR_DELIVERY_TRIGGER,
+            NO_INTAKE_AIM_HUB_TRIGGER, INTAKE_AIM_HUB_TRIGGER;
+//            NO_INTAKE_AIM_CLOSE_DELIVERY_TRIGGER;
 //            NO_INTAKE_AIM_FAR_DELIVERY_TRIGGER, INTAKE_AIM_CLOSE_DELIVERY_TRIGGER,
 //            INTAKE_AIM_FAR_DELIVERY_TRIGGER;
 
@@ -139,17 +140,17 @@ public class Superstructure implements Logged {
                 .and(closerToCloseDeliveryTrigger.negate())
                 .onTrue(setStateCommand(INTAKE_SHOOT_FAR_DELIVERY));
 
-        // also when over bump
-//        NO_INTAKE_AIM_HUB_TRIGGER = intakeRequested.negate()
-//                .and(ourAllianceShiftActivate.negate())
-//                .and(inAllianceZone)
-//                .onTrue(setStateCommand(NO_INTAKE_AIM_HUB));
+//         also when over bump
+        NO_INTAKE_AIM_HUB_TRIGGER = intakeRequested.negate()
+                .and(ourAllianceShiftActivate.negate())
+                .and(inAllianceZone)
+                .onTrue(setStateCommand(NO_INTAKE_AIM_HUB));
 
-        // also when under trench
-//        INTAKE_AIM_HUB_TRIGGER = intakeRequested
-//                .and(ourAllianceShiftActivate.negate())
-//                .and(inAllianceZone)
-//                .onTrue(setStateCommand(INTAKE_AIM_HUB));
+//         also when under trench
+        INTAKE_AIM_HUB_TRIGGER = intakeRequested
+                .and(ourAllianceShiftActivate.negate())
+                .and(inAllianceZone)
+                .onTrue(setStateCommand(INTAKE_AIM_HUB));
 
 //        NO_INTAKE_AIM_CLOSE_DELIVERY_TRIGGER = intakeRequested.negate()
 //                .and(ourAllianceShiftActivate)

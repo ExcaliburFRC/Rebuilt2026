@@ -7,25 +7,7 @@
         {
           "type": "named",
           "data": {
-            "name": "shoot"
-          }
-        },
-        {
-          "type": "wait",
-          "data": {
-            "waitTime": 1.0
-          }
-        },
-        {
-          "type": "named",
-          "data": {
             "name": "idle"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "PATH1"
           }
         },
         {
@@ -37,19 +19,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "PATH2"
+            "pathName": "#1"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "idle"
+            "name": "intake"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "PATH3"
+            "pathName": "#2"
           }
         },
         {
@@ -57,17 +39,11 @@
           "data": {
             "name": "shoot"
           }
-        },
-        {
-          "type": "wait",
-          "data": {
-            "waitTime": 2.0
-          }
         }
       ]
     }
   },
-  "resetOdom": false,
+  "resetOdom": true,
   "folder": null,
   "choreoAuto": false
 }

@@ -80,6 +80,12 @@ public final class Constants {
         public static final double MAX_OMEGA_RAD_PER_SEC = 1.5;
         public static final double MAX_OMEGA_RAD_PER_SEC_SQUARE = 1;
 
+        /**
+         * Reject any Limelight pose estimate that relies on an AprilTag farther than this distance (meters).
+         * Far tags produce noisy MegaTag poses, so frames containing one are dropped entirely.
+         */
+        public static final double MAX_VISION_TAG_DISTANCE_METERS = 5.0;
+
         public static final PathConstraints MAX_PATH_CONSTRAINTS = new PathConstraints(
                 MAX_VEL,
                 MAX_SKID_ACC,

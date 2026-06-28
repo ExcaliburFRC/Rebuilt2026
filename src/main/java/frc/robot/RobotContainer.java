@@ -74,7 +74,7 @@ public class RobotContainer implements Logged {
         flywheelVel.setDouble(0);
         hoodAngle.setDouble(0);
 
-        //registerCommands();
+        registerCommands();
         setAutoChooser();
         configureBindings();
     }

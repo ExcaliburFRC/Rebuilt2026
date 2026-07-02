@@ -31,8 +31,8 @@ public record CurrentBudget(
      * Basic budget: stator + supply limits. Supply-lower defaults to the supply limit
      * (no time-based reduction); torque peaks default to the stator limit.
      */
-    public static CurrentBudget of(double statorLimit, double supplyLimit) {
-        return new CurrentBudget(statorLimit, supplyLimit, supplyLimit, 0, statorLimit, -statorLimit);
+    public CurrentBudget(double statorLimit, double supplyLimit) {
+        this(statorLimit, supplyLimit, supplyLimit, 0, statorLimit, -statorLimit);
     }
 
     /** Returns a copy with time-based supply reduction (breaker protection). */

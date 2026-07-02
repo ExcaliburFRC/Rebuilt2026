@@ -36,23 +36,26 @@ class StateMachineTest {
     }
 
     @Test
-    void initialStateEntersAndRunsOnEnter() {
+    void initialStateEntersOnFirstTick() {
         AtomicInteger entered = new AtomicInteger();
-        StateMachine<TestState> machine = StateMachine.builder("test", TestState.IDLE)
-                .onEnter(TestState.IDLE, entered::incrementAndGet)
-                .build();
+        StateMachine<TestState> machine = new StateMachine<>("test", TestState.IDLE)
+                .onEnter(TestState.IDLE, entered::incrementAndGet);
+
+        assertEquals(0, entered.get()); // declarations first, actions on first tick
+        machine.periodic();
         assertEquals(TestState.IDLE, machine.getCurrentState());
         assertEquals(1, entered.get());
+        machine.periodic();
+        assertEquals(1, entered.get()); // start fires exactly once
     }
 
     @Test
     void legalTransitionRunsExitThenEnter() {
         List<String> order = new ArrayList<>();
-        StateMachine<TestState> machine = StateMachine.builder("test", TestState.IDLE)
+        StateMachine<TestState> machine = new StateMachine<>("test", TestState.IDLE)
                 .onExit(TestState.IDLE, () -> order.add("exit-idle"))
                 .onEnter(TestState.SPINNING, () -> order.add("enter-spinning"))
-                .transition(TestState.IDLE, TestState.SPINNING)
-                .build();
+                .transition(TestState.IDLE, TestState.SPINNING);
 
         assertTrue(machine.request(TestState.SPINNING));
         assertEquals(TestState.SPINNING, machine.getCurrentState());
@@ -61,9 +64,8 @@ class StateMachineTest {
 
     @Test
     void undeclaredTransitionIsDenied() {
-        StateMachine<TestState> machine = StateMachine.builder("test", TestState.IDLE)
-                .transition(TestState.IDLE, TestState.SPINNING)
-                .build();
+        StateMachine<TestState> machine = new StateMachine<>("test", TestState.IDLE)
+                .transition(TestState.IDLE, TestState.SPINNING);
 
         assertFalse(machine.request(TestState.SHOOTING));
         assertEquals(TestState.IDLE, machine.getCurrentState());
@@ -73,9 +75,8 @@ class StateMachineTest {
     @Test
     void guardedTransitionStaysPendingUntilGuardPasses() {
         AtomicBoolean guard = new AtomicBoolean(false);
-        StateMachine<TestState> machine = StateMachine.builder("test", TestState.IDLE)
-                .transition(TestState.IDLE, TestState.SPINNING, guard::get)
-                .build();
+        StateMachine<TestState> machine = new StateMachine<>("test", TestState.IDLE)
+                .transition(TestState.IDLE, TestState.SPINNING, guard::get);
 
         assertFalse(machine.request(TestState.SPINNING));
         assertEquals(TestState.IDLE, machine.getCurrentState());
@@ -92,11 +93,10 @@ class StateMachineTest {
 
     @Test
     void fromAnyEdgeWorksFromEveryState() {
-        StateMachine<TestState> machine = StateMachine.builder("test", TestState.IDLE)
+        StateMachine<TestState> machine = new StateMachine<>("test", TestState.IDLE)
                 .transition(TestState.IDLE, TestState.SPINNING)
                 .transition(TestState.SPINNING, TestState.SHOOTING)
-                .transitionFromAny(TestState.IDLE)
-                .build();
+                .transitionFromAny(TestState.IDLE);
 
         machine.request(TestState.SPINNING);
         machine.request(TestState.SHOOTING);
@@ -108,9 +108,8 @@ class StateMachineTest {
     @Test
     void requestingCurrentStateSucceedsAndClearsPending() {
         AtomicBoolean guard = new AtomicBoolean(false);
-        StateMachine<TestState> machine = StateMachine.builder("test", TestState.IDLE)
-                .transition(TestState.IDLE, TestState.SPINNING, guard::get)
-                .build();
+        StateMachine<TestState> machine = new StateMachine<>("test", TestState.IDLE)
+                .transition(TestState.IDLE, TestState.SPINNING, guard::get);
 
         machine.request(TestState.SPINNING);
         assertEquals(TestState.SPINNING, machine.getPending());
@@ -125,11 +124,10 @@ class StateMachineTest {
         Command spinCommand = Commands.run(executes::incrementAndGet)
                 .finallyDo(interrupted -> cancelled.set(interrupted));
 
-        StateMachine<TestState> machine = StateMachine.builder("test", TestState.IDLE)
+        StateMachine<TestState> machine = new StateMachine<>("test", TestState.IDLE)
                 .whileIn(TestState.SPINNING, spinCommand)
                 .transition(TestState.IDLE, TestState.SPINNING)
-                .transition(TestState.SPINNING, TestState.IDLE)
-                .build();
+                .transition(TestState.SPINNING, TestState.IDLE);
 
         machine.request(TestState.SPINNING);
         CommandScheduler.getInstance().run();
@@ -143,9 +141,8 @@ class StateMachineTest {
 
     @Test
     void in_triggerTracksState() {
-        StateMachine<TestState> machine = StateMachine.builder("test", TestState.IDLE)
-                .transition(TestState.IDLE, TestState.SPINNING)
-                .build();
+        StateMachine<TestState> machine = new StateMachine<>("test", TestState.IDLE)
+                .transition(TestState.IDLE, TestState.SPINNING);
 
         assertTrue(machine.in(TestState.IDLE).getAsBoolean());
         machine.request(TestState.SPINNING);
@@ -155,7 +152,7 @@ class StateMachineTest {
 
     @Test
     void forceStateBypassesTable() {
-        StateMachine<TestState> machine = StateMachine.builder("test", TestState.IDLE).build();
+        StateMachine<TestState> machine = new StateMachine<>("test", TestState.IDLE);
         machine.forceState(TestState.SHOOTING);
         assertEquals(TestState.SHOOTING, machine.getCurrentState());
     }

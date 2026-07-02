@@ -13,6 +13,15 @@ import java.util.function.BooleanSupplier;
  * A typed, enum-based state machine with an explicit transition table, guards, and
  * enter/while/exit actions — declarative, command-friendly, and never blocking.
  *
+ * <p>Construct it and declare behavior directly on the instance (chainable):
+ * <pre>{@code
+ * StateMachine<IntakeState> machine = new StateMachine<>("Intake", IntakeState.CLOSED)
+ *     .onEnter(OPEN, () -> fourBar.setGoal(OPEN_ANGLE))
+ *     .whileIn(PUMP, pumpCommand())
+ *     .transition(CLOSED, OPEN, armHomed)
+ *     .transitionFromAny(CLOSED);
+ * }</pre>
+ *
  * <h2>Semantics</h2>
  * <ul>
  *   <li><b>Default-deny:</b> a transition not declared in the table is illegal.
@@ -23,8 +32,9 @@ import java.util.function.BooleanSupplier;
  *   <li><b>Actions:</b> {@code onEnter}/{@code onExit} runnables execute synchronously at the
  *       transition; a {@code whileIn} command is scheduled on entry and cancelled on exit
  *       (its requirements integrate with command-based as usual).</li>
- *   <li><b>Triggers:</b> {@link #in(Enum)} exposes states as WPILib {@link Trigger}s for
- *       bindings.</li>
+ *   <li><b>Startup:</b> the initial state's {@code onEnter}/{@code whileIn} fire on the first
+ *       {@link #periodic()} or {@link #request} — declare everything first, then tick.</li>
+ *   <li><b>Triggers:</b> {@link #in(Enum)} exposes states as WPILib {@link Trigger}s.</li>
  * </ul>
  *
  * <p>Tick {@link #periodic()} from the owning subsystem. All calls are main-loop only.
@@ -33,7 +43,10 @@ import java.util.function.BooleanSupplier;
  * MA5951 per-subsystem states (concept).
  */
 public final class StateMachine<S extends Enum<S>> {
+    private static final BooleanSupplier ALWAYS = () -> true;
+
     private final String name;
+    private final Class<S> stateType;
     private final Map<S, Map<S, BooleanSupplier>> edges;
     private final Map<S, BooleanSupplier> fromAnyEdges;
     private final Map<S, Runnable> onEnter;
@@ -42,21 +55,59 @@ public final class StateMachine<S extends Enum<S>> {
 
     private S current;
     private S pending = null;
+    private boolean started = false;
     private String lastDenied = "";
 
-    private StateMachine(Builder<S> builder) {
-        this.name = builder.name;
-        this.edges = builder.edges;
-        this.fromAnyEdges = builder.fromAnyEdges;
-        this.onEnter = builder.onEnter;
-        this.onExit = builder.onExit;
-        this.whileIn = builder.whileIn;
-        this.current = builder.initial;
-        enterState(builder.initial);
+    public StateMachine(String name, S initialState) {
+        this.name = name;
+        this.stateType = initialState.getDeclaringClass();
+        this.edges = new EnumMap<>(stateType);
+        this.fromAnyEdges = new EnumMap<>(stateType);
+        this.onEnter = new EnumMap<>(stateType);
+        this.onExit = new EnumMap<>(stateType);
+        this.whileIn = new EnumMap<>(stateType);
+        this.current = initialState;
     }
 
-    public static <S extends Enum<S>> Builder<S> builder(String name, S initialState) {
-        return new Builder<>(name, initialState);
+    // ── Declaration (chainable; call during construction wiring) ────────────
+
+    /** Runs synchronously whenever the machine enters {@code state}. */
+    public StateMachine<S> onEnter(S state, Runnable action) {
+        onEnter.put(state, action);
+        return this;
+    }
+
+    /** Scheduled on entry, cancelled on exit. Requirements apply as usual. */
+    public StateMachine<S> whileIn(S state, Command command) {
+        whileIn.put(state, command);
+        return this;
+    }
+
+    /** Runs synchronously whenever the machine leaves {@code state}. */
+    public StateMachine<S> onExit(S state, Runnable action) {
+        onExit.put(state, action);
+        return this;
+    }
+
+    /** Declares an always-allowed edge. */
+    public StateMachine<S> transition(S from, S to) {
+        return transition(from, to, ALWAYS);
+    }
+
+    /** Declares a guarded edge. */
+    public StateMachine<S> transition(S from, S to, BooleanSupplier guard) {
+        edges.computeIfAbsent(from, k -> new EnumMap<>(stateType)).put(to, guard);
+        return this;
+    }
+
+    /** Declares an edge into {@code to} from every state (e.g. an IDLE escape). */
+    public StateMachine<S> transitionFromAny(S to) {
+        return transitionFromAny(to, ALWAYS);
+    }
+
+    public StateMachine<S> transitionFromAny(S to, BooleanSupplier guard) {
+        fromAnyEdges.put(to, guard);
+        return this;
     }
 
     // ── Requests ─────────────────────────────────────────────────────────────
@@ -68,6 +119,7 @@ public final class StateMachine<S extends Enum<S>> {
      * denied (no legal edge — logged and surfaced via telemetry)
      */
     public boolean request(S target) {
+        ensureStarted();
         if (target == current) {
             pending = null;
             return true;
@@ -102,6 +154,7 @@ public final class StateMachine<S extends Enum<S>> {
 
     /** Jumps to a state without consulting the table (init/reset/fault recovery only). */
     public void forceState(S target) {
+        ensureStarted();
         pending = null;
         if (target != current) {
             transitionTo(target);
@@ -128,6 +181,7 @@ public final class StateMachine<S extends Enum<S>> {
 
     /** Retries pending requests and publishes telemetry. Call once per loop. */
     public void periodic() {
+        ensureStarted();
         if (pending != null) {
             S target = pending;
             BooleanSupplier guard = guardFor(current, target);
@@ -145,6 +199,14 @@ public final class StateMachine<S extends Enum<S>> {
     }
 
     // ── Internals ────────────────────────────────────────────────────────────
+
+    /** Fires the initial state's actions once, after all declarations are in place. */
+    private void ensureStarted() {
+        if (!started) {
+            started = true;
+            enterState(current);
+        }
+    }
 
     private BooleanSupplier guardFor(S from, S to) {
         Map<S, BooleanSupplier> fromEdges = edges.get(from);
@@ -180,76 +242,6 @@ public final class StateMachine<S extends Enum<S>> {
         Runnable exit = onExit.get(state);
         if (exit != null) {
             exit.run();
-        }
-    }
-
-    // ── Builder ──────────────────────────────────────────────────────────────
-
-    public static final class Builder<S extends Enum<S>> {
-        private static final BooleanSupplier ALWAYS = () -> true;
-
-        private final String name;
-        private final S initial;
-        private final Map<S, Map<S, BooleanSupplier>> edges;
-        private final Map<S, BooleanSupplier> fromAnyEdges;
-        private final Map<S, Runnable> onEnter;
-        private final Map<S, Runnable> onExit;
-        private final Map<S, Command> whileIn;
-
-        @SuppressWarnings("unchecked")
-        private Builder(String name, S initial) {
-            this.name = name;
-            this.initial = initial;
-            Class<S> type = (Class<S>) initial.getClass();
-            this.edges = new EnumMap<>(type);
-            this.fromAnyEdges = new EnumMap<>(type);
-            this.onEnter = new EnumMap<>(type);
-            this.onExit = new EnumMap<>(type);
-            this.whileIn = new EnumMap<>(type);
-        }
-
-        /** Runs synchronously whenever the machine enters {@code state}. */
-        public Builder<S> onEnter(S state, Runnable action) {
-            onEnter.put(state, action);
-            return this;
-        }
-
-        /** Scheduled on entry, cancelled on exit. Requirements apply as usual. */
-        public Builder<S> whileIn(S state, Command command) {
-            whileIn.put(state, command);
-            return this;
-        }
-
-        /** Runs synchronously whenever the machine leaves {@code state}. */
-        public Builder<S> onExit(S state, Runnable action) {
-            onExit.put(state, action);
-            return this;
-        }
-
-        /** Declares an always-allowed edge. */
-        public Builder<S> transition(S from, S to) {
-            return transition(from, to, ALWAYS);
-        }
-
-        /** Declares a guarded edge. */
-        @SuppressWarnings("unchecked")
-        public Builder<S> transition(S from, S to, BooleanSupplier guard) {
-            edges.computeIfAbsent(from, k -> new EnumMap<>((Class<S>) k.getClass())).put(to, guard);
-            return this;
-        }
-
-        /** Declares an edge into {@code to} from every state (e.g. an IDLE escape). */
-        public Builder<S> transitionFromAny(S to) {
-            return transitionFromAny(to, ALWAYS);
-        }
-
-        public Builder<S> transitionFromAny(S to, BooleanSupplier guard) {
-            fromAnyEdges.put(to, guard);
-            return this;
-        }
-
-        public StateMachine<S> build() {
-            return new StateMachine<>(this);
         }
     }
 }

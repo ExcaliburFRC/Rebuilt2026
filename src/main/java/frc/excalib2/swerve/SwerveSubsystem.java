@@ -75,6 +75,54 @@ public class SwerveSubsystem extends SwerveDrivetrain<TalonFX, TalonFX, CANcoder
         return run(() -> setControl(requestSupplier.get()));
     }
 
+    /**
+     * Field-centric teleop drive (operator-perspective aware — CTRE flips for red).
+     * Joystick inputs are deadbanded <b>and rescaled</b> (no output step at the edge).
+     *
+     * @param x/y/omega         joystick axes in [-1, 1]; x forward, y left, omega CCW
+     * @param maxSpeedMps       full-stick linear speed
+     * @param maxOmegaRadPerSec full-stick rotational rate
+     */
+    public Command fieldCentricDriveCommand(java.util.function.DoubleSupplier x,
+                                            java.util.function.DoubleSupplier y,
+                                            java.util.function.DoubleSupplier omega,
+                                            double maxSpeedMps, double maxOmegaRadPerSec,
+                                            double deadband) {
+        SwerveRequest.FieldCentric request = new SwerveRequest.FieldCentric()
+                .withDriveRequestType(com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType.Velocity);
+        return applyRequest(() -> request
+                .withVelocityX(edu.wpi.first.math.MathUtil.applyDeadband(x.getAsDouble(), deadband) * maxSpeedMps)
+                .withVelocityY(edu.wpi.first.math.MathUtil.applyDeadband(y.getAsDouble(), deadband) * maxSpeedMps)
+                .withRotationalRate(edu.wpi.first.math.MathUtil.applyDeadband(omega.getAsDouble(), deadband) * maxOmegaRadPerSec))
+                .withName("Field Centric Drive");
+    }
+
+    /** Points all modules inward (X-stance) to resist pushing. */
+    public Command brakeCommand() {
+        SwerveRequest.SwerveDriveBrake request = new SwerveRequest.SwerveDriveBrake();
+        return applyRequest(() -> request).withName("Swerve Brake");
+    }
+
+    /** Coasts all modules (idle request). */
+    public Command idleCommand() {
+        SwerveRequest.Idle request = new SwerveRequest.Idle();
+        return applyRequest(() -> request).withName("Swerve Idle");
+    }
+
+    /**
+     * Short-range precision move-to-pose (see {@link DriveToPose} for parameters).
+     * For long moves prefer PathPlanner {@code AutoBuilder.pathfindToPose}.
+     */
+    public Command driveToPoseCommand(Supplier<edu.wpi.first.math.geometry.Pose2d> target,
+                                      double translationKp, double headingKp,
+                                      edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints translationConstraints,
+                                      edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints headingConstraints,
+                                      double translationToleranceMeters, double headingToleranceRadians) {
+        return new DriveToPose(this, target, translationKp, headingKp,
+                translationConstraints, headingConstraints,
+                translationToleranceMeters, headingToleranceRadians);
+    }
+
     // ── Vision ───────────────────────────────────────────────────────────────
 
     /**

@@ -27,8 +27,8 @@ public record MotionConstraints(
         boolean useExpo) {
 
     /** Trapezoidal profile: cruise velocity (units/s), acceleration (units/s²), jerk (units/s³, 0 = disabled). */
-    public static MotionConstraints trapezoidal(double cruiseVelocity, double acceleration, double jerk) {
-        return new MotionConstraints(cruiseVelocity, acceleration, jerk, 0, 0, false);
+    public MotionConstraints(double cruiseVelocity, double acceleration, double jerk) {
+        this(cruiseVelocity, acceleration, jerk, 0, 0, false);
     }
 
     /**
@@ -37,12 +37,12 @@ public record MotionConstraints(
      * @param expoKV volts per mechanism-unit/s (start: 12 / free-speed-in-mechanism-units)
      * @param expoKA volts per mechanism-unit/s² (higher = softer response)
      */
-    public static MotionConstraints expo(double expoKV, double expoKA) {
-        return new MotionConstraints(0, 0, 0, expoKV, expoKA, true);
+    public MotionConstraints(double expoKV, double expoKA) {
+        this(0, 0, 0, expoKV, expoKA, true);
     }
 
-    /** Exponential profile with a cruise-velocity cap (units/s). */
-    public static MotionConstraints expo(double expoKV, double expoKA, double cruiseVelocityCap) {
+    /** Returns a copy of an expo profile with a cruise-velocity cap (units/s). */
+    public MotionConstraints withCruiseCap(double cruiseVelocityCap) {
         return new MotionConstraints(cruiseVelocityCap, 0, 0, expoKV, expoKA, true);
     }
 

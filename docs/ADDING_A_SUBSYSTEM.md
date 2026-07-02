@@ -16,14 +16,14 @@ recipe, end to end:
 
 ```java
 private final PositionalMechanism hood = new PositionalMechanism(
-    MechanismConfig.of("Shooter/Hood", new CANDeviceId(30))
+    new MechanismConfig("Shooter/Hood", new CANDeviceId(30))
         .fusedCANcoder(new CANDeviceId(31), ROTOR_TO_SENSOR, SENSOR_TO_MECH, Rotations.of(MAGNET_OFFSET))
-        .gains(REAL_GAINS, SIM_GAINS)                    // Gains.pid(...).withSVA(...).withGravity(kG, Arm_Cosine)
-        .motion(MotionConstraints.expo(EXPO_KV, EXPO_KA)) // Expo = default choice for positional moves
+        .gains(REAL_GAINS, SIM_GAINS)                     // new Gains(kP,kI,kD,kS,kV,kA).withGravity(kG, Arm_Cosine)
+        .motion(new MotionConstraints(EXPO_KV, EXPO_KA))  // 2-arg = Expo (default choice); 3-arg = trapezoidal
         .softLimits(Radians.of(0.0), Radians.of(0.55))
-        .currentBudget(CurrentBudget.of(40, 30))          // add .withSupplyLower / .withTorquePeaks as needed
+        .currentBudget(new CurrentBudget(40, 30))         // add .withSupplyLower / .withTorquePeaks as needed
         .tolerance(Radians.of(0.01))
-        .simModel(MechanismSim.arm(DCMotor.getKrakenX60Foc(1), GEARING, MOI, LENGTH, MIN, MAX, START)));
+        .simArmModel(DCMotor.getKrakenX60Foc(1), GEARING, MOI, LENGTH, MIN, MAX, START));
 ```
 
 Everything else — device construction, config **apply + verify + retry**, StatusSignal
@@ -41,13 +41,14 @@ Rules of thumb:
 ```java
 public enum HoodState { STOWED, TRACKING }
 
-private final StateMachine<HoodState> machine = StateMachine.builder("Hood", HoodState.STOWED)
+private final StateMachine<HoodState> machine = new StateMachine<>("Hood", HoodState.STOWED)
     .onEnter(STOWED, () -> hood.setGoal(Radians.of(0)))
     .whileIn(TRACKING, run(() -> hood.setGoal(angleForDistance())))   // command w/ this subsystem as requirement
     .transition(STOWED, TRACKING)
-    .transitionFromAny(STOWED)
-    .build();
+    .transitionFromAny(STOWED);
 ```
+
+(The initial state's actions fire on the machine's first `periodic()` tick.)
 
 - The table is **default-deny**: an undeclared transition is illegal and requests for it fail loudly.
 - Guards (`BooleanSupplier`) make transitions wait: `.transition(A, B, shooter.atSpeed)`.

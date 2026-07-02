@@ -38,10 +38,10 @@ public final class MechanismConfig {
     ControlMode controlMode = ControlMode.TORQUE_CURRENT_FOC;
     InvertedValue inverted = InvertedValue.CounterClockwise_Positive;
     NeutralModeValue neutralMode = NeutralModeValue.Brake;
-    Gains realGains = Gains.empty();
-    Gains simGains = Gains.empty();
-    MotionConstraints motion = MotionConstraints.trapezoidal(0, 0, 0);
-    CurrentBudget currentBudget = CurrentBudget.of(40, 30);
+    Gains realGains = new Gains();
+    Gains simGains = new Gains();
+    MotionConstraints motion = new MotionConstraints(0, 0, 0);
+    CurrentBudget currentBudget = new CurrentBudget(40, 30);
 
     // Feedback
     double sensorToMechanismRatio = 1.0;
@@ -63,14 +63,10 @@ public final class MechanismConfig {
     // Simulation
     MechanismSim.ModelFactory simModel = null;
 
-    private MechanismConfig(String name, CANDeviceId motorId) {
+    /** Starts a config for the mechanism driven by {@code motorId}. {@code name} is the telemetry path. */
+    public MechanismConfig(String name, CANDeviceId motorId) {
         this.name = name;
         this.motorId = motorId;
-    }
-
-    /** Starts a config for the mechanism driven by {@code motorId}. {@code name} is the telemetry path. */
-    public static MechanismConfig of(String name, CANDeviceId motorId) {
-        return new MechanismConfig(name, motorId);
     }
 
     // ── Builder methods ──────────────────────────────────────────────────────
@@ -184,6 +180,29 @@ public final class MechanismConfig {
     public MechanismConfig simModel(MechanismSim.ModelFactory factory) {
         this.simModel = factory;
         return this;
+    }
+
+    /**
+     * Simulates the mechanism as a generic rotational load (flywheel, roller, drum, turret).
+     *
+     * @param gearbox      motor(s) driving it, e.g. {@code DCMotor.getKrakenX60Foc(2)}
+     * @param moiKgMeters2 moment of inertia at the mechanism
+     * @param gearing      rotor rotations per mechanism rotation
+     */
+    public MechanismConfig simRotationalModel(edu.wpi.first.math.system.plant.DCMotor gearbox,
+                                              double moiKgMeters2, double gearing) {
+        return simModel(MechanismSim.rotational(gearbox, moiKgMeters2, gearing));
+    }
+
+    /**
+     * Simulates the mechanism as a gravity-loaded single-jointed arm / pivot / hood
+     * (mechanism radians, 0 = horizontal).
+     */
+    public MechanismConfig simArmModel(edu.wpi.first.math.system.plant.DCMotor gearbox,
+                                       double gearing, double moiKgMeters2, double armLengthMeters,
+                                       double minAngleRad, double maxAngleRad, double startAngleRad) {
+        return simModel(MechanismSim.arm(gearbox, gearing, moiKgMeters2, armLengthMeters,
+                minAngleRad, maxAngleRad, startAngleRad));
     }
 
     // ── Derived ──────────────────────────────────────────────────────────────

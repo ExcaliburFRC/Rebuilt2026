@@ -26,13 +26,18 @@ public record Gains(
         StaticFeedforwardSignValue staticFeedforwardSign) {
 
     /** All-zero gains. */
-    public static Gains empty() {
-        return pid(0, 0, 0);
+    public Gains() {
+        this(0, 0, 0);
     }
 
     /** Feedback-only gains. */
-    public static Gains pid(double kP, double kI, double kD) {
-        return new Gains(kP, kI, kD, 0, 0, 0, 0,
+    public Gains(double kP, double kI, double kD) {
+        this(kP, kI, kD, 0, 0, 0);
+    }
+
+    /** Feedback + static/velocity/acceleration feedforward. */
+    public Gains(double kP, double kI, double kD, double kS, double kV, double kA) {
+        this(kP, kI, kD, kS, kV, kA, 0,
                 GravityTypeValue.Elevator_Static, StaticFeedforwardSignValue.UseVelocitySign);
     }
 

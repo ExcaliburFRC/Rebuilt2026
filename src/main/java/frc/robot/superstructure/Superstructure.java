@@ -5,7 +5,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.excalib.additional_utilities.AllianceUtils;
-import frc.excalib.swerve.Swerve;
 import frc.excalib2.statemachine.StateMachine;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
@@ -36,9 +35,10 @@ public class Superstructure extends frc.excalib2.superstructure.Superstructure<R
     private final Trigger closerToCloseDeliveryTrigger, underTrenchTrigger, overBumpTrigger;
     private final Trigger intakeRequested, shouldDeliver;
 
-    public Superstructure(Swerve swerve, Trigger intakeButton, Trigger ourAllianceShiftActivate, Trigger deliveryButton) {
-        this(new Shooter(swerve::getPose2D, swerve::getRobotRelativeSpeeds),
-                intakeButton, ourAllianceShiftActivate, deliveryButton);
+    public Superstructure(java.util.function.Supplier<edu.wpi.first.math.geometry.Pose2d> robotPose,
+                          java.util.function.Supplier<edu.wpi.first.math.kinematics.ChassisSpeeds> robotSpeeds,
+                          Trigger intakeButton, Trigger ourAllianceShiftActivate, Trigger deliveryButton) {
+        this(new Shooter(robotPose, robotSpeeds), intakeButton, ourAllianceShiftActivate, deliveryButton);
     }
 
     private Superstructure(Shooter shooter, Trigger intakeButton, Trigger ourAllianceShiftActivate, Trigger deliveryButton) {

@@ -74,6 +74,9 @@ public final class FaultReporter {
 
     /** Scans all registered devices at most once per second. Call every loop. */
     public static void poll() {
+        if (edu.wpi.first.wpilibj.RobotBase.isSimulation()) {
+            return; // fault signals are not modeled in sim — refreshing them just spams stale-CAN warnings
+        }
         double now = Timer.getFPGATimestamp();
         if (now - lastScanTimestamp < SCAN_PERIOD_SECONDS) {
             return;

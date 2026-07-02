@@ -36,6 +36,10 @@ public class ExcaTalonFX {
     private final MotionMagicExpoTorqueCurrentFOC mmExpoTorque = new MotionMagicExpoTorqueCurrentFOC(0);
     private final MotionMagicTorqueCurrentFOC mmTorque = new MotionMagicTorqueCurrentFOC(0);
     private final MotionMagicVelocityTorqueCurrentFOC mmVelTorque = new MotionMagicVelocityTorqueCurrentFOC(0);
+    private final VelocityTorqueCurrentFOC velTorque = new VelocityTorqueCurrentFOC(0);
+    private final VelocityVoltage velVolts = new VelocityVoltage(0);
+    private final PositionTorqueCurrentFOC posTorque = new PositionTorqueCurrentFOC(0);
+    private final PositionVoltage posVolts = new PositionVoltage(0);
     private final TorqueCurrentFOC torqueOut = new TorqueCurrentFOC(0);
     private final MotionMagicExpoVoltage mmExpoVolts = new MotionMagicExpoVoltage(0);
     private final MotionMagicVoltage mmVolts = new MotionMagicVoltage(0);
@@ -97,6 +101,22 @@ public class ExcaTalonFX {
         switch (controlMode) {
             case TORQUE_CURRENT_FOC -> talon.setControl(mmVelTorque.withVelocity(mechanismRotationsPerSecond));
             default -> talon.setControl(mmVelVolts.withVelocity(mechanismRotationsPerSecond));
+        }
+    }
+
+    /** Unprofiled closed-loop position goal (mechanism rotations) — setpoint applied directly. */
+    public void setPlainPositionGoal(double mechanismRotations) {
+        switch (controlMode) {
+            case TORQUE_CURRENT_FOC -> talon.setControl(posTorque.withPosition(mechanismRotations));
+            default -> talon.setControl(posVolts.withPosition(mechanismRotations));
+        }
+    }
+
+    /** Unprofiled closed-loop velocity goal (mechanism rot/s) — setpoint applied directly. */
+    public void setPlainVelocityGoal(double mechanismRotationsPerSecond) {
+        switch (controlMode) {
+            case TORQUE_CURRENT_FOC -> talon.setControl(velTorque.withVelocity(mechanismRotationsPerSecond));
+            default -> talon.setControl(velVolts.withVelocity(mechanismRotationsPerSecond));
         }
     }
 

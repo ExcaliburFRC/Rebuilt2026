@@ -23,16 +23,12 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.PrintCommand;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.excalib.additional_utilities.*;
-import frc.excalib.control.math.Vector2D;
-import frc.excalib.swerve.Swerve;
 import frc.robot.superstructure.RobotState;
 import frc.robot.superstructure.Superstructure;
 import monologue.Annotations.Log.NT;
 import monologue.Logged;
 
 import static frc.robot.Constants.*;
-import static frc.robot.Constants.SwerveConstants.MAX_OMEGA_RAD_PER_SEC;
-import static frc.robot.Constants.SwerveConstants.MAX_VEL;
 
 public class RobotContainer implements Logged {
 
@@ -42,7 +38,7 @@ public class RobotContainer implements Logged {
 
     private final LoggablePS5Controller primary = new LoggablePS5Controller(PRIMARY_CONTROLLER_PORT);
 
-    public final Swerve swerve = Constants.SwerveConstants.configureSwerve(Constants.INITIAL_POSE);
+    public final frc.excalib2.swerve.SwerveSubsystem swerve = SwerveConfig.createDrivetrain();
     private final PowerDistribution powerDistributionHub = new PowerDistribution(PDH_PORT, PowerDistribution.ModuleType.kRev);
 
     private final SendableChooser<String> autoChooser = new SendableChooser<>();
@@ -67,7 +63,10 @@ public class RobotContainer implements Logged {
     private final PerformanceMetricsTracker performanceMetricsTracker =
             new PerformanceMetricsTracker();
 //    private final Superstructure superstructure = new Superstructure(swerve, primary.R1(), new Trigger(ShiftUtil::isOwnHubActive), shouldDeliverTrigger);
-    private final Superstructure superstructure = new Superstructure(swerve, primary.R2(), primary.square(), primary.circle());
+    private final Superstructure superstructure = new Superstructure(
+            () -> swerve.getState().Pose,
+            () -> swerve.getState().Speeds,
+            primary.R2(), primary.square(), primary.circle());
 //
     public RobotContainer() {
 //        lowBatteryTrigger.onTrue(leds.setPattern(BLINKING, ORANGE.color).withInterruptBehavior(kCancelIncoming));
@@ -94,12 +93,14 @@ public class RobotContainer implements Logged {
 //        );
 
         swerve.setDefaultCommand(
-                swerve.driveCommand(
-                        () -> new Vector2D(
-                                applyDeadband(-primary.getLeftY()) * MAX_VEL,
-                                applyDeadband(-primary.getLeftX()) * MAX_VEL),
-                        () -> -applyDeadband(primary.getRightX()) * MAX_OMEGA_RAD_PER_SEC,
-                        () -> true
+                frc.excalib2.swerve.DriveCommands.fieldCentric(
+                        swerve,
+                        () -> -primary.getLeftY(),
+                        () -> -primary.getLeftX(),
+                        () -> -primary.getRightX(),
+                        SwerveConfig.MAX_SPEED_MPS,
+                        SwerveConfig.MAX_OMEGA_RAD_PER_SEC,
+                        CONTROLLER_DEADBAND
                 ).unless(() -> DISABLE_SWERVE)
         );
     }

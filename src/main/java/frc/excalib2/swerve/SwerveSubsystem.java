@@ -56,6 +56,8 @@ public class SwerveSubsystem extends SwerveDrivetrain<TalonFX, TalonFX, CANcoder
     private LimelightMegaTag2 limelight;
     private Supplier<Rotation2d> cameraYawSupplier;
     private BooleanSupplier visionRejectGate = () -> false;
+    private java.util.function.UnaryOperator<edu.wpi.first.math.geometry.Pose2d> cameraPoseToRobotPose =
+            java.util.function.UnaryOperator.identity();
 
     public SwerveSubsystem(SwerveDrivetrainConstants drivetrainConstants,
                            SwerveModuleConstants<?, ?, ?>... moduleConstants) {
@@ -93,6 +95,16 @@ public class SwerveSubsystem extends SwerveDrivetrain<TalonFX, TalonFX, CANcoder
         return this;
     }
 
+    /**
+     * For cameras not rigidly mounted to the chassis (e.g. on a turret): converts the
+     * estimate's camera-platform pose into a robot pose before fusion.
+     */
+    public SwerveSubsystem withVisionPoseTransform(
+            java.util.function.UnaryOperator<edu.wpi.first.math.geometry.Pose2d> transform) {
+        this.cameraPoseToRobotPose = transform;
+        return this;
+    }
+
     private void updateVision() {
         if (limelight == null) {
             return;
@@ -106,7 +118,7 @@ public class SwerveSubsystem extends SwerveDrivetrain<TalonFX, TalonFX, CANcoder
             DogLog.log("Swerve/Vision/Rejected", rejected);
             if (!rejected) {
                 addVisionMeasurement(
-                        estimate.pose(),
+                        cameraPoseToRobotPose.apply(estimate.pose()),
                         Utils.fpgaToCurrentTime(estimate.timestampSeconds()),
                         LimelightMegaTag2.stdDevs(estimate));
             }

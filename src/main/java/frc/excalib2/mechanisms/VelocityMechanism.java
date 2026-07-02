@@ -31,11 +31,19 @@ public class VelocityMechanism extends Mechanism {
         setVelocityRotationsPerSecond(velocity.in(RotationsPerSecond));
     }
 
-    /** Commands a profiled velocity setpoint (mechanism rotations per second). */
+    /**
+     * Commands a velocity setpoint (mechanism rotations per second) — profiled through
+     * MotionMagicVelocity when the config declares motion constraints, otherwise applied
+     * directly (plain velocity closed loop).
+     */
     public void setVelocityRotationsPerSecond(double rotationsPerSecond) {
         goalRotationsPerSecond = rotationsPerSecond;
         hasGoal = true;
-        motor.setVelocityGoal(rotationsPerSecond);
+        if (config.motion.acceleration() > 0 || config.motion.useExpo()) {
+            motor.setVelocityGoal(rotationsPerSecond);
+        } else {
+            motor.setPlainVelocityGoal(rotationsPerSecond);
+        }
     }
 
     /** Stops (neutral output) and clears the setpoint ({@link #atSpeed} goes false). */

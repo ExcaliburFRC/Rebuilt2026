@@ -91,6 +91,11 @@ public class Intake extends SubsystemBase {
         return machine.requestCommand(state);
     }
 
+    /** Direct request — used by the superstructure's goal fan-out. */
+    public void requestState(IntakeStates state) {
+        machine.request(state);
+    }
+
     public Command coastCommand() {
         return fourBar.coastCommand(this);
     }

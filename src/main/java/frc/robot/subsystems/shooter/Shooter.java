@@ -354,6 +354,11 @@ public class Shooter extends SubsystemBase {
         return machine.requestCommand(state);
     }
 
+    /** Direct request — used by the superstructure's goal fan-out. */
+    public void requestState(ShooterStates state) {
+        machine.request(state);
+    }
+
     public Trigger isShooterReady() {
         return shooterReady;
     }

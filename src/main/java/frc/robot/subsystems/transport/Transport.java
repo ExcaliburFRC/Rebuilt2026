@@ -68,6 +68,11 @@ public class Transport extends SubsystemBase {
         return machine.requestCommand(state);
     }
 
+    /** Direct request — used by the superstructure's goal fan-out. */
+    public void requestState(TransportStates state) {
+        machine.request(state);
+    }
+
     /** Both mechanisms at their commanded speed (semantics preserved from v1). */
     public Trigger atPositionTrigger() {
         return drum.atSpeed.and(transport.atSpeed);

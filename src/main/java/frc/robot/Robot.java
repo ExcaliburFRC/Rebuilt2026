@@ -25,12 +25,17 @@ public class Robot extends TimedRobot {
     private final PerformanceMetricsTracker performanceMetricsTracker;
 
     public Robot() {
+        frc.excalib2.telemetry.Telemetry.init(false, null);
+
         robotContainer = new RobotContainer();
 
         performanceMetricsTracker = robotContainer.getPerformanceMetricsTracker();
         LEDs.getInstance().restoreLEDs();
 
         Monologue.setupMonologue(robotContainer, "Robot", false, false);
+
+        // Disable unregistered status signals on all excalib2 devices (bus utilization).
+        frc.excalib2.device.SignalHub.optimizeAll();
     }
 
     /**
@@ -41,6 +46,10 @@ public class Robot extends TimedRobot {
     public void robotPeriodic() {
         // Record loop start time for performance tracking
         performanceMetricsTracker.recordLoopStart();
+
+        // Refresh excalib2 status signals BEFORE commands run, so they act on fresh data.
+        frc.excalib2.device.SignalHub.refreshAll();
+        frc.excalib2.telemetry.FaultReporter.poll();
 
         ShiftUtil.update();
         robotContainer.periodic();

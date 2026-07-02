@@ -1,104 +1,97 @@
 package frc.robot.subsystems.transport;
 
-import edu.wpi.first.wpilibj2.command.*;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.excalib.control.motor.controllers.TalonFXMotor;
-import frc.excalib.control.motor.motor_specs.DirectionState;
-import frc.excalib.control.motor.motor_specs.IdleState;
-import frc.excalib.mechanisms.fly_wheel.FlyWheel;
-import frc.robot.Constants;
-import monologue.Annotations;
-import monologue.Logged;
+import frc.excalib2.control.ControlMode;
+import frc.excalib2.device.CANDeviceId;
+import frc.excalib2.mechanisms.MechanismConfig;
+import frc.excalib2.mechanisms.VelocityMechanism;
+import frc.excalib2.statemachine.StateMachine;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
-import static frc.robot.Constants.*;
-import static frc.robot.Constants.SUBSYSTEMS_CANBUS;
 import static frc.robot.subsystems.transport.TransportConstants.*;
-import static monologue.Annotations.*;
+import static frc.robot.subsystems.transport.TransportStates.IDLE;
+import static frc.robot.subsystems.transport.TransportStates.TRANSPORT;
 
-public class Transport extends SubsystemBase implements Logged {
-    private final TalonFXMotor drumMotor, transportMotor;
-    public FlyWheel drumMechanism, transportMechanism;
-    private TransportStates currentState = TransportStates.IDLE;
-    private Trigger atPositionTrigger;
-    private final BooleanSupplier isShooterReadyForTransport;
+/**
+ * Transport on ExcaLib v2: two {@link VelocityMechanism}s (drum + transport belt) driven by
+ * a two-state machine. Velocities only flow while the shooter reports ready — same gating
+ * as the pre-migration subsystem.
+ */
+public class Transport extends SubsystemBase {
+
+    private final VelocityMechanism drum = new VelocityMechanism(
+            MechanismConfig.of("Transport/Drum", new CANDeviceId(DRUM_MOTOR_ID))
+                    .controlMode(ControlMode.VOLTAGE) // ported v1 volts gains; FOC after SysId
+                    .inverted(false)
+                    .gains(DRUM_GAINS, SIM_GAINS)
+                    .currentBudget(CURRENT_BUDGET)
+                    .tolerance(edu.wpi.first.units.Units.Rotations.of(DRUM_TOLERANCE_RPS))
+                    .simModel(DRUM_SIM_MODEL));
+
+    private final VelocityMechanism transport = new VelocityMechanism(
+            MechanismConfig.of("Transport/Belt", new CANDeviceId(TRANSPORT_MOTOR_ID))
+                    .controlMode(ControlMode.VOLTAGE)
+                    .inverted(true)
+                    .gains(TRANSPORT_GAINS, SIM_GAINS)
+                    .currentBudget(CURRENT_BUDGET)
+                    .tolerance(edu.wpi.first.units.Units.Rotations.of(TRANSPORT_TOLERANCE_RPS))
+                    .simModel(TRANSPORT_SIM_MODEL));
+
+    private final StateMachine<TransportStates> machine;
+    private final BooleanSupplier shooterReady;
 
     public Transport(BooleanSupplier isShooterReadyForTransport) {
-        drumMotor = new TalonFXMotor(DRUM_MOTOR_ID, SUBSYSTEMS_CANBUS);
-        drumMechanism = new FlyWheel(drumMotor, MAX_ACCELERATION, MAX_JERK, DRUM_GAINS);
+        this.shooterReady = isShooterReadyForTransport;
 
-        transportMotor = new TalonFXMotor(TRANSPORT_MOTOR_ID, SUBSYSTEMS_CANBUS);
-
-        drumMotor.setCurrentLimit(80, 80);
-        transportMotor.setCurrentLimit(80, 80);
-
-        transportMotor.setIdleState(IdleState.BRAKE);
-        drumMotor.setIdleState(IdleState.BRAKE);
-        drumMotor.setInverted(DirectionState.FORWARD);
-        transportMotor.setInverted(DirectionState.REVERSE);
-
-        this.isShooterReadyForTransport = isShooterReadyForTransport;
-
-        transportMechanism = new FlyWheel(transportMotor, 10, 10, TRANSPORT_PID_GAINS);
-        drumMotor.setVelocityConversionFactor(0.39898 / 9);
-        transportMotor.setVelocityConversionFactor(0.0731);
-
-        atPositionTrigger = new Trigger(
-                () -> Math.abs(transportMechanism.getVelocity() - currentState.linearVelocity) < TRANSPORT_TOLERANCE &&
-                        Math.abs(drumMechanism.getVelocity() - currentState.linearVelocity) < DRUM_TOLERANCE
-
-        );
-
-        setDefaultCommand(defaultCommand().unless(() -> DISABLE_SUBSYSTEMS));
+        machine = StateMachine.builder("Transport", IDLE)
+                .whileIn(IDLE, run(this::applyCurrentState))
+                .whileIn(TRANSPORT, run(this::applyCurrentState))
+                .transitionFromAny(IDLE)
+                .transitionFromAny(TRANSPORT)
+                .build();
     }
 
-
-    public Command manualCommand(DoubleSupplier outputDrum, DoubleSupplier outputTransport) {
-        Command command = drumMechanism.manualCommand(outputDrum).alongWith(transportMechanism.manualCommand(outputTransport));
-        command.addRequirements(this);
-        return command;
+    /** Velocity flows only while the shooter is ready — otherwise both mechanisms hold 0. */
+    private void applyCurrentState() {
+        double legacyVelocity = shooterReady.getAsBoolean()
+                ? machine.getCurrentState().linearVelocity
+                : 0;
+        drum.setVelocityRotationsPerSecond(legacyVelocity / DRUM_LEGACY_UNITS_PER_ROTATION);
+        transport.setVelocityRotationsPerSecond(legacyVelocity / TRANSPORT_LEGACY_UNITS_PER_ROTATION);
     }
 
-    public Command defaultCommand() {
-        Command defaultCommand = new ParallelCommandGroup(
-                drumMechanism.setDynamicVelocityCommand(
-                        () ->
-                                isShooterReadyForTransport.getAsBoolean() ?
-                                        this.currentState.linearVelocity :
-                                        0
-                ),
-                transportMechanism.setDynamicVelocityCommand(
-                        () -> isShooterReadyForTransport.getAsBoolean() ?
-                                this.currentState.linearVelocity :
-                                0
-                )
-        );
-        defaultCommand.addRequirements(this);
-        return defaultCommand;
+    public Command setStateCommand(TransportStates state) {
+        return machine.requestCommand(state);
     }
 
-    public Command setStateCommand(TransportStates stateToSet) {
-        return new InstantCommand(() -> currentState = stateToSet);
-    }
-
-    public Command manualTransport() {
-        Command defaultCommand = new ParallelCommandGroup(
-                drumMechanism.setDynamicVelocityCommand(() -> 5),
-                transportMechanism.setDynamicVelocityCommand(() -> 5)
-        );
-        defaultCommand.addRequirements(this);
-        return defaultCommand;
-    }
-
+    /** Both mechanisms at their commanded speed (semantics preserved from v1). */
     public Trigger atPositionTrigger() {
-        return atPositionTrigger;
+        return drum.atSpeed.and(transport.atSpeed);
     }
 
-    @Log.NT
-    public String getCurrentTransportState() {
-        return currentState.name();
+    /** Fixed-speed manual feed (5 legacy units, from v1's manualTransport). */
+    public Command manualTransport() {
+        return run(() -> {
+            drum.setVelocityRotationsPerSecond(5 / DRUM_LEGACY_UNITS_PER_ROTATION);
+            transport.setVelocityRotationsPerSecond(5 / TRANSPORT_LEGACY_UNITS_PER_ROTATION);
+        });
+    }
+
+    public Command manualCommand(DoubleSupplier drumOutput, DoubleSupplier transportOutput) {
+        return run(() -> {
+            drum.setVolts(drumOutput.getAsDouble() * 12);
+            transport.setVolts(transportOutput.getAsDouble() * 12);
+        });
+    }
+
+    @Override
+    public void periodic() {
+        drum.periodic();
+        transport.periodic();
+        machine.periodic();
     }
 }

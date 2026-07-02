@@ -84,6 +84,12 @@ dependencies {
 test {
     useJUnitPlatform()
     systemProperty 'junit.jupiter.extensions.autodetection.enabled', 'true'
+    // Run tests on the WPILib JDK: its bundled MSVC runtime is compatible with the
+    // WPILib/CTRE desktop natives (other JDKs' msvcp140.dll can crash wpiHal.dll on load).
+    def wpilibJava = file("${System.getenv('PUBLIC') ?: 'C:/Users/Public'}/wpilib/2026/jdk/bin/java.exe")
+    if (org.gradle.internal.os.OperatingSystem.current().isWindows() && wpilibJava.exists()) {
+        executable = wpilibJava
+    }
 }
 
 // Simulation configuration (e.g. environment variables).

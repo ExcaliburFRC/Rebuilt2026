@@ -71,6 +71,7 @@ public class ExcaTalonFX {
         SignalHub.register(deviceId.busName(), SignalHub.Rate.MEDIUM, appliedVolts, supplyCurrent, statorCurrent);
         SignalHub.register(deviceId.busName(), SignalHub.Rate.SLOW, temperature);
         SignalHub.registerDevice(talon);
+        frc.excalib2.telemetry.FaultReporter.register(name, talon);
     }
 
     // ── Closed loop (mechanism units) ────────────────────────────────────────

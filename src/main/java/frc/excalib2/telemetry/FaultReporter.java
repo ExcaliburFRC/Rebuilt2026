@@ -1,0 +1,86 @@
+package frc.excalib2.telemetry;
+
+import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.hardware.TalonFX;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Timer;
+import dev.doglog.DogLog;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Periodic device-fault scanner: registered devices' key faults surface as dashboard
+ * {@link Alert}s and DogLog faults. Rate-limited internally to 1 Hz — call {@link #poll()}
+ * every loop from {@code robotPeriodic}.
+ *
+ * <p>Pattern credit: 3061-lib {@code FaultReporter}/self-check, simplified.
+ */
+public final class FaultReporter {
+    private static final double SCAN_PERIOD_SECONDS = 1.0;
+    private static final List<MonitoredDevice> DEVICES = new ArrayList<>();
+    private static double lastScanTimestamp = 0;
+
+    private FaultReporter() {
+    }
+
+    private static final class MonitoredDevice {
+        final String name;
+        final StatusSignal<Boolean> hardwareFault;
+        final StatusSignal<Boolean> deviceTempFault;
+        final StatusSignal<Boolean> bootDuringEnable;
+        final StatusSignal<Boolean> undervoltage;
+        final Alert hardwareAlert;
+        final Alert tempAlert;
+        final Alert bootAlert;
+        final Alert undervoltageAlert;
+
+        MonitoredDevice(String name, TalonFX talon) {
+            this.name = name;
+            hardwareFault = talon.getFault_Hardware();
+            deviceTempFault = talon.getFault_DeviceTemp();
+            bootDuringEnable = talon.getStickyFault_BootDuringEnable();
+            undervoltage = talon.getStickyFault_Undervoltage();
+            hardwareAlert = new Alert(name + ": hardware fault", Alert.AlertType.kError);
+            tempAlert = new Alert(name + ": overtemperature", Alert.AlertType.kWarning);
+            bootAlert = new Alert(name + ": boot during enable (sticky)", Alert.AlertType.kWarning);
+            undervoltageAlert = new Alert(name + ": undervoltage (sticky)", Alert.AlertType.kWarning);
+        }
+
+        void scan() {
+            hardwareFault.refresh();
+            deviceTempFault.refresh();
+            bootDuringEnable.refresh();
+            undervoltage.refresh();
+            update(hardwareAlert, hardwareFault, "HardwareFault");
+            update(tempAlert, deviceTempFault, "DeviceTempFault");
+            update(bootAlert, bootDuringEnable, "BootDuringEnable");
+            update(undervoltageAlert, undervoltage, "Undervoltage");
+        }
+
+        private void update(Alert alert, StatusSignal<Boolean> fault, String faultName) {
+            boolean active = fault.getStatus().isOK() && fault.getValue();
+            alert.set(active);
+            if (active) {
+                DogLog.logFault(name + "/" + faultName);
+            }
+        }
+    }
+
+    /** Registers a TalonFX for fault scanning. ExcaTalonFX does this automatically. */
+    public static void register(String name, TalonFX talon) {
+        DEVICES.add(new MonitoredDevice(name, talon));
+    }
+
+    /** Scans all registered devices at most once per second. Call every loop. */
+    public static void poll() {
+        double now = Timer.getFPGATimestamp();
+        if (now - lastScanTimestamp < SCAN_PERIOD_SECONDS) {
+            return;
+        }
+        lastScanTimestamp = now;
+        for (MonitoredDevice device : DEVICES) {
+            device.scan();
+        }
+    }
+}

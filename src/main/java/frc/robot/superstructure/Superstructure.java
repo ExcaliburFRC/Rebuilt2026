@@ -318,17 +318,11 @@ public class Superstructure implements Logged {
 //    }
 
     public Command coastCommand() {
-        return shooter.turretMechanism.coastCommand(this.shooter);
+        return shooter.coastTurretCommand();
     }
 
     public Command setManualShootingCommand(DoubleSupplier hoodAngle, DoubleSupplier rpsSpeed) {
-        Command command = new ParallelCommandGroup(
-                shooter.setAdjustedTurretAngle(),
-                shooter.setHoodAngleCommand(hoodAngle),
-                shooter.setFlyWheelVelocity(rpsSpeed),
-                transport.manualTransport()
-        );
-        command.addRequirements(shooter);
-        return command;
+        return shooter.manualShootingCommand(hoodAngle, rpsSpeed)
+                .alongWith(transport.manualTransport());
     }
 }

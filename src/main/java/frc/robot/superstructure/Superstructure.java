@@ -4,7 +4,7 @@ import dev.doglog.DogLog;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.excalib.additional_utilities.AllianceUtils;
+import frc.robot.Constants.FieldConstants;
 import frc.excalib2.statemachine.StateMachine;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
@@ -63,7 +63,7 @@ public class Superstructure extends frc.excalib2.superstructure.Superstructure<R
         inNeutralZone = (inAllianceZone.or(inIntermediateZone)).negate();
 
         closerToCloseDeliveryTrigger = new Trigger(
-                () -> shooter.getTurretOnField().getTranslation().getY() < AllianceUtils.FIELD_WIDTH_METERS / 2);
+                () -> shooter.getTurretOnField().getTranslation().getY() < FieldConstants.FIELD_WIDTH_METERS / 2);
 
         underTrenchTrigger = new Trigger(() -> {
             double y = shooter.getTurretOnField().getTranslation().getY();
@@ -79,16 +79,16 @@ public class Superstructure extends frc.excalib2.superstructure.Superstructure<R
 
     /** Goal machine: every goal fans out to the three subsystem machines on entry. */
     private static StateMachine<RobotState> buildMachine(Shooter shooter, Transport transport, Intake intake) {
-        StateMachine.Builder<RobotState> builder = StateMachine.builder("Superstructure", NO_INTAKE_AIM_HUB);
+        StateMachine<RobotState> machine = new StateMachine<>("Superstructure", NO_INTAKE_AIM_HUB);
         for (RobotState goal : RobotState.values()) {
-            builder.onEnter(goal, () -> {
+            machine.onEnter(goal, () -> {
                 shooter.requestState(goal.shooterState);
                 transport.requestState(goal.transportState);
                 intake.requestState(goal.intakeState);
             });
-            builder.transitionFromAny(goal); // v1 semantics: every goal reachable from anywhere
+            machine.transitionFromAny(goal); // v1 semantics: every goal reachable from anywhere
         }
-        return builder.build();
+        return machine;
     }
 
     private void initTriggers() {

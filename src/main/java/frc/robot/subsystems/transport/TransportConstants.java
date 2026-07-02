@@ -1,9 +1,7 @@
 package frc.robot.subsystems.transport;
 
-import edu.wpi.first.math.system.plant.DCMotor;
 import frc.excalib2.control.CurrentBudget;
 import frc.excalib2.control.Gains;
-import frc.excalib2.sim.MechanismSim;
 
 public class TransportConstants {
     public static final int DRUM_MOTOR_ID = 20;
@@ -28,17 +26,12 @@ public class TransportConstants {
      * ⚠ VOLTAGE-mode gains; switch to TorqueCurrentFOC needs SysId (planned tuning session).
      */
     public static final Gains DRUM_GAINS =
-            Gains.pid(0, 0, 0).withSVA(1.0, 0.34 * DRUM_LEGACY_UNITS_PER_ROTATION, 0);
+            new Gains(0, 0, 0, 1.0, 0.34 * DRUM_LEGACY_UNITS_PER_ROTATION, 0);
     public static final Gains TRANSPORT_GAINS =
-            Gains.pid(0, 0, 0).withSVA(1.4, 0.4 * TRANSPORT_LEGACY_UNITS_PER_ROTATION, 0);
+            new Gains(0, 0, 0, 1.4, 0.4 * TRANSPORT_LEGACY_UNITS_PER_ROTATION, 0);
 
     /** Sim gains: plain velocity loop on the ideal model. */
-    public static final Gains SIM_GAINS = Gains.pid(0.1, 0, 0).withSVA(0, 0.12, 0);
+    public static final Gains SIM_GAINS = new Gains(0.1, 0, 0, 0, 0.12, 0);
 
-    public static final CurrentBudget CURRENT_BUDGET = CurrentBudget.of(80, 80);
-
-    public static final MechanismSim.ModelFactory DRUM_SIM_MODEL =
-            MechanismSim.rotational(DCMotor.getKrakenX60Foc(1), 0.005, 9.0);
-    public static final MechanismSim.ModelFactory TRANSPORT_SIM_MODEL =
-            MechanismSim.rotational(DCMotor.getKrakenX60Foc(1), 0.005, 13.7);
+    public static final CurrentBudget CURRENT_BUDGET = new CurrentBudget(80, 80);
 }

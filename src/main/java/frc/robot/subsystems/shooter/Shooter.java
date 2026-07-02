@@ -7,12 +7,11 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.excalib.additional_utilities.AllianceUtils;
-import frc.excalib.additional_utilities.Color;
-import frc.excalib.additional_utilities.LEDs;
+import frc.excalib2.util.AllianceFlip;
 import frc.excalib2.control.ControlMode;
 import frc.excalib2.device.CANDeviceId;
 import frc.excalib2.mechanisms.MechanismConfig;
@@ -26,8 +25,6 @@ import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 import static edu.wpi.first.units.Units.Radians;
-import static frc.excalib.additional_utilities.AllianceUtils.FIELD_LENGTH_METERS;
-import static frc.excalib.additional_utilities.AllianceUtils.FIELD_WIDTH_METERS;
 import static frc.robot.Constants.FieldConstants.*;
 import static frc.robot.Constants.PhysicalConstants.TURRET_OFFSET_TRANSLATION;
 import static frc.robot.Constants.SUBSYSTEMS_CANBUS;
@@ -52,7 +49,7 @@ public class Shooter extends SubsystemBase {
     // ── Mechanisms ───────────────────────────────────────────────────────────
 
     private final VelocityMechanism flywheel = new VelocityMechanism(
-            MechanismConfig.of("Shooter/Flywheel",
+            new MechanismConfig("Shooter/Flywheel",
                             new CANDeviceId(FLYWHEEL_MOTOR_LOW_ID, SUBSYSTEMS_CANBUS.getName()))
                     .follower(new CANDeviceId(FLYWHEEL_MOTOR_TOP_ID, SUBSYSTEMS_CANBUS.getName()), false)
                     .controlMode(ControlMode.VOLTAGE) // ported v1 volts gains; FOC after SysId
@@ -60,10 +57,10 @@ public class Shooter extends SubsystemBase {
                     .gains(FLYWHEEL_GAINS, FLYWHEEL_SIM_GAINS)
                     .currentBudget(FLYWHEEL_BUDGET)
                     .tolerance(Radians.of(FLYWHEEL_TOLERANCE_RPS)) // rot/s tolerance
-                    .simModel(FLYWHEEL_SIM_MODEL));
+                    .simRotationalModel(DCMotor.getKrakenX60Foc(2), 0.01, FLYWHEEL_ROTOR_PER_MECHANISM));
 
     private final PositionalMechanism hood = new PositionalMechanism(
-            MechanismConfig.of("Shooter/Hood",
+            new MechanismConfig("Shooter/Hood",
                             new CANDeviceId(HOOD_MOTOR_ID, SUBSYSTEMS_CANBUS.getName()))
                     .controlMode(ControlMode.VOLTAGE)
                     .rotorToMechanismRatio(HOOD_ROTOR_PER_MECHANISM)
@@ -72,10 +69,11 @@ public class Shooter extends SubsystemBase {
                     .currentBudget(HOOD_BUDGET)
                     .tolerance(Radians.of(HOOD_TOLERANCE_RAD))
                     .neutralMode(com.ctre.phoenix6.signals.NeutralModeValue.Coast)
-                    .simModel(HOOD_SIM_MODEL));
+                    .simArmModel(DCMotor.getKrakenX60Foc(1), HOOD_ROTOR_PER_MECHANISM, 0.05, 0.15,
+                            HOOD_MIN_ANGLE_RAD, HOOD_MAX_ANGLE_RAD, 0));
 
     private final PositionalMechanism turret = new PositionalMechanism(
-            MechanismConfig.of("Shooter/Turret",
+            new MechanismConfig("Shooter/Turret",
                             new CANDeviceId(TURRET_MOTOR_ID, SUBSYSTEMS_CANBUS.getName()))
                     .controlMode(ControlMode.VOLTAGE)
                     .inverted(true) // v1: REVERSE
@@ -87,7 +85,7 @@ public class Shooter extends SubsystemBase {
                     .currentBudget(TURRET_BUDGET)
                     .tolerance(Radians.of(TURRET_TOLERANCE_RAD))
                     .neutralMode(com.ctre.phoenix6.signals.NeutralModeValue.Coast)
-                    .simModel(TURRET_SIM_MODEL));
+                    .simRotationalModel(DCMotor.getKrakenX60Foc(1), 0.5, TURRET_ROTOR_PER_MECHANISM));
 
     // ── Targeting state ──────────────────────────────────────────────────────
 
@@ -115,6 +113,8 @@ public class Shooter extends SubsystemBase {
     private final Trigger hoodAdjustedTrigger;
     private final Trigger volatileTrenchHoodTrigger;
     public final Trigger shooterReady;
+    /** Flywheel spinning above idle — used for driver feedback (LEDs). */
+    public final Trigger flywheelSpinning;
 
     public Shooter(Supplier<Pose2d> poseSupplier, Supplier<ChassisSpeeds> swerveSpeeds) {
         this.robotPositionSupplier = poseSupplier;
@@ -134,7 +134,7 @@ public class Shooter extends SubsystemBase {
         initDistanceTimeOfFlightMap();
         initLowMaps();
 
-        machine = StateMachine.builder("Shooter", ShooterStates.LOOK_HUB)
+        machine = new StateMachine<>("Shooter", ShooterStates.LOOK_HUB)
                 .whileIn(IDLE, idleCommand())
                 .whileIn(ShooterStates.SHOOT_HUB, trackCommand())
                 .whileIn(ShooterStates.LOOK_HUB, trackCommand())
@@ -148,8 +148,7 @@ public class Shooter extends SubsystemBase {
                 .transitionFromAny(ShooterStates.SHOOT_FAR_DELIVERY)
                 .transitionFromAny(ShooterStates.LOOK_FAR_DELIVERY)
                 .transitionFromAny(ShooterStates.SHOOT_CLOSE_DELIVERY)
-                .transitionFromAny(ShooterStates.LOOK_CLOSE_DELIVERY)
-                .build();
+                .transitionFromAny(ShooterStates.LOOK_CLOSE_DELIVERY);
 
         isTurretAligned = turret.atGoal;
         flyWheelReadyTrigger = new Trigger(
@@ -160,7 +159,7 @@ public class Shooter extends SubsystemBase {
 
         volatileTrenchHoodTrigger = new Trigger(() -> {
             Pose2d pose = poseSupplier.get();
-            if (AllianceUtils.isBlueAlliance()) {
+            if (AllianceFlip.isBlue()) {
                 return pose.getX() > FRONT_TRENCH_SIDEX_LINE_DIST_METERS
                         && pose.getY() < TRENCH_SIDEY_LINE_DIST_METERS
                         && pose.getX() < BACK_TRENCH_SIDEX_LINE_DIST_METERS;
@@ -174,11 +173,9 @@ public class Shooter extends SubsystemBase {
                 () -> flywheelVelocitySetpoint,
                 () -> filteredFlywheelVelocity);
 
-        // v1 LED behavior: blink orange while the flywheel spins
-        Trigger activateLeds = new Trigger(() -> flywheel.getVelocityRotationsPerSecond() > 3);
-        activateLeds.onTrue(LEDs.getInstance()
-                .setPattern(LEDs.LEDPattern.BLINKING, Color.Colors.ORANGE.color)
-                .andThen(LEDs.getInstance().restoreLEDs()));
+        // v1 LED behavior (blink orange while the flywheel spins) is bound in
+        // RobotContainer — UI concern; this trigger feeds it.
+        flywheelSpinning = new Trigger(() -> flywheel.getVelocityRotationsPerSecond() > 3);
 
         // Vision pose conversion still needs the turret angle (consumed by swerve)
         TurretOffsetGetter.instance.setTurretOffsetSupplier(this::getTurretRotation);

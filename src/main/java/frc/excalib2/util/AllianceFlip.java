@@ -67,4 +67,62 @@ public final class AllianceFlip {
     public static Pose2d apply(Pose2d blueFrame) {
         return isBlue() ? blueFrame : flip(blueFrame);
     }
+
+    /**
+     * A field translation authored in blue-frame coordinates; {@link #get()} returns the
+     * current alliance's version (port of ExcaLib v1 {@code AllianceUtils.AllianceTranslation}).
+     */
+    public static class AllianceTranslation {
+        private final Translation2d blueFrame;
+
+        public AllianceTranslation(double blueX, double blueY) {
+            this.blueFrame = new Translation2d(blueX, blueY);
+        }
+
+        public AllianceTranslation(Translation2d blueFrame) {
+            this.blueFrame = blueFrame;
+        }
+
+        public AllianceTranslation() {
+            this(new Translation2d());
+        }
+
+        /** Alliance-corrected translation. */
+        public Translation2d get() {
+            return apply(blueFrame);
+        }
+
+        public Translation2d getBlue() {
+            return blueFrame;
+        }
+    }
+
+    /**
+     * A field pose authored in blue-frame coordinates; {@link #get()} returns the current
+     * alliance's version (port of ExcaLib v1 {@code AllianceUtils.AlliancePose}).
+     */
+    public static class AlliancePose {
+        private final Pose2d blueFrame;
+
+        public AlliancePose(double blueX, double blueY, double blueRotationRadians) {
+            this.blueFrame = new Pose2d(blueX, blueY, new Rotation2d(blueRotationRadians));
+        }
+
+        public AlliancePose(Pose2d blueFrame) {
+            this.blueFrame = blueFrame;
+        }
+
+        public AlliancePose() {
+            this(new Pose2d());
+        }
+
+        /** Alliance-corrected pose. */
+        public Pose2d get() {
+            return apply(blueFrame);
+        }
+
+        public Pose2d getBlue() {
+            return blueFrame;
+        }
+    }
 }

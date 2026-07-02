@@ -1,5 +1,6 @@
 package frc.robot.subsystems.transport;
 
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -24,22 +25,22 @@ import static frc.robot.subsystems.transport.TransportStates.TRANSPORT;
 public class Transport extends SubsystemBase {
 
     private final VelocityMechanism drum = new VelocityMechanism(
-            MechanismConfig.of("Transport/Drum", new CANDeviceId(DRUM_MOTOR_ID))
+            new MechanismConfig("Transport/Drum", new CANDeviceId(DRUM_MOTOR_ID))
                     .controlMode(ControlMode.VOLTAGE) // ported v1 volts gains; FOC after SysId
                     .inverted(false)
                     .gains(DRUM_GAINS, SIM_GAINS)
                     .currentBudget(CURRENT_BUDGET)
                     .tolerance(edu.wpi.first.units.Units.Rotations.of(DRUM_TOLERANCE_RPS))
-                    .simModel(DRUM_SIM_MODEL));
+                    .simRotationalModel(DCMotor.getKrakenX60Foc(1), 0.005, 9.0));
 
     private final VelocityMechanism transport = new VelocityMechanism(
-            MechanismConfig.of("Transport/Belt", new CANDeviceId(TRANSPORT_MOTOR_ID))
+            new MechanismConfig("Transport/Belt", new CANDeviceId(TRANSPORT_MOTOR_ID))
                     .controlMode(ControlMode.VOLTAGE)
                     .inverted(true)
                     .gains(TRANSPORT_GAINS, SIM_GAINS)
                     .currentBudget(CURRENT_BUDGET)
                     .tolerance(edu.wpi.first.units.Units.Rotations.of(TRANSPORT_TOLERANCE_RPS))
-                    .simModel(TRANSPORT_SIM_MODEL));
+                    .simRotationalModel(DCMotor.getKrakenX60Foc(1), 0.005, 13.7));
 
     private final StateMachine<TransportStates> machine;
     private final BooleanSupplier shooterReady;
@@ -47,12 +48,11 @@ public class Transport extends SubsystemBase {
     public Transport(BooleanSupplier isShooterReadyForTransport) {
         this.shooterReady = isShooterReadyForTransport;
 
-        machine = StateMachine.builder("Transport", IDLE)
+        machine = new StateMachine<>("Transport", IDLE)
                 .whileIn(IDLE, run(this::applyCurrentState))
                 .whileIn(TRANSPORT, run(this::applyCurrentState))
                 .transitionFromAny(IDLE)
-                .transitionFromAny(TRANSPORT)
-                .build();
+                .transitionFromAny(TRANSPORT);
     }
 
     /** Velocity flows only while the shooter is ready — otherwise both mechanisms hold 0. */

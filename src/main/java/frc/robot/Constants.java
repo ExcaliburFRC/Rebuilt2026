@@ -13,7 +13,7 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
-import frc.excalib.additional_utilities.AllianceUtils;
+import frc.excalib2.util.AllianceFlip;
 import frc.excalib.control.gains.Gains;
 import frc.excalib.control.imu.IMU;
 import frc.excalib.control.imu.Pigeon;
@@ -173,33 +173,36 @@ public final class Constants {
 
     public static class FieldConstants {
         // all the units of length are in meters
-        public static final AllianceUtils.AllianceTranslation BLUE_HUB_CENTER_POSE = new
-                AllianceUtils.AllianceTranslation(4.69115, 4.03);
-        public static final AllianceUtils.AllianceTranslation DELIVERY_FAR_POSE = new
-                AllianceUtils.AllianceTranslation(2, 7.41);
-        public static final AllianceUtils.AllianceTranslation DELIVERY_CLOSE_POSE = new
-                AllianceUtils.AllianceTranslation(2, 0.63);
-        public static final AllianceUtils.AlliancePose NET_END_RIGHT_POSE = new
-                AllianceUtils.AlliancePose(4.62, 3.29, 0);
-        public static final AllianceUtils.AlliancePose NET_END_LEFT_POSE = new
-                AllianceUtils.AlliancePose(4.62, 4.77, 0);
+        public static final double FIELD_LENGTH_METERS = 16.54;
+        public static final double FIELD_WIDTH_METERS = 8.07;
+
+        public static final AllianceFlip.AllianceTranslation BLUE_HUB_CENTER_POSE = new
+                AllianceFlip.AllianceTranslation(4.69115, 4.03);
+        public static final AllianceFlip.AllianceTranslation DELIVERY_FAR_POSE = new
+                AllianceFlip.AllianceTranslation(2, 7.41);
+        public static final AllianceFlip.AllianceTranslation DELIVERY_CLOSE_POSE = new
+                AllianceFlip.AllianceTranslation(2, 0.63);
+        public static final AllianceFlip.AlliancePose NET_END_RIGHT_POSE = new
+                AllianceFlip.AlliancePose(4.62, 3.29, 0);
+        public static final AllianceFlip.AlliancePose NET_END_LEFT_POSE = new
+                AllianceFlip.AlliancePose(4.62, 4.77, 0);
         public static final Translation3d BLUE_CLIMB_TOWER_POSE_L1 = new
                 Translation3d(1.05, 3.74, 0.6858);
         public static final Translation3d BLUE_CLIMB_TOWER_POSE_L2 = new
                 Translation3d(1.05, 3.74, 1.143);
         public static final Translation3d BLUE_CLIMB_TOWER_POSE_L3 = new
                 Translation3d(1.05, 3.74, 1.6002);
-        public static final AllianceUtils.AlliancePose BLUE_OUTPOST_POSE_CENTER = new
-                AllianceUtils.AlliancePose(0, 0.63, 0);
-        public static final AllianceUtils.AlliancePose BLUE_DOWN_FIELD_TRENCH_POSE = new
-                AllianceUtils.AlliancePose(4.62, 0.63, 0);
-        public static final AllianceUtils.AlliancePose BLUE_UP_FIELD_TRENCH_POSE = new
-                AllianceUtils.AlliancePose(4.62, 7.43, 0);
-        public static final AllianceUtils.AlliancePose BLUE_UP_FIELD_PICKUP_FUEL_PLACEMENT = new
-                AllianceUtils.AlliancePose(0.39, 6.06, 0);
+        public static final AllianceFlip.AlliancePose BLUE_OUTPOST_POSE_CENTER = new
+                AllianceFlip.AlliancePose(0, 0.63, 0);
+        public static final AllianceFlip.AlliancePose BLUE_DOWN_FIELD_TRENCH_POSE = new
+                AllianceFlip.AlliancePose(4.62, 0.63, 0);
+        public static final AllianceFlip.AlliancePose BLUE_UP_FIELD_TRENCH_POSE = new
+                AllianceFlip.AlliancePose(4.62, 7.43, 0);
+        public static final AllianceFlip.AlliancePose BLUE_UP_FIELD_PICKUP_FUEL_PLACEMENT = new
+                AllianceFlip.AlliancePose(0.39, 6.06, 0);
 
         public static double CLOSE_TRENCH_TO_BUMP_X = 1.65;
-        public static double FAR_TRENCH_TO_BUMP_X = AllianceUtils.FIELD_WIDTH_METERS - CLOSE_TRENCH_TO_BUMP_X;
+        public static double FAR_TRENCH_TO_BUMP_X = FIELD_WIDTH_METERS - CLOSE_TRENCH_TO_BUMP_X;
 
         public static final double FUEL_DIAMETER = 0.15;
 

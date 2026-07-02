@@ -1,5 +1,6 @@
 package frc.robot.subsystems.intake;
 
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -24,7 +25,7 @@ import static frc.robot.subsystems.intake.IntakeStates.*;
 public class Intake extends SubsystemBase {
 
     private final PositionalMechanism fourBar = new PositionalMechanism(
-            MechanismConfig.of("Intake/FourBar", new CANDeviceId(LEFT_FOUR_BAR_MOTOR_ID))
+            new MechanismConfig("Intake/FourBar", new CANDeviceId(LEFT_FOUR_BAR_MOTOR_ID))
                     .follower(new CANDeviceId(RIGHT_FOUR_BAR_MOTOR_ID), true)
                     .controlMode(ControlMode.VOLTAGE) // ported v1 volts gains; FOC after SysId
                     .rotorToMechanismRatio(GEARING)
@@ -35,13 +36,14 @@ public class Intake extends SubsystemBase {
                     .currentBudget(FOUR_BAR_BUDGET)
                     .tolerance(Radians.of(INTAKE_ANGLE_TOLERANCE_RAD))
                     .neutralMode(com.ctre.phoenix6.signals.NeutralModeValue.Coast)
-                    .simModel(FOUR_BAR_SIM_MODEL));
+                    .simArmModel(DCMotor.getKrakenX60Foc(2), GEARING, 0.3, 0.3,
+                            INTAKE_MIN_ANGLE_RAD, INTAKE_MAX_ANGLE_RAD, START_ANGLE_RAD));
 
     private final RollerMechanism roller = new RollerMechanism(
-            MechanismConfig.of("Intake/Roller", new CANDeviceId(ROLLER_MOTOR_ID))
+            new MechanismConfig("Intake/Roller", new CANDeviceId(ROLLER_MOTOR_ID))
                     .controlMode(ControlMode.VOLTAGE)
                     .currentBudget(ROLLER_BUDGET)
-                    .simModel(ROLLER_SIM_MODEL));
+                    .simRotationalModel(DCMotor.getKrakenX60Foc(1), 0.002, 3.0));
 
     private final StateMachine<IntakeStates> machine;
 
@@ -53,7 +55,7 @@ public class Intake extends SubsystemBase {
         // fusing it needs an on-robot offset calibration; planned follow-up).
         fourBar.resetPosition(Radians.of(START_ANGLE_RAD));
 
-        machine = StateMachine.builder("Intake", CLOSE)
+        machine = new StateMachine<>("Intake", CLOSE)
                 .whileIn(OPEN, run(() -> {
                     fourBar.setGoal(Radians.of(OPEN.angle));
                     roller.runDutyCycle(OPEN.voltage);
@@ -65,8 +67,7 @@ public class Intake extends SubsystemBase {
                 .whileIn(PUMP, pumpCommand())
                 .transitionFromAny(OPEN)
                 .transitionFromAny(CLOSE)
-                .transitionFromAny(PUMP)
-                .build();
+                .transitionFromAny(PUMP);
 
         atPositionTrigger = new Trigger(() -> Math.abs(
                 machine.getCurrentState().angle - fourBar.getPosition().in(Radians))

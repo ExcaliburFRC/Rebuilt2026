@@ -1,11 +1,9 @@
 package frc.robot.subsystems.shooter;
 
-import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import frc.excalib2.control.CurrentBudget;
 import frc.excalib2.control.Gains;
 import frc.excalib2.control.MotionConstraints;
-import frc.excalib2.sim.MechanismSim;
 
 /**
  * Shooter constants. Ratios are derived from the ExcaLib v1 conversion factors so device
@@ -26,11 +24,9 @@ public class ShooterConstants {
     /** v1 velocity factor 40/48 mech-units per motor rotation → rotor per mechanism = 48/40. */
     public static final double FLYWHEEL_ROTOR_PER_MECHANISM = 48.0 / 40.0;
     public static final double FLYWHEEL_TOLERANCE_RPS = 2;
-    public static final Gains FLYWHEEL_GAINS = Gains.pid(0.2, 0, 0).withSVA(0.33, 0.156, 0);
-    public static final Gains FLYWHEEL_SIM_GAINS = Gains.pid(0.05, 0, 0).withSVA(0, 0.11, 0);
-    public static final CurrentBudget FLYWHEEL_BUDGET = CurrentBudget.of(120, 80);
-    public static final MechanismSim.ModelFactory FLYWHEEL_SIM_MODEL =
-            MechanismSim.rotational(DCMotor.getKrakenX60Foc(2), 0.01, FLYWHEEL_ROTOR_PER_MECHANISM);
+    public static final Gains FLYWHEEL_GAINS = new Gains(0.2, 0, 0, 0.33, 0.156, 0);
+    public static final Gains FLYWHEEL_SIM_GAINS = new Gains(0.05, 0, 0, 0, 0.11, 0);
+    public static final CurrentBudget FLYWHEEL_BUDGET = new CurrentBudget(120, 80);
 
     // ===== Hood =====
     /**
@@ -49,13 +45,10 @@ public class ShooterConstants {
      * v1: kP 10.8 V/rad, kD 0.15, asymmetric kS +0.375/−0.25 → symmetric 0.3125 (device kS
      * is symmetric; ±0.06 V delta noted as a behavior change).
      */
-    public static final Gains HOOD_GAINS = Gains.pid(10.8 * 2 * Math.PI, 0, 0.15 * 2 * Math.PI)
-            .withSVA(0.3125, 0, 0);
-    public static final Gains HOOD_SIM_GAINS = Gains.pid(40, 0, 0);
-    public static final CurrentBudget HOOD_BUDGET = CurrentBudget.of(40, 30);
-    public static final MechanismSim.ModelFactory HOOD_SIM_MODEL = MechanismSim.arm(
-            DCMotor.getKrakenX60Foc(1), HOOD_ROTOR_PER_MECHANISM, 0.05, 0.15,
-            HOOD_MIN_ANGLE_RAD, HOOD_MAX_ANGLE_RAD, 0);
+    public static final Gains HOOD_GAINS =
+            new Gains(10.8 * 2 * Math.PI, 0, 0.15 * 2 * Math.PI, 0.3125, 0, 0);
+    public static final Gains HOOD_SIM_GAINS = new Gains(40, 0, 0);
+    public static final CurrentBudget HOOD_BUDGET = new CurrentBudget(40, 30);
 
     // ===== Turret =====
     /**
@@ -68,13 +61,11 @@ public class ShooterConstants {
     public static final double TURRET_MIN_ANGLE_RAD = -5.4;
     public static final double TURRET_MAX_ANGLE_RAD = 1.5;
     public static final double TURRET_TOLERANCE_RAD = 0.04;
-    public static final Gains TURRET_GAINS = Gains.pid(7 * 2 * Math.PI, 0, 0.4 * 2 * Math.PI)
-            .withSVA(0.4, 0, 0);
-    public static final Gains TURRET_SIM_GAINS = Gains.pid(50, 0, 0);
+    public static final Gains TURRET_GAINS =
+            new Gains(7 * 2 * Math.PI, 0, 0.4 * 2 * Math.PI, 0.4, 0, 0);
+    public static final Gains TURRET_SIM_GAINS = new Gains(50, 0, 0);
     /** v1 profile: 2π rad/s cruise, 100π rad/s² accel. */
-    public static final MotionConstraints TURRET_MOTION = MotionConstraints.trapezoidal(
+    public static final MotionConstraints TURRET_MOTION = new MotionConstraints(
             Units.radiansToRotations(2 * Math.PI), Units.radiansToRotations(100 * Math.PI), 0);
-    public static final CurrentBudget TURRET_BUDGET = CurrentBudget.of(120, 80);
-    public static final MechanismSim.ModelFactory TURRET_SIM_MODEL =
-            MechanismSim.rotational(DCMotor.getKrakenX60Foc(1), 0.5, TURRET_ROTOR_PER_MECHANISM);
+    public static final CurrentBudget TURRET_BUDGET = new CurrentBudget(120, 80);
 }

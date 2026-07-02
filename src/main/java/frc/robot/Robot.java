@@ -4,14 +4,16 @@
 
 package frc.robot;
 
-import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.excalib.additional_utilities.LEDs;
 import frc.excalib.control.math.periodics.PeriodicScheduler;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
-import frc.excalib.additional_utilities.PerformanceMetricsTracker;
+import frc.excalib2.device.SignalHub;
+import frc.excalib2.telemetry.FaultReporter;
+import frc.excalib2.telemetry.LoopTimer;
+import frc.excalib2.telemetry.Telemetry;
+import frc.excalib2.util.AllianceFlip;
 import frc.robot.util.ShiftUtil;
 import monologue.Monologue;
 
@@ -22,46 +24,41 @@ import monologue.Monologue;
 public class Robot extends TimedRobot {
     private Command autonomousCommand;
     private final RobotContainer robotContainer;
-    private final PerformanceMetricsTracker performanceMetricsTracker;
 
     public Robot() {
-        frc.excalib2.telemetry.Telemetry.init(false, null);
+        Telemetry.init(false, null);
+        AllianceFlip.configure(
+                Constants.FieldConstants.FIELD_LENGTH_METERS,
+                Constants.FieldConstants.FIELD_WIDTH_METERS);
 
         robotContainer = new RobotContainer();
-
-        performanceMetricsTracker = robotContainer.getPerformanceMetricsTracker();
-        LEDs.getInstance().restoreLEDs();
 
         Monologue.setupMonologue(robotContainer, "Robot", false, false);
 
         // Disable unregistered status signals on all excalib2 devices (bus utilization).
-        frc.excalib2.device.SignalHub.optimizeAll();
+        SignalHub.optimizeAll();
     }
 
     /**
      * Called every 20ms. Updates all periodic functions and executes scheduled commands.
-     * Maintains high thread priority for motor updates to ensure consistent control.
      */
     @Override
     public void robotPeriodic() {
-        // Record loop start time for performance tracking
-        performanceMetricsTracker.recordLoopStart();
+        LoopTimer.start();
 
         // Refresh excalib2 status signals BEFORE commands run, so they act on fresh data.
-        frc.excalib2.device.SignalHub.refreshAll();
-        frc.excalib2.telemetry.FaultReporter.poll();
+        SignalHub.refreshAll();
+        FaultReporter.poll();
 
         ShiftUtil.update();
         robotContainer.periodic();
         PeriodicScheduler.PERIOD.MILLISECONDS_20.run();
 
-        Threads.setCurrentThreadPriority(true, 99);
-
         CommandScheduler.getInstance().run();
         Monologue.updateAll();
         TalonFXMotor.refreshAll();
 
-        performanceMetricsTracker.recordLoopEnd();
+        LoopTimer.end();
     }
 
     @Override
@@ -91,20 +88,15 @@ public class Robot extends TimedRobot {
             System.err.println("WARNING: No autonomous command selected!");
         }
 
-        performanceMetricsTracker.reset();
+        LoopTimer.reset();
     }
 
     @Override
     public void autonomousPeriodic() {
     }
 
-    /**
-     * Called when transitioning from autonomous to disabled or next phase.
-     */
     @Override
     public void autonomousExit() {
-        // Print performance summary after autonomous period
-        performanceMetricsTracker.printSummary();
     }
 
     /**
@@ -125,7 +117,6 @@ public class Robot extends TimedRobot {
 
     @Override
     public void teleopExit() {
-        performanceMetricsTracker.printSummary();
     }
 
     /**

@@ -21,8 +21,12 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.PrintCommand;
+import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.excalib.additional_utilities.*;
+import edu.wpi.first.units.Units;
+import edu.wpi.first.wpilibj.LEDPattern;
+import edu.wpi.first.wpilibj.util.Color;
+import frc.excalib2.util.LedStrip;
 import frc.robot.superstructure.RobotState;
 import frc.robot.superstructure.Superstructure;
 import monologue.Annotations.Log.NT;
@@ -32,18 +36,20 @@ import static frc.robot.Constants.*;
 
 public class RobotContainer implements Logged {
 
-    // ===== System Constants =====
-    private static final double BATTERY_VOLTAGE_WARNING_THRESHOLD = 12.0; // Volts
-    private static final double BATTERY_VOLTAGE_HYSTERESIS = 0.5; // Volts (to prevent alert flickering)
+    private static final int LED_PWM_PORT = 8;   // from ExcaLib v1 LEDs
+    private static final int LED_STRIP_LENGTH = 22;
 
-    private final LoggablePS5Controller primary = new LoggablePS5Controller(PRIMARY_CONTROLLER_PORT);
+    private final CommandPS5Controller primary = new CommandPS5Controller(PRIMARY_CONTROLLER_PORT);
 
-    public final frc.excalib2.swerve.SwerveSubsystem swerve = SwerveConfig.createDrivetrain();
+    public final frc.excalib2.swerve.SwerveSubsystem swerve = new frc.excalib2.swerve.SwerveSubsystem(
+            SwerveConfig.DRIVETRAIN,
+            SwerveConfig.FRONT_LEFT, SwerveConfig.FRONT_RIGHT,
+            SwerveConfig.BACK_LEFT, SwerveConfig.BACK_RIGHT);
     private final PowerDistribution powerDistributionHub = new PowerDistribution(PDH_PORT, PowerDistribution.ModuleType.kRev);
 
     private final SendableChooser<String> autoChooser = new SendableChooser<>();
 
-    private final LEDs leds = LEDs.getInstance();
+    private final LedStrip leds = new LedStrip(LED_PWM_PORT, LED_STRIP_LENGTH);
 
     // ===== Alerts =====
     private final Alert primaryDisconnected = new Alert("Primary controller disconnected (port 0).", Alert.AlertType.kWarning);
@@ -53,15 +59,6 @@ public class RobotContainer implements Logged {
     NetworkTableEntry flywheelVel = table.getEntry("flywheelVel");
     NetworkTableEntry hoodAngle = table.getEntry("hoodAngle");
 
-    // ===== Vision System State =====
-    private boolean batteryLow = false;
-
-    //    private final RobotDiagnostics robotDiagnostics = new RobotDiagnostics(powerDistributionHub);
-    private final CANHealthMonitor canHealthMonitor = new CANHealthMonitor();
-    private final ControllerStateTracker primaryControllerTracker =
-            new ControllerStateTracker(primary.getHID(), "Primary Controller");
-    private final PerformanceMetricsTracker performanceMetricsTracker =
-            new PerformanceMetricsTracker();
 //    private final Superstructure superstructure = new Superstructure(swerve, primary.R1(), new Trigger(ShiftUtil::isOwnHubActive), shouldDeliverTrigger);
     private final Superstructure superstructure = new Superstructure(
             () -> swerve.getState().Pose,
@@ -69,10 +66,20 @@ public class RobotContainer implements Logged {
             primary.R2(), primary.square(), primary.circle());
 //
     public RobotContainer() {
-//        lowBatteryTrigger.onTrue(leds.setPattern(BLINKING, ORANGE.color).withInterruptBehavior(kCancelIncoming));
+        dev.doglog.DogLog.setPdh(powerDistributionHub); // automatic PDH channel/voltage logging
+        leds.setDefaultPattern(LEDPattern.solid(Color.kBlue));
 
         flywheelVel.setDouble(0);
         hoodAngle.setDouble(0);
+
+        // Turret-mounted limelight: MT2 orientation = turret platform heading; the returned
+        // pose is turret-centered and converted back to a robot pose (v1 turretToRobot math).
+        swerve.withLimelight(
+                        "limelight-turret",
+                        () -> swerve.getHeading().plus(frc.robot.util.TurretOffsetGetter.instance.getTurretOffset()),
+                        frc.robot.util.TurretOffsetGetter.instance::isFast)
+                .withVisionPoseTransform(SwerveConfig::turretPoseToRobotPose);
+        swerve.configureAutoBuilder(SwerveConfig.PP_TRANSLATION_GAINS, SwerveConfig.PP_ROTATION_GAINS);
 
         // P-04 fix: autos reference these named commands; unregistered names silently no-op.
         registerCommands();
@@ -84,6 +91,10 @@ public class RobotContainer implements Logged {
         // Driver Control
         primary.touchpad().onTrue(superstructure.coastCommand());
 
+        // v1 LED behavior: blink orange while the flywheel spins
+        superstructure.shooter.flywheelSpinning.whileTrue(
+                leds.runPatternCommand(LEDPattern.solid(Color.kOrange).blink(Units.Seconds.of(0.2))));
+
 //        superstructure.shooter.setDefaultCommand(
 //                superstructure.shooter.yoavHatesThisCommandCommand(
 //                        () -> hoodAngle.getDouble(0),
@@ -93,8 +104,7 @@ public class RobotContainer implements Logged {
 //        );
 
         swerve.setDefaultCommand(
-                frc.excalib2.swerve.DriveCommands.fieldCentric(
-                        swerve,
+                swerve.fieldCentricDriveCommand(
                         () -> -primary.getLeftY(),
                         () -> -primary.getLeftX(),
                         () -> -primary.getRightX(),
@@ -134,17 +144,7 @@ public class RobotContainer implements Logged {
     }
 
     public void periodic() {
-
-//        robotDiagnostics.update();
-//        canHealthMonitor.update();
-        primaryControllerTracker.update();
         primaryDisconnected.set(!DriverStation.isJoystickConnected(primary.getHID().getPort()));
-
-        performanceMetricsTracker.recordPowerConsumption(powerDistributionHub.getTotalPower());
-    }
-
-    public PerformanceMetricsTracker getPerformanceMetricsTracker() {
-        return performanceMetricsTracker;
     }
 
     @NT

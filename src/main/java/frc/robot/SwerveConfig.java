@@ -14,7 +14,6 @@ import com.pathplanner.lib.config.PIDConstants;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import frc.excalib2.swerve.SwerveSubsystem;
 import frc.robot.util.TurretOffsetGetter;
 
 import static edu.wpi.first.units.Units.*;
@@ -87,30 +86,16 @@ public final class SwerveConfig {
                 false, false, false);
     }
 
-    /** Builds the drivetrain with vision fusion and PathPlanner wired. */
-    public static SwerveSubsystem createDrivetrain() {
-        SwerveSubsystem swerve = new SwerveSubsystem(
-                DRIVETRAIN_CONSTANTS,
-                module(22, 20, 21, TRACK_HALF, TRACK_HALF),   // front left
-                module(12, 10, 11, TRACK_HALF, -TRACK_HALF),  // front right
-                module(32, 30, 31, -TRACK_HALF, TRACK_HALF),  // back left
-                module(42, 40, 41, -TRACK_HALF, -TRACK_HALF));// back right
-
-        // Turret-mounted limelight: MT2 orientation = turret platform heading; the returned
-        // pose is turret-centered and converted back to a robot pose (v1 turretToRobot math).
-        swerve.withLimelight(
-                        "limelight-turret",
-                        () -> swerve.getState().Pose.getRotation()
-                                .plus(TurretOffsetGetter.instance.getTurretOffset()),
-                        TurretOffsetGetter.instance::isFast)
-                .withVisionPoseTransform(SwerveConfig::turretPoseToRobotPose);
-
-        swerve.configureAutoBuilder(PP_TRANSLATION_GAINS, PP_ROTATION_GAINS);
-        return swerve;
-    }
+    /** v1 module map (steer/drive/CANcoder): FL 22/20/21, FR 12/10/11, BL 32/30/31, BR 42/40/41. */
+    public static final SwerveDrivetrainConstants DRIVETRAIN = DRIVETRAIN_CONSTANTS;
+    public static final SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
+            FRONT_LEFT = module(22, 20, 21, TRACK_HALF, TRACK_HALF),
+            FRONT_RIGHT = module(12, 10, 11, TRACK_HALF, -TRACK_HALF),
+            BACK_LEFT = module(32, 30, 31, -TRACK_HALF, TRACK_HALF),
+            BACK_RIGHT = module(42, 40, 41, -TRACK_HALF, -TRACK_HALF);
 
     /** v1 {@code Swerve.turretToRobot}: turret-frame pose → robot-frame pose. */
-    private static Pose2d turretPoseToRobotPose(Pose2d turretPose) {
+    public static Pose2d turretPoseToRobotPose(Pose2d turretPose) {
         Rotation2d robotRotation = turretPose.getRotation()
                 .minus(TurretOffsetGetter.instance.getTurretOffset());
         Translation2d robotTranslation = turretPose.getTranslation()

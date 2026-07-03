@@ -10,8 +10,8 @@ Legend: ✅ ported/replaced in v2 · 🔷 covered by WPILib/CTRE/PathPlanner dir
 
 | v1 | Status | v2 answer |
 |---|---|---|
-| `Motor` (interface) | ✅ | `device.ExcaTalonFX` — mechanism-unit API, verified config, FOC+Voltage request families |
-| `TalonFXMotor` (incl. `refreshAll`, signal registry) | ✅ | `ExcaTalonFX` + `device.SignalHub` (per-bus batched refresh, frequency tiers, `optimizeAll`, latency compensation) |
+| `Motor` (interface) | ✅ | `device.Motor` — mechanism-unit API, verified config, FOC+Voltage request families (v1's interface + `TalonFXMotor` impl collapse into one class; TalonFX-only since REV was dropped) |
+| `TalonFXMotor` (incl. `refreshAll`, signal registry) | ✅ | `device.Motor` + `device.SignalHub` (per-bus batched refresh, frequency tiers, `optimizeAll`, latency compensation) |
 | `MotorGroup` (followers) | ✅ | `MechanismConfig.follower(id, opposed)` |
 | `SparkMaxMotor`, `FlexMotor` | ⛔ | No REV hardware (approved decision OD-8); old classes remain in git history |
 | `Gains` | ✅ | `control.Gains` (record; constructors; maps to `Slot0Configs` incl. kG/GravityType) |

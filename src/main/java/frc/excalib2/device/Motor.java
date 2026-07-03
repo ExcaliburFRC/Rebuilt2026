@@ -82,17 +82,35 @@ public class Motor {
 
     /** MotionMagic Expo profiled move to a position goal (mechanism rotations). */
     public void setExpoPositionGoal(double mechanismRotations) {
+        setExpoPositionGoal(mechanismRotations, 0);
+    }
+
+    /**
+     * MotionMagic Expo profiled move with a supplemental arbitrary feedforward (volts in
+     * VOLTAGE mode, amps in TorqueCurrentFOC mode) — e.g. dynamic gravity compensation whose
+     * magnitude the controller can't compute onboard.
+     */
+    public void setExpoPositionGoal(double mechanismRotations, double feedforward) {
         switch (controlMode) {
-            case TORQUE_CURRENT_FOC -> talon.setControl(mmExpoTorque.withPosition(mechanismRotations));
-            default -> talon.setControl(mmExpoVolts.withPosition(mechanismRotations));
+            case TORQUE_CURRENT_FOC ->
+                    talon.setControl(mmExpoTorque.withPosition(mechanismRotations).withFeedForward(feedforward));
+            default ->
+                    talon.setControl(mmExpoVolts.withPosition(mechanismRotations).withFeedForward(feedforward));
         }
     }
 
     /** Trapezoidal MotionMagic profiled move to a position goal (mechanism rotations). */
     public void setTrapezoidPositionGoal(double mechanismRotations) {
+        setTrapezoidPositionGoal(mechanismRotations, 0);
+    }
+
+    /** Trapezoidal MotionMagic move with a supplemental arbitrary feedforward (volts / amps by mode). */
+    public void setTrapezoidPositionGoal(double mechanismRotations, double feedforward) {
         switch (controlMode) {
-            case TORQUE_CURRENT_FOC -> talon.setControl(mmTorque.withPosition(mechanismRotations));
-            default -> talon.setControl(mmVolts.withPosition(mechanismRotations));
+            case TORQUE_CURRENT_FOC ->
+                    talon.setControl(mmTorque.withPosition(mechanismRotations).withFeedForward(feedforward));
+            default ->
+                    talon.setControl(mmVolts.withPosition(mechanismRotations).withFeedForward(feedforward));
         }
     }
 

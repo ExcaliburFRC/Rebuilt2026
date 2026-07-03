@@ -7,6 +7,7 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.RobotBase;
 import frc.excalib2.control.ControlMode;
 import frc.excalib2.control.CurrentBudget;
@@ -15,6 +16,7 @@ import frc.excalib2.control.MotionConstraints;
 import frc.excalib2.device.CANDeviceId;
 import frc.excalib2.sim.MechanismSim;
 
+import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Rotations;
 
 /**
@@ -149,6 +151,16 @@ public final class MechanismConfig {
     }
 
     /**
+     * Device-side soft limits for a <b>linear</b> mechanism, in meters (the mechanism unit is
+     * meters via a rotor-rotations-per-meter ratio). For {@code LinearExtension}.
+     */
+    public MechanismConfig softLimitsMeters(Distance reverse, Distance forward) {
+        this.reverseSoftLimitRotations = reverse.in(Meters);
+        this.forwardSoftLimitRotations = forward.in(Meters);
+        return this;
+    }
+
+    /**
      * Marks the mechanism as continuously rotating (turret): position goals are wrapped to
      * the nearest equivalent angle inside the soft-limit range before being commanded.
      * Requires {@link #softLimits}.
@@ -161,6 +173,12 @@ public final class MechanismConfig {
     /** At-goal / at-speed tolerance. */
     public MechanismConfig tolerance(Angle tolerance) {
         this.toleranceRotations = tolerance.in(Rotations);
+        return this;
+    }
+
+    /** At-goal tolerance for a <b>linear</b> mechanism, in meters. For {@code LinearExtension}. */
+    public MechanismConfig toleranceMeters(Distance tolerance) {
+        this.toleranceRotations = tolerance.in(Meters);
         return this;
     }
 
@@ -203,6 +221,18 @@ public final class MechanismConfig {
                                        double minAngleRad, double maxAngleRad, double startAngleRad) {
         return simModel(MechanismSim.arm(gearbox, gearing, moiKgMeters2, armLengthMeters,
                 minAngleRad, maxAngleRad, startAngleRad));
+    }
+
+    /**
+     * Simulates the mechanism as a gravity-loaded linear elevator/extension (mechanism unit
+     * = meters). For {@code LinearExtension}.
+     */
+    public MechanismConfig simElevatorModel(edu.wpi.first.math.system.plant.DCMotor gearbox,
+                                            double gearing, double carriageMassKg, double drumRadiusMeters,
+                                            double minHeightMeters, double maxHeightMeters,
+                                            double startHeightMeters) {
+        return simModel(MechanismSim.elevator(gearbox, gearing, carriageMassKg, drumRadiusMeters,
+                minHeightMeters, maxHeightMeters, startHeightMeters));
     }
 
     // ── Derived ──────────────────────────────────────────────────────────────

@@ -30,7 +30,7 @@ frc.excalib2
 │   ├── CANDeviceId            # record(id, busName)                          [R-16]
 │   ├── Motor                  # TalonFX wrapper: signal registration, pre-allocated
 │   │                          #   control requests, follower handling
-│   ├── ExcaCANcoder           # CANcoder wrapper (fused-feedback helper)
+│   │                          #   (fused CANcoder handled in MechanismConfig — no wrapper class)
 │   ├── DeviceConfigs          # apply + read-back verify + retry + Alert      [R-01]
 │   └── SignalHub              # per-bus signal registry: update freqs, batched
 │                              #   refreshAll(), waitForAll on CANivore,
@@ -52,6 +52,8 @@ frc.excalib2
 │   │                          #   coast/brake helpers (async), SysId hooks
 │   ├── PositionalMechanism    # MotionMagic(Expo) to setpoint, soft limits,
 │   │                          #   gravity FF, atSetpoint Trigger
+│   ├── LinearExtension        # meters-based positional; dynamic arm-mounted
+│   │                          #   gravity FF (kG·sin θ) or constant-gravity elevator
 │   ├── VelocityMechanism      # onboard velocity (MM-Velocity), atSpeed Trigger
 │   └── RollerMechanism        # duty/voltage/current modes, current-spike
 │                              #   game-piece detection                        [R-05]

@@ -7,7 +7,8 @@ recipe, end to end:
 
 | Your mechanism | Archetype |
 |---|---|
-| Arm / pivot / hood / elevator stage / turret | `PositionalMechanism` |
+| Arm / pivot / hood / turret | `PositionalMechanism` |
+| Elevator / telescoping slide / linear extension | `LinearExtension` (meters-based; supports dynamic arm-mounted gravity) |
 | Flywheel / shooter wheel / drum | `VelocityMechanism` |
 | Intake / feeder / indexer roller | `RollerMechanism` |
 | Drivetrain | `SwerveSubsystem` |

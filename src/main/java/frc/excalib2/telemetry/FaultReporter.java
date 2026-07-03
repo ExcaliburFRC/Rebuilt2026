@@ -67,7 +67,7 @@ public final class FaultReporter {
         }
     }
 
-    /** Registers a TalonFX for fault scanning. ExcaTalonFX does this automatically. */
+    /** Registers a TalonFX for fault scanning. Motor does this automatically. */
     public static void register(String name, TalonFX talon) {
         DEVICES.add(new MonitoredDevice(name, talon));
     }

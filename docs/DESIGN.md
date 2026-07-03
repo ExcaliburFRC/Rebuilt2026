@@ -28,7 +28,7 @@ New root **`frc.excalib2`** (old `frc.excalib` untouched until Phase 4 migration
 frc.excalib2
 ├── device/                    # Phoenix 6 device layer
 │   ├── CANDeviceId            # record(id, busName)                          [R-16]
-│   ├── ExcaTalonFX            # TalonFX wrapper: signal registration, pre-allocated
+│   ├── Motor                  # TalonFX wrapper: signal registration, pre-allocated
 │   │                          #   control requests, follower handling
 │   ├── ExcaCANcoder           # CANcoder wrapper (fused-feedback helper)
 │   ├── DeviceConfigs          # apply + read-back verify + retry + Alert      [R-01]

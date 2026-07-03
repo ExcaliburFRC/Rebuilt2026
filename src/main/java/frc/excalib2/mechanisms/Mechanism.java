@@ -13,7 +13,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import dev.doglog.DogLog;
 import frc.excalib2.device.DeviceConfigs;
-import frc.excalib2.device.ExcaTalonFX;
+import frc.excalib2.device.Motor;
 import frc.excalib2.sim.MechanismSim;
 
 import java.util.concurrent.ExecutorService;
@@ -46,8 +46,8 @@ public abstract class Mechanism {
     });
 
     protected final MechanismConfig config;
-    protected final ExcaTalonFX motor;
-    protected final ExcaTalonFX followerMotor;
+    protected final Motor motor;
+    protected final Motor followerMotor;
 
     private final Debouncer connectedDebouncer = new Debouncer(0.5, Debouncer.DebounceType.kFalling);
     private final Alert disconnectedAlert;
@@ -63,11 +63,11 @@ public abstract class Mechanism {
             DeviceConfigs.applyVerified(config.name + "/CANcoder", cancoder, config.toCANcoderConfiguration());
         }
 
-        motor = new ExcaTalonFX(config.name, config.motorId, config.toTalonFXConfiguration(),
+        motor = new Motor(config.name, config.motorId, config.toTalonFXConfiguration(),
                 config.effectiveControlMode());
 
         if (config.followerId != null) {
-            followerMotor = new ExcaTalonFX(config.name + "/Follower", config.followerId,
+            followerMotor = new Motor(config.name + "/Follower", config.followerId,
                     config.toTalonFXConfiguration(), config.effectiveControlMode());
             followerMotor.follow(motor, config.followerOpposed);
         } else {

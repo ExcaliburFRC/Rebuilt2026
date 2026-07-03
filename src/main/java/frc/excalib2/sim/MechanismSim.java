@@ -8,6 +8,7 @@ import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
+import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 
 /**
@@ -111,6 +112,49 @@ public final class MechanismSim {
             @Override
             public double velocityRotationsPerSecond() {
                 return Units.radiansToRotations(sim.getVelocityRadPerSec());
+            }
+        };
+    }
+
+    /**
+     * Gravity-loaded linear elevator / extension. The mechanism unit is <b>meters</b>
+     * (the device's SensorToMechanismRatio is rotor rotations per meter), so this model
+     * reports position/velocity in meters through the rotations-named methods.
+     *
+     * @param gearbox        motor(s) driving the stage
+     * @param gearing        rotor rotations per meter of travel
+     * @param carriageMassKg moving mass
+     * @param drumRadiusMeters effective drum/pulley radius
+     * @param minHeightMeters hard minimum travel
+     * @param maxHeightMeters hard maximum travel
+     * @param startHeightMeters initial position
+     */
+    public static ModelFactory elevator(DCMotor gearbox, double gearing, double carriageMassKg,
+                                        double drumRadiusMeters, double minHeightMeters,
+                                        double maxHeightMeters, double startHeightMeters) {
+        return () -> new Model() {
+            private final ElevatorSim sim = new ElevatorSim(
+                    gearbox, gearing, carriageMassKg, drumRadiusMeters,
+                    minHeightMeters, maxHeightMeters, true, startHeightMeters);
+
+            @Override
+            public void setInputVoltage(double volts) {
+                sim.setInputVoltage(volts);
+            }
+
+            @Override
+            public void update(double dt) {
+                sim.update(dt);
+            }
+
+            @Override
+            public double positionRotations() {
+                return sim.getPositionMeters(); // mechanism unit = meters
+            }
+
+            @Override
+            public double velocityRotationsPerSecond() {
+                return sim.getVelocityMetersPerSecond();
             }
         };
     }

@@ -28,7 +28,7 @@ Legend: ✅ ported/replaced in v2 · 🔷 covered by WPILib/CTRE/PathPlanner dir
 | `Arm` | ✅ | `PositionalMechanism` with `Gains.withGravity(kG, Arm_Cosine)` + MotionMagic |
 | `FlyWheel` | ✅ | `VelocityMechanism` (plain or MotionMagicVelocity-profiled) |
 | `Turret` | ✅ | `PositionalMechanism` with `continuousWrap()` |
-| `LinearExtension` | ⛔ | Unused by the robot; when needed, `PositionalMechanism` in rotations + a meters-per-rotation constant (a typed `LinearMechanism` is a noted follow-up) |
+| `LinearExtension` | ✅ | `mechanisms.LinearExtension` — meters-based positional archetype (onboard MotionMagic); reproduces v1's dynamic arm-mounted gravity (`kG·sin(angle)`) as supplemental feedforward, plus a constant-gravity elevator mode |
 | `Mass` (gravity model) | 🔷 | Phoenix `kG` + `GravityType` handles gravity onboard |
 
 ## Swerve (v1 `Swerve` → v2 `SwerveSubsystem`, method by method)

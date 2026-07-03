@@ -20,7 +20,7 @@ import frc.excalib2.control.ControlMode;
  * {@code SensorToMechanismRatio}/{@code RotorToSensorRatio} are set in the device
  * configuration, so no RIO-side conversion factors exist.
  */
-public class ExcaTalonFX {
+public class Motor {
     private final TalonFX talon;
     private final String name;
     private final ControlMode controlMode;
@@ -53,7 +53,7 @@ public class ExcaTalonFX {
      * @param configuration full device configuration (built by {@code MechanismConfig})
      * @param controlMode   which request family closed-loop calls use
      */
-    public ExcaTalonFX(String name, CANDeviceId deviceId, TalonFXConfiguration configuration, ControlMode controlMode) {
+    public Motor(String name, CANDeviceId deviceId, TalonFXConfiguration configuration, ControlMode controlMode) {
         this.name = name;
         this.controlMode = controlMode;
         this.talon = new TalonFX(deviceId.id(), deviceId.toCANBus());
@@ -126,8 +126,8 @@ public class ExcaTalonFX {
         talon.setControl(neutral);
     }
 
-    /** Follows another ExcaTalonFX. */
-    public void follow(ExcaTalonFX leader, boolean oppose) {
+    /** Follows another Motor. */
+    public void follow(Motor leader, boolean oppose) {
         talon.setControl(follower
                 .withLeaderID(leader.talon.getDeviceID())
                 .withMotorAlignment(oppose ? MotorAlignmentValue.Opposed : MotorAlignmentValue.Aligned));

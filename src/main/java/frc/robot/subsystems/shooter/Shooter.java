@@ -24,6 +24,7 @@ import frc.robot.util.TurretOffsetGetter;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
+import static com.ctre.phoenix6.signals.NeutralModeValue.*;
 import static edu.wpi.first.units.Units.Radians;
 import static frc.robot.Constants.FieldConstants.*;
 import static frc.robot.Constants.PhysicalConstants.TURRET_OFFSET_TRANSLATION;
@@ -68,7 +69,7 @@ public class Shooter extends SubsystemBase {
                     .softLimits(Radians.of(HOOD_MIN_ANGLE_RAD), Radians.of(HOOD_MAX_ANGLE_RAD))
                     .currentBudget(HOOD_BUDGET)
                     .tolerance(Radians.of(HOOD_TOLERANCE_RAD))
-                    .neutralMode(com.ctre.phoenix6.signals.NeutralModeValue.Coast)
+                    .neutralMode(Coast)
                     .simArmModel(DCMotor.getKrakenX60Foc(1), HOOD_ROTOR_PER_MECHANISM, 0.05, 0.15,
                             HOOD_MIN_ANGLE_RAD, HOOD_MAX_ANGLE_RAD, 0));
 
@@ -84,7 +85,7 @@ public class Shooter extends SubsystemBase {
                     .continuousWrap()
                     .currentBudget(TURRET_BUDGET)
                     .tolerance(Radians.of(TURRET_TOLERANCE_RAD))
-                    .neutralMode(com.ctre.phoenix6.signals.NeutralModeValue.Coast)
+                    .neutralMode(Coast)
                     .simRotationalModel(DCMotor.getKrakenX60Foc(1), 0.5, TURRET_ROTOR_PER_MECHANISM));
 
     // ── Targeting state ──────────────────────────────────────────────────────

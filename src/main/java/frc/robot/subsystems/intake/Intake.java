@@ -12,6 +12,7 @@ import frc.excalib2.mechanisms.PositionalMechanism;
 import frc.excalib2.mechanisms.RollerMechanism;
 import frc.excalib2.statemachine.StateMachine;
 
+import static com.ctre.phoenix6.signals.NeutralModeValue.*;
 import static edu.wpi.first.units.Units.Radians;
 import static frc.robot.subsystems.intake.IntakeConstants.*;
 import static frc.robot.subsystems.intake.IntakeStates.*;
@@ -35,7 +36,7 @@ public class Intake extends SubsystemBase {
                     .peakVoltage(FOUR_BAR_PEAK_VOLTS, -FOUR_BAR_PEAK_VOLTS)
                     .currentBudget(FOUR_BAR_BUDGET)
                     .tolerance(Radians.of(INTAKE_ANGLE_TOLERANCE_RAD))
-                    .neutralMode(com.ctre.phoenix6.signals.NeutralModeValue.Coast)
+                    .neutralMode(Coast)
                     .simArmModel(DCMotor.getKrakenX60Foc(2), GEARING, 0.3, 0.3,
                             INTAKE_MIN_ANGLE_RAD, INTAKE_MAX_ANGLE_RAD, START_ANGLE_RAD));
 

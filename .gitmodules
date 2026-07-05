@@ -1,6 +1,0 @@
-[submodule "src/main/java/frc/excalib"]
-	path = src/main/java/frc/excalib
-	url = https://github.com/ExcaliburFRC/ExcaLib.git
-
-	branch = main
-

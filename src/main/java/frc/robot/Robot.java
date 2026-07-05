@@ -7,8 +7,6 @@ package frc.robot;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.excalib.control.math.periodics.PeriodicScheduler;
-import frc.excalib.control.motor.controllers.TalonFXMotor;
 import frc.excalib2.device.SignalHub;
 import frc.excalib2.telemetry.FaultReporter;
 import frc.excalib2.telemetry.LoopTimer;
@@ -52,11 +50,9 @@ public class Robot extends TimedRobot {
 
         ShiftUtil.update();
         robotContainer.periodic();
-        PeriodicScheduler.PERIOD.MILLISECONDS_20.run();
 
         CommandScheduler.getInstance().run();
         Monologue.updateAll();
-        TalonFXMotor.refreshAll();
 
         LoopTimer.end();
     }

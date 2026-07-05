@@ -49,7 +49,7 @@ public class Shooter extends SubsystemBase {
 
     // ── Mechanisms ───────────────────────────────────────────────────────────
 
-    private final VelocityMechanism flywheel = new VelocityMechanism(
+    public final VelocityMechanism flywheel = new VelocityMechanism(
             new MechanismConfig("Shooter/Flywheel",
                             new CANDeviceId(FLYWHEEL_MOTOR_LOW_ID, SUBSYSTEMS_CANBUS.getName()))
                     .follower(new CANDeviceId(FLYWHEEL_MOTOR_TOP_ID, SUBSYSTEMS_CANBUS.getName()), false)
@@ -60,7 +60,7 @@ public class Shooter extends SubsystemBase {
                     .tolerance(Radians.of(FLYWHEEL_TOLERANCE_RPS)) // rot/s tolerance
                     .simRotationalModel(DCMotor.getKrakenX60Foc(2), 0.01, FLYWHEEL_ROTOR_PER_MECHANISM));
 
-    private final PositionalMechanism hood = new PositionalMechanism(
+    public final PositionalMechanism hood = new PositionalMechanism(
             new MechanismConfig("Shooter/Hood",
                             new CANDeviceId(HOOD_MOTOR_ID, SUBSYSTEMS_CANBUS.getName()))
                     .controlMode(ControlMode.VOLTAGE)
@@ -73,7 +73,7 @@ public class Shooter extends SubsystemBase {
                     .simArmModel(DCMotor.getKrakenX60Foc(1), HOOD_ROTOR_PER_MECHANISM, 0.05, 0.15,
                             HOOD_MIN_ANGLE_RAD, HOOD_MAX_ANGLE_RAD, 0));
 
-    private final PositionalMechanism turret = new PositionalMechanism(
+    public final PositionalMechanism turret = new PositionalMechanism(
             new MechanismConfig("Shooter/Turret",
                             new CANDeviceId(TURRET_MOTOR_ID, SUBSYSTEMS_CANBUS.getName()))
                     .controlMode(ControlMode.VOLTAGE)

@@ -23,6 +23,7 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.PrintCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.LEDPattern;
 import edu.wpi.first.wpilibj.util.Color;
@@ -45,6 +46,7 @@ public class RobotContainer implements Logged {
             SwerveConfig.DRIVETRAIN,
             SwerveConfig.FRONT_LEFT, SwerveConfig.FRONT_RIGHT,
             SwerveConfig.BACK_LEFT, SwerveConfig.BACK_RIGHT);
+
     private final PowerDistribution powerDistributionHub = new PowerDistribution(PDH_PORT, PowerDistribution.ModuleType.kRev);
 
     private final SendableChooser<String> autoChooser = new SendableChooser<>();
@@ -85,6 +87,53 @@ public class RobotContainer implements Logged {
         registerCommands();
         setAutoChooser();
         configureBindings();
+        configureTestBindings();   // bring-up harness — active only in DriverStation Test mode
+    }
+
+    /**
+     * On-robot bring-up controls, <b>gated to Test mode</b> ({@code RobotModeTriggers.test()}),
+     * so none of this can fire during teleop or autonomous. Enter "Test" + "Enable" in the
+     * Driver Station to use them. See {@code docs/BRINGUP_TESTPLAN.html}.
+     *
+     * <p>Layout on the primary controller (Test mode only):
+     * <ul>
+     *   <li><b>L1</b> — coast the whole robot (swerve + intake four-bar + turret) for
+     *       hand-positioning / zeroing.</li>
+     *   <li><b>D-pad</b> — SysId on the <i>mechanism under test</i>: ▲ quasistatic-fwd,
+     *       ▼ quasistatic-rev, ▶ dynamic-fwd, ◀ dynamic-rev. Change {@code MUT} below to
+     *       characterize a different mechanism.</li>
+     *   <li><b>△ / ✕</b> — quick intake OPEN / CLOSE direction &amp; range check.</li>
+     *   <li><b>◯ (hold)</b> — spin the flywheel at a low fixed speed (10 rot/s) to check
+     *       direction and readiness.</li>
+     * </ul>
+     */
+    private void configureTestBindings() {
+        Trigger test = edu.wpi.first.wpilibj2.command.button.RobotModeTriggers.test();
+
+        // --- coast everything for hand-positioning ---
+        test.and(primary.L1()).whileTrue(
+                swerve.coastCommand()
+                        .alongWith(superstructure.intake.coastCommand())
+                        .alongWith(superstructure.coastCommand()));   // coasts the turret
+
+        // --- SysId of the MECHANISM UNDER TEST (edit these two lines to pick a mechanism) ---
+        var mut = superstructure.shooter.hood;      // the mechanism to characterize
+        var mutSubsystem = superstructure.shooter;  // the subsystem that owns it (SysId needs the requirement)
+        test.and(primary.povUp())
+                .whileTrue(mut.sysIdQuasistatic(mutSubsystem, Direction.kForward));
+        test.and(primary.povDown())
+                .whileTrue(mut.sysIdQuasistatic(mutSubsystem, Direction.kReverse));
+        test.and(primary.povRight())
+                .whileTrue(mut.sysIdDynamic(mutSubsystem, Direction.kForward));
+        test.and(primary.povLeft())
+                .whileTrue(mut.sysIdDynamic(mutSubsystem, Direction.kReverse));
+        // torque-current (FOC) SysId: swap the four lines above for sysIdQuasistaticTorque / sysIdDynamicTorque.
+
+        // --- quick per-subsystem checks ---
+        test.and(primary.triangle()).whileTrue(superstructure.intake.setStateCommand(frc.robot.subsystems.intake.IntakeStates.OPEN));
+        test.and(primary.cross()).whileTrue(superstructure.intake.setStateCommand(frc.robot.subsystems.intake.IntakeStates.CLOSE));
+        test.and(primary.circle()).whileTrue(
+                superstructure.shooter.run(() -> superstructure.shooter.flywheel.setVelocityRotationsPerSecond(10)));
     }
 
     private void configureBindings() {

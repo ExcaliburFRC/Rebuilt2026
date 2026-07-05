@@ -25,7 +25,7 @@ import static frc.robot.subsystems.intake.IntakeStates.*;
  */
 public class Intake extends SubsystemBase {
 
-    private final PositionalMechanism fourBar = new PositionalMechanism(
+    public final PositionalMechanism fourBar = new PositionalMechanism(
             new MechanismConfig("Intake/FourBar", new CANDeviceId(LEFT_FOUR_BAR_MOTOR_ID))
                     .follower(new CANDeviceId(RIGHT_FOUR_BAR_MOTOR_ID), true)
                     .controlMode(ControlMode.VOLTAGE) // ported v1 volts gains; FOC after SysId
@@ -40,7 +40,7 @@ public class Intake extends SubsystemBase {
                     .simArmModel(DCMotor.getKrakenX60Foc(2), GEARING, 0.3, 0.3,
                             INTAKE_MIN_ANGLE_RAD, INTAKE_MAX_ANGLE_RAD, START_ANGLE_RAD));
 
-    private final RollerMechanism roller = new RollerMechanism(
+    public final RollerMechanism roller = new RollerMechanism(
             new MechanismConfig("Intake/Roller", new CANDeviceId(ROLLER_MOTOR_ID))
                     .controlMode(ControlMode.VOLTAGE)
                     .currentBudget(ROLLER_BUDGET)

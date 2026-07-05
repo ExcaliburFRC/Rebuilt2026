@@ -27,7 +27,7 @@ import static frc.robot.superstructure.RobotState.*;
 public class Superstructure extends frc.excalib2.superstructure.Superstructure<RobotState> {
 
     public final Shooter shooter;
-    private final Transport transport;
+    public final Transport transport;
     public final Intake intake;
 
     private final Trigger robotAtState, ourAllianceShiftActivate;

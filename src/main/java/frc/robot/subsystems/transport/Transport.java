@@ -24,7 +24,7 @@ import static frc.robot.subsystems.transport.TransportStates.TRANSPORT;
  */
 public class Transport extends SubsystemBase {
 
-    private final VelocityMechanism drum = new VelocityMechanism(
+    public final VelocityMechanism drum = new VelocityMechanism(
             new MechanismConfig("Transport/Drum", new CANDeviceId(DRUM_MOTOR_ID))
                     .controlMode(ControlMode.VOLTAGE) // ported v1 volts gains; FOC after SysId
                     .inverted(false)
@@ -33,7 +33,7 @@ public class Transport extends SubsystemBase {
                     .tolerance(edu.wpi.first.units.Units.Rotations.of(DRUM_TOLERANCE_RPS))
                     .simRotationalModel(DCMotor.getKrakenX60Foc(1), 0.005, 9.0));
 
-    private final VelocityMechanism transport = new VelocityMechanism(
+    public final VelocityMechanism transport = new VelocityMechanism(
             new MechanismConfig("Transport/Belt", new CANDeviceId(TRANSPORT_MOTOR_ID))
                     .controlMode(ControlMode.VOLTAGE)
                     .inverted(true)

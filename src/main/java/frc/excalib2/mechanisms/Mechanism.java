@@ -53,6 +53,7 @@ public abstract class Mechanism {
     private final Alert disconnectedAlert;
     private final MechanismSim sim;
     private SysIdRoutine sysIdRoutine;
+    private SysIdRoutine sysIdTorqueRoutine;
 
     protected Mechanism(MechanismConfig config) {
         this.config = config;
@@ -157,11 +158,46 @@ public abstract class Mechanism {
         return sysIdRoutine;
     }
 
+    /** Voltage characterization (slow ramp). Yields volt-based gains for {@code ControlMode.VOLTAGE}. */
     public Command sysIdQuasistatic(SubsystemBase subsystem, SysIdRoutine.Direction direction) {
         return getSysIdRoutine(subsystem).quasistatic(direction);
     }
 
+    /** Voltage characterization (step). Yields volt-based gains for {@code ControlMode.VOLTAGE}. */
     public Command sysIdDynamic(SubsystemBase subsystem, SysIdRoutine.Direction direction) {
         return getSysIdRoutine(subsystem).dynamic(direction);
+    }
+
+    /**
+     * Torque-current characterization for {@code ControlMode.TORQUE_CURRENT_FOC} gains.
+     *
+     * <p>WPILib's SysId API is volts-typed, so — per the CTRE idiom — the routine's "volts"
+     * are <b>interpreted as amps</b> and driven as {@code TorqueCurrentFOC} output
+     * (ramp 5 A/s, step 20 A, clamped by the config's torque peaks). The analyzer's
+     * resulting "volt" gains are therefore <b>amp gains</b>: drop them straight into the
+     * FOC-mode {@code Gains}. Real FOC hardware only — do not run in simulation.
+     */
+    private SysIdRoutine getTorqueSysIdRoutine(SubsystemBase subsystem) {
+        if (sysIdTorqueRoutine == null) {
+            sysIdTorqueRoutine = new SysIdRoutine(
+                    new SysIdRoutine.Config(
+                            Volts.of(5).per(edu.wpi.first.units.Units.Second), // 5 "volts"(=amps) per second ramp
+                            Volts.of(20),                                       // 20 "volts"(=amps) step
+                            null,
+                            state -> SignalLogger.writeString(config.name + "/SysIdTorqueState", state.toString())),
+                    new SysIdRoutine.Mechanism(
+                            (Voltage amps) -> motor.forceAmps(amps.in(Volts)), null, subsystem));
+        }
+        return sysIdTorqueRoutine;
+    }
+
+    /** Torque-current characterization (slow ramp). Yields amp-based gains for FOC mode. */
+    public Command sysIdQuasistaticTorque(SubsystemBase subsystem, SysIdRoutine.Direction direction) {
+        return getTorqueSysIdRoutine(subsystem).quasistatic(direction);
+    }
+
+    /** Torque-current characterization (step). Yields amp-based gains for FOC mode. */
+    public Command sysIdDynamicTorque(SubsystemBase subsystem, SysIdRoutine.Direction direction) {
+        return getTorqueSysIdRoutine(subsystem).dynamic(direction);
     }
 }

@@ -159,6 +159,16 @@ public class Motor {
         talon.setControl(dutyOut.withOutput(dutyCycle));
     }
 
+    /**
+     * Torque-current output <b>regardless of the configured control mode</b> — for
+     * torque-current SysId characterization (which must drive amps even while the mechanism
+     * still runs VOLTAGE closed-loop). Real FOC-licensed hardware only; clamped by the
+     * configured TorqueCurrent peaks.
+     */
+    public void forceAmps(double amps) {
+        talon.setControl(torqueOut.withOutput(amps));
+    }
+
     /** Applies neutral output (brake/coast per configured neutral mode). */
     public void stop() {
         talon.setControl(neutral);

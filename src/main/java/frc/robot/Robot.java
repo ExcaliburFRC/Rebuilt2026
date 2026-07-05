@@ -13,7 +13,6 @@ import frc.excalib2.telemetry.LoopTimer;
 import frc.excalib2.telemetry.Telemetry;
 import frc.excalib2.util.AllianceFlip;
 import frc.robot.util.ShiftUtil;
-import monologue.Monologue;
 
 /**
  * Main robot class that extends TimedRobot.
@@ -30,8 +29,6 @@ public class Robot extends TimedRobot {
                 Constants.FieldConstants.FIELD_WIDTH_METERS);
 
         robotContainer = new RobotContainer();
-
-        Monologue.setupMonologue(robotContainer, "Robot", false, false);
 
         // Disable unregistered status signals on all excalib2 devices (bus utilization).
         SignalHub.optimizeAll();
@@ -52,7 +49,6 @@ public class Robot extends TimedRobot {
         robotContainer.periodic();
 
         CommandScheduler.getInstance().run();
-        Monologue.updateAll();
 
         LoopTimer.end();
     }

@@ -2,12 +2,10 @@ package frc.robot.util;
 
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import monologue.Annotations.Log;
-import monologue.Logged;
 
 import java.util.function.DoubleSupplier;
 
-public class BallCounter implements Logged {
+public class BallCounter {
     public int ballCounterNum = 0;
     public final DoubleSupplier flywheelVelocitySetpoint, flywheelVelocityMeasurement;
     public Trigger hasDippedUnderSetpointTrigger;
@@ -28,7 +26,7 @@ public class BallCounter implements Logged {
         ballCounterNum++;
     }
 
-    @Log.NT
+    /** Ball count — logged to DogLog by the Shooter under {@code Shooter/BallCount}. */
     public int getBallCount() {
         return ballCounterNum;
     }

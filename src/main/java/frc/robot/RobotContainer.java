@@ -30,12 +30,10 @@ import edu.wpi.first.wpilibj.util.Color;
 import frc.excalib2.util.LedStrip;
 import frc.robot.superstructure.RobotState;
 import frc.robot.superstructure.Superstructure;
-import monologue.Annotations.Log.NT;
-import monologue.Logged;
 
 import static frc.robot.Constants.*;
 
-public class RobotContainer implements Logged {
+public class RobotContainer {
 
     private static final int LED_PWM_PORT = 8;   // from ExcaLib v1 LEDs
     private static final int LED_STRIP_LENGTH = 22;
@@ -194,10 +192,5 @@ public class RobotContainer implements Logged {
 
     public void periodic() {
         primaryDisconnected.set(!DriverStation.isJoystickConnected(primary.getHID().getPort()));
-    }
-
-    @NT
-    public double getInterpolationFlywheelVel() {
-        return flywheelVel.getDouble(0);
     }
 }

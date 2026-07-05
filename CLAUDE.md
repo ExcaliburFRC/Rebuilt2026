@@ -19,12 +19,11 @@ On this Windows machine, Gradle must run on the WPILib JDK for tests/sim (other 
 
 ## Architecture
 
-Two libraries currently coexist:
+- **`frc.excalib2`** — **ExcaLib v2, the one and only library.** Phoenix-6-native, FOC-first, declarative. All robot subsystems are built on it. Never imports `frc.robot`.
 
-- **`frc.excalib2`** — **ExcaLib v2, the active library.** Phoenix-6-native, FOC-first, declarative. All robot subsystems are built on it. Never imports `frc.robot`.
-- **`frc.excalib`** — ExcaLib v1 (legacy). Still in-tree for reference and a few utilities the robot still uses (`AllianceUtils`, `LEDs`, `LoggablePS5Controller`, `PerformanceMetricsTracker`, Monologue-based logging in `RobotContainer`). Do not build new features on it. Removal is pending approval.
+ExcaLib v1 (`frc.excalib`) has been **removed** — the migration is complete and the robot runs entirely on v2. Only Monologue remains as a legacy logging dependency (a separate vendordep; DogLog is the log of record). If you find a reference to `frc.excalib` (no "2"), it's a mistake.
 
-Design history and rationale: `docs/AUDIT.md` (v1 pain points), `docs/RESEARCH.md` (patterns mined from other teams), `docs/DESIGN.md` (approved v2 design), `NOTICE.md` (credits).
+Design history and rationale: `docs/AUDIT.md` (v1 pain points), `docs/RESEARCH.md` (patterns mined from other teams), `docs/DESIGN.md` (approved v2 design), `docs/V1_TO_V2_MAPPING.md` (where each old class went), `docs/EXCALIB_MANUAL.html` (the full reference), `NOTICE.md` (credits).
 
 ### ExcaLib v2 in one paragraph
 

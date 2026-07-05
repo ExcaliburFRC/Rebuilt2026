@@ -244,7 +244,7 @@ git checkout -b feature/my-thing     # ALWAYS a branch. Never main.
       <tr><th>Path</th><th>What</th><th>You touch it?</th></tr>
       <tr><td><code>frc/excalib2/</code></td><td>The library (this manual's subject). device / control / mechanisms / statemachine / superstructure / swerve / auto / telemetry / sim / util.</td><td>Rarely — you consume it</td></tr>
       <tr><td><code>frc/robot/</code></td><td>The robot: <code>Robot</code>, <code>RobotContainer</code>, <code>Constants</code>, <code>SwerveConfig</code>, <code>subsystems/</code>, <code>superstructure/</code>, <code>util/</code>.</td><td><b>Yes — daily</b></td></tr>
-      <tr><td><code>frc/excalib/</code></td><td>Legacy v1. Kept until removal is approved. <b>Never build on it.</b></td><td>No</td></tr>
+      <tr><td><code>frc/excalib/</code> <em>(removed)</em></td><td>ExcaLib v1 — deleted once the migration was proven. If you see an <code>frc.excalib</code> import (no "2"), it's a mistake to fix.</td><td>Gone</td></tr>
       <tr><td><code>src/main/deploy/pathplanner/</code></td><td>Paths and <code>.auto</code> files from the PathPlanner app.</td><td>Via the app</td></tr>
       <tr><td><code>src/test/java/</code></td><td>Unit tests (state machine, LinearExtension). Run on the WPILib JDK automatically.</td><td>Add when it makes sense</td></tr>
       <tr><td><code>docs/</code></td><td>This manual + design history (AUDIT / RESEARCH / DESIGN / mapping).</td><td>Read</td></tr>

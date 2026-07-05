@@ -81,10 +81,9 @@ Legend: ✅ ported/replaced in v2 · 🔷 covered by WPILib/CTRE/PathPlanner dir
 | `Vector2D` | 🔷 | WPILib `Translation2d` (same operations) |
 | `EMAFilter` | 🔷 | WPILib `LinearFilter.singlePoleIIR` (Shooter's readiness filter keeps v1's exact inline EMA for parity) |
 | `Circle`, `Line`, `MathUtils` | ⛔ | Unused by robot code; WPILib `MathUtil` + geometry classes cover the use cases |
-| `PeriodicScheduler` / `PeriodicTask` | 🔷 | WPILib `TimedRobot.addPeriodic(...)`; still running in `Robot` for legacy v1 code until v1 removal |
+| `PeriodicScheduler` / `PeriodicTask` | ⛔ | Removed with v1. Use WPILib `TimedRobot.addPeriodic(...)` if a fixed-rate task is ever needed. |
 | `CommandMutex`, `CommandUtils`, `ContinuouslyConditionalCommand`, `MapCommand` | ⛔ | Unused; WPILib `Commands.either/select/defer` + `Trigger` cover them |
 
-## Robot-side leftovers still on v1 (removed together with v1, after approval)
+## Status: v1 removed ✅
 
-- `Robot`'s `PeriodicScheduler` + `TalonFXMotor.refreshAll()` calls (harmless; nothing registers anymore except legacy paths)
-- Monologue (`RobotContainer implements Logged`, `Monologue.setupMonologue/updateAll`)
+ExcaLib v1 (`frc.excalib`) was **deleted** once the migration was proven (build green, sim clean, no `frc.excalib` references in `src`). The two `Robot`-loop leftovers (`PeriodicScheduler.run()`, `TalonFXMotor.refreshAll()`) went with it — nothing registered on either. **Monologue** remains as the one legacy dependency (`RobotContainer implements Logged`, `Monologue.setupMonologue/updateAll`, `BallCounter implements Logged`); it's a separate vendordep, and its retirement in favor of DogLog is the last remaining cleanup, tracked independently.

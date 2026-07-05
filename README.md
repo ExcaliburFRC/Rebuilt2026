@@ -33,19 +33,17 @@ Here's an overview of our code layout:
 
 ```
 src/main/java/frc/
-├── excalib2/            ← ExcaLib v2 — our reusable library (Phoenix 6 FOC-first)
-│   ├── device/          CANDeviceId, ExcaTalonFX, DeviceConfigs (apply+verify+retry), SignalHub
+├── excalib2/            ← ExcaLib v2 — our library (Phoenix 6 FOC-first). v1 has been removed.
+│   ├── device/          CANDeviceId, Motor, DeviceConfigs (apply+verify+retry), SignalHub
 │   ├── control/         ControlMode, Gains, MotionConstraints (MotionMagic/Expo), CurrentBudget
-│   ├── mechanisms/      MechanismConfig + Positional / Velocity / Roller archetypes
+│   ├── mechanisms/      MechanismConfig + Positional / Linear / Velocity / Roller archetypes
 │   ├── statemachine/    StateMachine<S> — transition table, guards, enter/while/exit
 │   ├── superstructure/  Superstructure<G> goal-coordinator base
-│   ├── swerve/          SwerveSubsystem (CTRE swerve), DriveCommands, DriveToPose, MegaTag2
+│   ├── swerve/          SwerveSubsystem (CTRE swerve, drive commands), DriveToPose, MegaTag2
 │   ├── auto/            PathPlanner glue (named commands, auto chooser)
-│   ├── telemetry/       Telemetry (DogLog+SignalLogger), TunableNumber, FaultReporter
+│   ├── telemetry/       Telemetry (DogLog+SignalLogger), TunableNumber, FaultReporter, LoopTimer
 │   ├── sim/             MechanismSim — TalonFXSimState + WPILib physics models
-│   └── util/            AllianceFlip, Zones
-│
-├── excalib/             ← ExcaLib v1 (legacy — kept until removal is approved)
+│   └── util/            AllianceFlip, Zones, LedStrip
 │
 └── robot/
     ├── Robot.java / RobotContainer.java / Constants.java / SwerveConfig.java
@@ -54,7 +52,7 @@ src/main/java/frc/
     └── util/            ShiftUtil, TurretOffsetGetter, BallCounter, LimelightHelpers
 ```
 
-📖 **Adding a subsystem?** See [docs/ADDING_A_SUBSYSTEM.md](docs/ADDING_A_SUBSYSTEM.md).
+📖 **Full library reference:** open [docs/EXCALIB_MANUAL.html](docs/EXCALIB_MANUAL.html). Quick recipe: [docs/ADDING_A_SUBSYSTEM.md](docs/ADDING_A_SUBSYSTEM.md).
 📚 Library background: [docs/AUDIT.md](docs/AUDIT.md) · [docs/RESEARCH.md](docs/RESEARCH.md) · [docs/DESIGN.md](docs/DESIGN.md) · credits in [NOTICE.md](NOTICE.md).
 
 ---

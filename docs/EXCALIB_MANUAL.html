@@ -1,0 +1,1608 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The ExcaLib v2 Manual — everything, in one place</title>
+<style>
+  :root{
+    --accent:#6f8cff; --accent-2:#f0be5c; --accent-soft:#1a2340;
+    --bg:#0a0e1a; --bg-2:#111830; --bg-3:#18213f;
+    --fg:#e8edff; --fg-2:#a7b4d6; --fg-3:#6d7ba0; --border:#233052;
+    --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 30px rgba(0,0,0,.4);
+    --code-bg:#060a15;
+    --yes:#4cc98c; --yes-bg:#0f2a1d; --no:#e0a94a; --no-bg:#2a2110; --alt:#7aa2ff; --alt-bg:#141d38;
+    --tip:#6f8cff; --tip-bg:#141d38; --warn:#e0a94a; --warn-bg:#2a2110;
+    --danger:#f07070; --danger-bg:#2c1414; --ok:#4cc98c; --ok-bg:#0f2a1d; --why:#b183ee; --why-bg:#201634;
+    --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  html[data-theme="light"]{
+    --accent:#2a4bd7; --accent-2:#c9820f; --accent-soft:#eaf0ff;
+    --bg:#fff; --bg-2:#f5f7fb; --bg-3:#eef1f7;
+    --fg:#141c2e; --fg-2:#4a5876; --fg-3:#8794ab; --border:#dbe2ee;
+    --shadow:0 1px 3px rgba(20,30,60,.08),0 8px 24px rgba(20,30,60,.06);
+    --code-bg:#0f1729;
+    --yes:#1d9a63; --yes-bg:#e7f7ee; --no:#c67c05; --no-bg:#fff6e6; --alt:#2a5bd7; --alt-bg:#eaf1ff;
+    --tip:#2a6bd7; --tip-bg:#eaf1ff; --warn:#c67c05; --warn-bg:#fff6e6;
+    --danger:#d13b3b; --danger-bg:#fdecec; --ok:#1d9a63; --ok-bg:#e7f7ee; --why:#8a4bd0; --why-bg:#f4ecfd;
+  }
+  *{box-sizing:border-box}html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);line-height:1.65;font-size:16px}
+  #progress{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--accent),var(--accent-2));z-index:100}
+  .wrap{display:grid;grid-template-columns:300px 1fr;max-width:1460px;margin:0 auto}
+  nav{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;padding:20px 12px 60px 20px;border-right:1px solid var(--border);background:var(--bg-2)}
+  nav .brand{display:flex;align-items:center;gap:10px}nav .brand .s{font-size:22px}nav .brand b{font-size:14.5px}
+  nav .sub{color:var(--fg-3);font-size:11.5px;margin:2px 0 10px 32px}
+  #search{width:100%;background:var(--bg-3);border:1px solid var(--border);color:var(--fg);border-radius:8px;padding:7px 10px;font-size:13px;margin-bottom:10px;font-family:var(--sans)}
+  #search:focus{outline:none;border-color:var(--accent)}
+  nav a{display:block;color:var(--fg-2);text-decoration:none;padding:4.5px 10px;border-radius:7px;font-size:13px}
+  nav a:hover{background:var(--bg-3);color:var(--fg)}nav a.active{background:var(--accent);color:#08122b;font-weight:700}
+  nav .grp{margin:13px 0 3px;font-size:10.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--fg-3);font-weight:700}
+  main{padding:0 min(6vw,60px) 120px;max-width:960px}
+  .hero{padding:52px 0 26px;border-bottom:1px solid var(--border);margin-bottom:14px}
+  .hero .kicker{display:inline-block;background:var(--accent-soft);color:var(--accent);padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;letter-spacing:.4px;text-transform:uppercase}
+  .hero h1{font-size:clamp(28px,4.4vw,42px);line-height:1.1;margin:16px 0 10px;letter-spacing:-.5px}
+  .hero p{font-size:17px;color:var(--fg-2);margin:0;max-width:700px}
+  .hero .meta{display:flex;gap:20px;flex-wrap:wrap;margin-top:22px;font-size:13px;color:var(--fg-3)}
+  section{padding-top:32px;margin-top:12px;border-top:1px dashed var(--border)}section:first-of-type{border-top:none}
+  h2{font-size:26px;margin:6px 0 4px;scroll-margin-top:16px;letter-spacing:-.3px}
+  h2 .n{display:inline-grid;place-items:center;min-width:34px;height:34px;padding:0 8px;background:var(--accent);color:#08122b;border-radius:9px;font-size:14px;font-weight:800;margin-right:12px;vertical-align:middle}
+  h3{font-size:18.5px;margin:28px 0 5px;scroll-margin-top:16px}
+  h3 code, h2 code{font-family:var(--mono);color:var(--accent-2);font-size:.92em}
+  h4{font-size:14px;text-transform:uppercase;letter-spacing:.5px;color:var(--fg-3);margin:20px 0 4px}
+  p{margin:9px 0}.lead{font-size:16.5px;color:var(--fg-2)}
+  code.k{background:var(--bg-3);border:1px solid var(--border);border-radius:5px;padding:.1em .42em;font-family:var(--mono);font-size:.84em;color:var(--fg)}
+  a.inline{color:var(--accent);text-decoration:none}a.inline:hover{text-decoration:underline}
+  .lvl{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.5px;padding:2px 8px;border-radius:12px;vertical-align:middle;margin-left:8px}
+  .lvl.basic{background:var(--ok-bg);color:var(--ok)}.lvl.deep{background:var(--why-bg);color:var(--why)}
+  .box{border-left:4px solid var(--fg-3);background:var(--bg-2);border-radius:8px;padding:12px 15px;margin:14px 0;font-size:14.5px}
+  .box .h{font-weight:700;display:flex;gap:8px;margin-bottom:2px}.box p:last-child{margin-bottom:0}
+  .box.tip{border-color:var(--tip);background:var(--tip-bg)}.box.tip .h{color:var(--tip)}
+  .box.warn{border-color:var(--warn);background:var(--warn-bg)}.box.warn .h{color:var(--warn)}
+  .box.danger{border-color:var(--danger);background:var(--danger-bg)}.box.danger .h{color:var(--danger)}
+  .box.ok{border-color:var(--ok);background:var(--ok-bg)}.box.ok .h{color:var(--ok)}
+  .box.why{border-color:var(--why);background:var(--why-bg)}.box.why .h{color:var(--why)}
+  .code{background:var(--code-bg);border-radius:9px;margin:12px 0;overflow:hidden;box-shadow:var(--shadow)}
+  .code-head{display:flex;align-items:center;justify-content:space-between;padding:7px 13px;background:rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.08)}
+  .code-head .fname{font-family:var(--mono);font-size:11.5px;color:#9fb0d8}.code-head .fname::before{content:"›_ ";color:#5a6a92}
+  .copy{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.13);color:#c7d3f0;font-size:11px;padding:3px 9px;border-radius:6px;cursor:pointer;font-family:var(--sans)}
+  .code pre{margin:0;padding:14px 15px;overflow-x:auto}
+  .code code{font-family:var(--mono);font-size:12.5px;line-height:1.62;color:#e6ecff;white-space:pre}
+  .c-kw{color:#ff8fd0}.c-str{color:#8ee6a8}.c-com{color:#6d7fa8;font-style:italic}.c-num{color:#f0b775}.c-ann{color:#ffcf6f}
+  .decide{border:1px solid var(--border);border-radius:12px;margin:16px 0;overflow:hidden;background:var(--bg-2)}
+  .decide .q{padding:12px 16px;font-weight:700;font-size:15px;background:var(--accent-soft);border-left:4px solid var(--accent);border-bottom:1px solid var(--border);display:flex;gap:9px}
+  .decide .q .qm{color:var(--accent)}
+  .branches{display:grid;gap:1px;background:var(--border)}
+  .branch{background:var(--bg-2);padding:11px 16px;display:grid;grid-template-columns:70px 1fr;gap:12px;align-items:start}
+  .branch .lbl{font-size:10.5px;font-weight:800;letter-spacing:.4px;padding:3px 0;text-align:center;border-radius:6px}
+  .branch.yes .lbl{background:var(--yes-bg);color:var(--yes)}
+  .branch.no  .lbl{background:var(--no-bg);color:var(--no)}
+  .branch.alt .lbl{background:var(--alt-bg);color:var(--alt)}
+  .branch .do{font-size:14.5px}.branch .do code{font-family:var(--mono);font-size:12.5px;color:var(--accent);background:var(--bg-3);padding:.1em .4em;border-radius:5px}
+  .branch .why{color:var(--fg-3);font-size:12.5px;margin-top:3px}
+  .tbl{overflow-x:auto;margin:14px 0}
+  table{border-collapse:collapse;width:100%;font-size:13.5px}
+  th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+  th{background:var(--bg-3);font-weight:700;font-size:11.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--fg-2)}
+  td code,th code{font-family:var(--mono);font-size:12px;color:var(--accent)}
+  .matrix td:first-child{font-weight:700;color:var(--fg)}
+  .yeslot{color:var(--yes);font-weight:700}.nolot{color:var(--fg-3)}.mid{color:var(--no);font-weight:700}
+  figure{margin:16px 0;border:1px solid var(--border);border-radius:12px;background:var(--bg-2);padding:14px}
+  figure svg{display:block;width:100%;height:auto}
+  figcaption{color:var(--fg-3);font-size:12.5px;margin-top:8px;text-align:center}
+  .svg-t{font-family:var(--sans);font-size:12px}.svg-mono{font-family:var(--mono);font-size:10.5px}
+  ol.steps{list-style:none;counter-reset:s;padding:0;margin:16px 0}
+  ol.steps>li{counter-increment:s;position:relative;padding:1px 0 16px 50px;border-left:2px solid var(--border);margin-left:15px}
+  ol.steps>li:last-child{border-left-color:transparent;padding-bottom:2px}
+  ol.steps>li::before{content:counter(s);position:absolute;left:-16px;top:-3px;width:32px;height:32px;background:var(--accent);color:#08122b;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:13px}
+  ol.steps>li b.t{display:block;font-size:15.5px;margin:-2px 0 2px}
+  ul.check{list-style:none;padding:0;margin:12px 0}
+  ul.check li{padding:6px 0 6px 32px;position:relative;border-bottom:1px solid var(--border)}
+  ul.check li::before{content:"";position:absolute;left:2px;top:9px;width:16px;height:16px;border:2px solid var(--accent);border-radius:5px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:16px 0}
+  .card{border:1px solid var(--border);border-radius:12px;padding:14px;background:var(--bg-2)}
+  .card .ic{font-size:20px}.card b{display:block;margin:6px 0 2px;font-size:14.5px}
+  .card p{font-size:12.5px;color:var(--fg-2);margin:3px 0 0}
+  kbd{background:var(--bg-3);border:1px solid var(--border);border-bottom-width:2px;border-radius:5px;padding:1px 6px;font-family:var(--mono);font-size:12px}
+  .toolbar{position:fixed;bottom:20px;right:20px;display:flex;gap:8px;z-index:50}
+  .toolbar button{background:var(--bg-2);border:1px solid var(--border);color:var(--fg);width:44px;height:44px;border-radius:50%;cursor:pointer;font-size:17px;box-shadow:var(--shadow)}
+  .menu-btn{display:none}
+  @media(max-width:940px){.wrap{grid-template-columns:1fr}nav{position:fixed;left:0;top:0;z-index:60;width:280px;transform:translateX(-100%);transition:.25s}nav.open{transform:translateX(0)}main{padding:0 18px 100px}.menu-btn{display:grid;place-items:center}}
+  @media print{nav,.toolbar,.copy,#progress{display:none}.wrap{display:block}main{max-width:none}section{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div class="wrap">
+<nav id="nav">
+  <div class="brand"><span class="s">🗡️</span><b>The ExcaLib v2 Manual</b></div>
+  <p class="sub">Team 6738 · everything, one page</p>
+  <input id="search" type="search" placeholder="Filter sections… (/)"/>
+  <div class="grp">Part I — Start here</div>
+  <a href="#use">How to use this manual</a>
+  <a href="#setup">1 · Environment setup</a>
+  <a href="#repo">2 · Repo, commands, layout</a>
+  <a href="#concepts">3 · Concepts &amp; architecture</a>
+  <a href="#boot">4 · Robot boot &amp; the loop</a>
+  <div class="grp">Part II — Core value types</div>
+  <a href="#candeviceid">5 · CANDeviceId</a>
+  <a href="#controlmode">6 · ControlMode</a>
+  <a href="#gains">7 · Gains</a>
+  <a href="#motion">8 · MotionConstraints</a>
+  <a href="#budget">9 · CurrentBudget</a>
+  <div class="grp">Part III — Device layer</div>
+  <a href="#motor">10 · Motor</a>
+  <a href="#deviceconfigs">11 · DeviceConfigs</a>
+  <a href="#signalhub">12 · SignalHub</a>
+  <div class="grp">Part IV — MechanismConfig</div>
+  <a href="#config">13 · Every field, in depth</a>
+  <div class="grp">Part V — Mechanisms</div>
+  <a href="#mechbase">14 · Mechanism (base)</a>
+  <a href="#positional">15 · PositionalMechanism</a>
+  <a href="#linear">16 · LinearExtension</a>
+  <a href="#velocity">17 · VelocityMechanism</a>
+  <a href="#roller">18 · RollerMechanism</a>
+  <a href="#mechsim">19 · MechanismSim</a>
+  <div class="grp">Part VI — Coordination</div>
+  <a href="#statemachine">20 · StateMachine</a>
+  <a href="#anatomy">21 · A full subsystem</a>
+  <a href="#superstructure">22 · Superstructure</a>
+  <div class="grp">Part VII — Drive &amp; field</div>
+  <a href="#swerve">23 · SwerveSubsystem</a>
+  <a href="#vision">24 · Vision (MegaTag2)</a>
+  <a href="#drivetopose">25 · DriveToPose</a>
+  <a href="#auto">26 · Autonomous</a>
+  <div class="grp">Part VIII — Observability</div>
+  <a href="#telemetry">27 · Telemetry &amp; DogLog</a>
+  <a href="#tunable">28 · TunableNumber</a>
+  <a href="#faults">29 · FaultReporter</a>
+  <a href="#looptimer">30 · LoopTimer</a>
+  <div class="grp">Part IX — Utilities</div>
+  <a href="#alliance">31 · AllianceFlip</a>
+  <a href="#zones">32 · Zones</a>
+  <a href="#leds">33 · LedStrip</a>
+  <div class="grp">Part X — Workflows</div>
+  <a href="#simflow">34 · Simulation workflow</a>
+  <a href="#tuning">35 · SysId &amp; tuning</a>
+  <a href="#deploy">36 · Deploy &amp; bring-up</a>
+  <a href="#trouble">37 · Troubleshooting</a>
+  <a href="#checklists">38 · Checklists</a>
+  <a href="#glossary">39 · Glossary &amp; doc index</a>
+</nav>
+
+<main>
+  <div class="hero" id="top">
+    <span class="kicker">🗡️ Team 6738 · Galahad · The complete reference</span>
+    <h1>The ExcaLib v2 Manual</h1>
+    <p class="lead">Everything in one place: every class in the library, every config field with its default and failure mode, every workflow from a blank machine to a tuned competition robot. Written for two readers at once — the brand-new programmer and the experienced one — with the depth to serve both.</p>
+    <div class="meta">
+      <span>📚 39 sections · full API coverage</span>
+      <span>🌓 dark default · toggle bottom-right</span>
+      <span>⌨️ press <kbd>/</kbd> to filter sections</span>
+    </div>
+  </div>
+
+  <!-- ==================================================== USE -->
+  <section id="use">
+    <h2><span class="n">☞</span>How to use this manual</h2>
+    <p class="lead">Two badges route you. <span class="lvl basic">BASICS</span> marks what a beginner must read; <span class="lvl deep">DEEP</span> marks reasoning, internals, and edge cases an experienced dev will want. Everything else serves both.</p>
+    <div class="cards">
+      <div class="card"><span class="ic">🐣</span><b>New to robot code?</b><p>Read Parts I → VI in order, skipping <span class="lvl deep" style="margin:0">DEEP</span> boxes on the first pass. Then build the worked subsystem in §21.</p></div>
+      <div class="card"><span class="ic">🧠</span><b>Experienced?</b><p>Skim §3–§4 for the model, then use Parts II–IX as a per-class reference. The decision blocks map physical questions to exact calls.</p></div>
+      <div class="card"><span class="ic">🔍</span><b>Just need one thing?</b><p>Press <kbd>/</kbd>, type a class name, click. Every class has: when to use, full API table, a worked example, and pitfalls.</p></div>
+    </div>
+    <div class="box danger"><div class="h">🚫 The four project non-negotiables</div>
+      <p>1) Work on a branch — never commit to <code class="k">main</code>. 2) <code class="k">./gradlew build</code> green before every commit. 3) Every mechanism gets a <code class="k">simModel</code>. 4) Every subsystem's <code class="k">periodic()</code> ticks its mechanisms and its state machine — forget it and things silently don't move.</p></div>
+  </section>
+
+  <!-- ==================================================== 1 SETUP -->
+  <section id="setup">
+    <h2><span class="n">1</span>Environment setup <span class="lvl basic">BASICS</span></h2>
+    <p class="lead">Install these once, in this order. Skipping any of them costs you an afternoon later.</p>
+    <ol class="steps">
+      <li><b class="t">WPILib 2026</b> — the full bundle from <code class="k">github.com/wpilibsuite/allwpilib/releases</code>. Installs the build system, the simulator, and — critically — the WPILib JDK at <code class="k">C:\Users\Public\wpilib\2026\jdk</code>.</li>
+      <li><b class="t">CTRE Phoenix Tuner X</b> — Microsoft Store. Used for: setting CAN IDs, applying Phoenix Pro licenses, device diagnostics, firmware, and generating swerve constants.</li>
+      <li><b class="t">An IDE</b> — IntelliJ IDEA or VS Code. The project is plain Gradle; both work.</li>
+      <li><b class="t">Git</b> — you will branch and open PRs. Get access to the <code class="k">ExcaliburFRC</code> GitHub org from a lead.</li>
+      <li><b class="t">AdvantageScope</b> — the log viewer (<code class="k">github.com/Mechanical-Advantage/AdvantageScope</code>). You will spend more time here than in the driver station.</li>
+      <li><b class="t">PathPlanner</b> — the desktop app, for drawing autonomous paths.</li>
+      <li><b class="t">Elastic</b> (optional) — driver dashboard; renders our WPILib <code class="k">Alert</code>s natively.</li>
+    </ol>
+    <div class="box danger"><div class="h">🚫 The Windows JDK trap (read this twice)</div>
+      <p>WPILib's native libraries (<code class="k">wpiHal.dll</code>) hard-crash with <code class="k">Invalid MSVC Runtime</code> if the JVM that loads them ships a mismatched MSVC runtime — which Oracle/Corretto JDKs do. <b>Tests and simulation must run on the WPILib JDK.</b> The <code class="k">test</code> task is already pinned in <code class="k">build.gradle</code>; for the sim, pass the JDK explicitly (§2) or use the repo's <code class="k">launch_sim.bat</code>.</p></div>
+    <h3>Licenses &amp; accounts</h3>
+    <div class="tbl"><table>
+      <tr><th>What</th><th>Why</th><th>Where</th></tr>
+      <tr><td><b>Phoenix Pro (FOC)</b></td><td>Unlocks TorqueCurrentFOC and the FOC MotionMagic request variants — the control layer's end state. We are licensed.</td><td>Per device, in Tuner X</td></tr>
+      <tr><td><b>Phoenix seasonal license</b></td><td>Required for Phoenix 6 devices to run each season.</td><td>Tuner X</td></tr>
+      <tr><td><b>GitHub org</b></td><td>Branches + PRs.</td><td>Ask a lead</td></tr>
+    </table></div>
+    <h3>Know the hardware map before writing code</h3>
+    <div class="tbl"><table>
+      <tr><th>Subsystem</th><th>Devices (CAN id)</th><th>Bus</th></tr>
+      <tr><td>Swerve ×4</td><td>drive FX 10/20/30/40 · steer FX 12/22/32/42 · CANcoder 11/21/31/41 · Pigeon2 (2)</td><td><code>"SwerveCANivore"</code></td></tr>
+      <tr><td>Shooter</td><td>hood FX 30 + CANcoder 34 · flywheel FX 31/32 · turret FX 42 + CANcoder 41</td><td><code>""</code> (RIO)</td></tr>
+      <tr><td>Intake</td><td>four-bar FX 10/34 + CANcoder 12 · roller FX 13</td><td><code>""</code> (RIO)</td></tr>
+      <tr><td>Transport</td><td>drum FX 20 · belt FX 33</td><td><code>""</code> (RIO)</td></tr>
+    </table></div>
+    <div class="box warn"><div class="h">⚠️ IDs are unique per bus, not globally</div><p>The CANivore and the RIO bus each have a device 10 — that's legal, they never meet. It's why <code class="k">CANDeviceId</code> (§5) always carries the bus name.</p></div>
+  </section>
+
+  <!-- ==================================================== 2 REPO -->
+  <section id="repo">
+    <h2><span class="n">2</span>Repo, commands, layout <span class="lvl basic">BASICS</span></h2>
+    <div class="code"><div class="code-head"><span class="fname">terminal — get started</span><button class="copy">Copy</button></div><pre><code>git clone https://github.com/ExcaliburFRC/Rebuilt2026.git
+cd Rebuilt2026
+git checkout -b feature/my-thing     # ALWAYS a branch. Never main.
+
+./gradlew build                      # compile + unit tests — must be green before commits
+./gradlew simulateJava "-Dorg.gradle.java.home=C:/Users/Public/wpilib/2026/jdk"   # sim (Windows)
+./gradlew deploy                     # push to a connected roboRIO (§36)</code></pre></div>
+    <h3>Where everything lives</h3>
+    <div class="tbl"><table>
+      <tr><th>Path</th><th>What</th><th>You touch it?</th></tr>
+      <tr><td><code>frc/excalib2/</code></td><td>The library (this manual's subject). device / control / mechanisms / statemachine / superstructure / swerve / auto / telemetry / sim / util.</td><td>Rarely — you consume it</td></tr>
+      <tr><td><code>frc/robot/</code></td><td>The robot: <code>Robot</code>, <code>RobotContainer</code>, <code>Constants</code>, <code>SwerveConfig</code>, <code>subsystems/</code>, <code>superstructure/</code>, <code>util/</code>.</td><td><b>Yes — daily</b></td></tr>
+      <tr><td><code>frc/excalib/</code> <em>(removed)</em></td><td>ExcaLib v1 — deleted once the migration was proven. If you see an <code>frc.excalib</code> import (no "2"), it's a mistake to fix.</td><td>Gone</td></tr>
+      <tr><td><code>src/main/deploy/pathplanner/</code></td><td>Paths and <code>.auto</code> files from the PathPlanner app.</td><td>Via the app</td></tr>
+      <tr><td><code>src/test/java/</code></td><td>Unit tests (state machine, LinearExtension). Run on the WPILib JDK automatically.</td><td>Add when it makes sense</td></tr>
+      <tr><td><code>docs/</code></td><td>This manual + design history (AUDIT / RESEARCH / DESIGN / mapping).</td><td>Read</td></tr>
+    </table></div>
+    <div class="box tip"><div class="h">💡 Commit hygiene</div><p>One concern per commit; message says what &amp; why; stage files explicitly (<code class="k">git add path…</code>, not <code class="k">-A</code> — it sweeps in scratch files). Build green first, every time.</p></div>
+  </section>
+
+  <!-- ==================================================== 3 CONCEPTS -->
+  <section id="concepts">
+    <h2><span class="n">3</span>Concepts &amp; architecture <span class="lvl basic">BASICS</span></h2>
+    <p class="lead">Everything in this library follows five ideas. Internalize these and every API in Parts II–IX will feel inevitable.</p>
+    <ol class="steps">
+      <li><b class="t">The control loop runs on the motor, not the RIO.</b> Your code picks a <em>setpoint</em>; the TalonFX closes the loop onboard at 1&#160;kHz. The RIO never computes a PID. This is why control is smooth and why loop timing on the RIO barely matters for control quality.</li>
+      <li><b class="t">Everything is in mechanism units.</b> The device is configured with its gear ratio, so it natively reports and accepts <em>mechanism</em> position — radians of hood, meters of elevator. Encoder ticks and conversion factors do not exist in robot code. A whole category of unit bugs is gone.</li>
+      <li><b class="t">Declare, don't write.</b> A mechanism is a <code class="k">MechanismConfig</code> (pure data) handed to an archetype (Positional / Linear / Velocity / Roller). The archetype supplies control, telemetry, alerts, SysId, and simulation. Your subsystem file is declarations + coordination — never plumbing.</li>
+      <li><b class="t">Config is a verified contract.</b> Every device configuration is applied, read back, field-compared, and retried up to 5×; failure raises a dashboard Alert. A half-configured motor is never silent.</li>
+      <li><b class="t">State is a declared table.</b> Subsystem modes live in a <code class="k">StateMachine</code> with explicit, guarded, default-deny transitions. Illegal sequences aren't runtime bugs — they're unrepresentable.</li>
+    </ol>
+    <figure>
+      <svg viewBox="0 0 720 300" role="img">
+        <defs><marker id="a1" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--fg-3)"/></marker></defs>
+        <g>
+          <rect x="60" y="18" width="600" height="52" rx="9" fill="var(--accent-soft)" stroke="var(--accent)"/>
+          <text x="80" y="40" class="svg-t" fill="var(--fg)" font-weight="700">Superstructure (§22)</text>
+          <text x="80" y="58" class="svg-t" fill="var(--fg-2)">one robot goal → a state for every subsystem · interlocks are guards</text>
+          <text x="640" y="48" text-anchor="end" class="svg-mono" fill="var(--accent)">you</text>
+        </g>
+        <g>
+          <rect x="60" y="82" width="600" height="52" rx="9" fill="var(--accent-soft)" stroke="var(--accent)"/>
+          <text x="80" y="104" class="svg-t" fill="var(--fg)" font-weight="700">Subsystem + StateMachine (§20–21)</text>
+          <text x="80" y="122" class="svg-t" fill="var(--fg-2)">owns mechanisms · named modes · the only place you write logic</text>
+          <text x="640" y="112" text-anchor="end" class="svg-mono" fill="var(--accent)">you</text>
+        </g>
+        <g>
+          <rect x="60" y="146" width="600" height="52" rx="9" fill="var(--bg-3)" stroke="var(--border)"/>
+          <text x="80" y="168" class="svg-t" fill="var(--fg)" font-weight="700">Mechanism archetypes (§14–19)</text>
+          <text x="80" y="186" class="svg-t" fill="var(--fg-2)">Positional · Linear · Velocity · Roller — you configure, they control</text>
+          <text x="640" y="176" text-anchor="end" class="svg-mono" fill="var(--fg-3)">config only</text>
+        </g>
+        <g>
+          <rect x="60" y="210" width="600" height="52" rx="9" fill="var(--bg-3)" stroke="var(--border)"/>
+          <text x="80" y="232" class="svg-t" fill="var(--fg)" font-weight="700">Device layer — Motor · SignalHub · DeviceConfigs (§10–12)</text>
+          <text x="80" y="250" class="svg-t" fill="var(--fg-2)">verified config · batched signals · TalonFX at 1&#160;kHz</text>
+          <text x="640" y="240" text-anchor="end" class="svg-mono" fill="var(--fg-3)">never</text>
+        </g>
+        <line x1="360" y1="70" x2="360" y2="80" stroke="var(--fg-3)" marker-end="url(#a1)"/>
+        <line x1="360" y1="134" x2="360" y2="144" stroke="var(--fg-3)" marker-end="url(#a1)"/>
+        <line x1="360" y1="198" x2="360" y2="208" stroke="var(--fg-3)" marker-end="url(#a1)"/>
+      </svg>
+      <figcaption>Strict downward dependency. The library never imports <code>frc.robot</code>; robot values enter only through configs.</figcaption>
+    </figure>
+    <figure>
+      <svg viewBox="0 0 720 130" role="img">
+        <defs><marker id="a2" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--accent)"/></marker></defs>
+        <g class="svg-t" font-weight="700" fill="var(--fg)">
+          <rect x="8"  y="40" width="118" height="50" rx="8" fill="var(--bg-3)" stroke="var(--border)"/><text x="67" y="62" text-anchor="middle">your Command</text><text x="67" y="79" text-anchor="middle" class="svg-mono" fill="var(--fg-3)">setGoal(θ)</text>
+          <rect x="158" y="40" width="128" height="50" rx="8" fill="var(--bg-3)" stroke="var(--border)"/><text x="222" y="62" text-anchor="middle">archetype</text><text x="222" y="79" text-anchor="middle" class="svg-mono" fill="var(--fg-3)">clamp · wrap · FF</text>
+          <rect x="318" y="40" width="128" height="50" rx="8" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="382" y="62" text-anchor="middle">Motor</text><text x="382" y="79" text-anchor="middle" class="svg-mono" fill="var(--fg-3)">control request</text>
+          <rect x="478" y="40" width="118" height="50" rx="8" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="537" y="62" text-anchor="middle">TalonFX</text><text x="537" y="79" text-anchor="middle" class="svg-mono" fill="var(--fg-3)">1 kHz loop</text>
+          <rect x="628" y="40" width="84" height="50" rx="8" fill="var(--bg-3)" stroke="var(--border)"/><text x="670" y="65" text-anchor="middle">plant</text>
+        </g>
+        <g stroke="var(--accent)" stroke-width="1.5">
+          <line x1="126" y1="65" x2="156" y2="65" marker-end="url(#a2)"/><line x1="286" y1="65" x2="316" y2="65" marker-end="url(#a2)"/>
+          <line x1="446" y1="65" x2="476" y2="65" marker-end="url(#a2)"/><line x1="596" y1="65" x2="626" y2="65" marker-end="url(#a2)"/>
+        </g>
+        <path d="M670 92 C670 118, 67 118, 67 92" fill="none" stroke="var(--fg-3)" stroke-dasharray="4 3" marker-end="url(#a2)"/>
+        <text x="360" y="126" text-anchor="middle" class="svg-mono" fill="var(--fg-3)">status signals — batched, refreshed once per loop BEFORE commands (§12)</text>
+      </svg>
+      <figcaption>Where a setpoint goes. You own the left box; the library owns the rest.</figcaption>
+    </figure>
+    <div class="box why"><div class="h">🧠 <span class="lvl deep" style="margin:0 6px 0 0">DEEP</span> The one asterisk: VOLTAGE today, FOC tomorrow</div>
+      <p>All migrated mechanisms run <code class="k">ControlMode.VOLTAGE</code> because their gains were ported from v1's voltage-based software PID (mathematically equivalent, now onboard at 1&#160;kHz). TorqueCurrentFOC — the library's default and end-state — needs amp-based gains from a SysId session; they are <em>different numbers</em>, not a conversion. The switch is one field per mechanism (§6, §35). Treat VOLTAGE as "correct today", FOC as "the tuned upgrade".</p></div>
+  </section>
+
+  <!-- ==================================================== 4 BOOT -->
+  <section id="boot">
+    <h2><span class="n">4</span>Robot boot &amp; the loop <span class="lvl basic">BASICS</span></h2>
+    <p class="lead">Two places wire the library into the robot's lifecycle: the constructor (once) and <code class="k">robotPeriodic</code> (every 20&#160;ms). The order is load-bearing.</p>
+    <div class="code"><div class="code-head"><span class="fname">frc/robot/Robot.java — the exact wiring</span><button class="copy">Copy</button></div><pre><code>public Robot() {
+    Telemetry.init(false, null);                 // §27 — start DogLog + SignalLogger (false = not competition)
+    AllianceFlip.configure(FIELD_LENGTH_METERS, FIELD_WIDTH_METERS);   // §31 — season field dims
+
+    robotContainer = new RobotContainer();       // constructs all subsystems (device configs apply HERE)
+
+    SignalHub.optimizeAll();                     // §12 — AFTER all devices exist: disable unused CAN signals
+}
+
+@Override public void robotPeriodic() {
+    LoopTimer.start();                           // §30
+
+    SignalHub.refreshAll();                      // §12 — fresh signals BEFORE commands run
+    FaultReporter.poll();                        // §29 — 1 Hz device-fault scan (skips itself in sim)
+
+    ShiftUtil.update();                          // game-specific (hub shifts)
+    robotContainer.periodic();
+    CommandScheduler.getInstance().run();        // subsystem periodics + all commands
+
+    LoopTimer.end();
+}</code></pre></div>
+    <figure>
+      <svg viewBox="0 0 720 120" role="img">
+        <line x1="20" y1="95" x2="700" y2="95" stroke="var(--border)"/>
+        <g class="svg-t" font-weight="700" fill="var(--fg)">
+          <rect x="20"  y="55" width="150" height="40" rx="6" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="95" y="80" text-anchor="middle">SignalHub.refreshAll</text>
+          <rect x="176" y="55" width="120" height="40" rx="6" fill="var(--bg-3)" stroke="var(--border)"/><text x="236" y="80" text-anchor="middle">FaultReporter</text>
+          <rect x="302" y="55" width="110" height="40" rx="6" fill="var(--bg-3)" stroke="var(--border)"/><text x="357" y="80" text-anchor="middle">ShiftUtil</text>
+          <rect x="418" y="55" width="180" height="40" rx="6" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="508" y="80" text-anchor="middle">CommandScheduler.run</text>
+          <rect x="604" y="55" width="96" height="40" rx="6" fill="var(--bg-3)" stroke="var(--border)"/><text x="652" y="80" text-anchor="middle">LoopTimer</text>
+        </g>
+        <path d="M95 55 C95 30, 508 30, 508 53" fill="none" stroke="var(--accent-2)" stroke-dasharray="4 3"/>
+        <text x="300" y="26" text-anchor="middle" class="svg-t" fill="var(--accent-2)" font-weight="700">signals fresh here → commands act on current data (−20 ms latency)</text>
+      </svg>
+    </figure>
+    <div class="box why"><div class="h">🧠 <span class="lvl deep" style="margin:0 6px 0 0">DEEP</span> Why refresh-before-scheduler is free performance</div>
+      <p>Status signals are CAN frames cached on the RIO. If you refresh <em>after</em> the scheduler (v1 did), every command that reads position/velocity is reading last loop's frame — a built-in 20&#160;ms of sensor latency on top of everything else. Refreshing first costs nothing and removes it. This single ordering decision is measurable in tuning.</p></div>
+    <div class="box warn"><div class="h">⚠️ Why <code style="color:inherit">optimizeAll()</code> must come last in the constructor</div>
+      <p><code class="k">SignalHub.optimizeAll()</code> tells every registered device to stop sending CAN frames for signals nobody registered — a big bus-utilization win. But it must run <b>after every device exists</b>: a device constructed later would have its signals silenced before it registered them. Constructor order: telemetry → subsystems → optimize.</p></div>
+  </section>
+
+  <!-- ==================================================== 5 CANDeviceId -->
+  <section id="candeviceid">
+    <h2><span class="n">5</span><code>CANDeviceId</code> — id + bus, inseparable</h2>
+    <p class="lead">A tiny value type that prevents a classic wiring bug: right id, wrong bus.</p>
+    <div class="code"><div class="code-head"><span class="fname">API + examples</span><button class="copy">Copy</button></div><pre><code>new CANDeviceId(30);                       // device 30 on the RIO bus ("")
+new CANDeviceId(11, "SwerveCANivore");     // device 11 on the CANivore
+
+id.id();          // the numeric id
+id.busName();     // the bus name
+id.toCANBus();    // a Phoenix CANBus object
+id.toString();    // rio[30]  or  SwerveCANivore[11]  — used in alerts/logs</code></pre></div>
+    <div class="box why"><div class="h">🧠 Why a whole type for two fields?</div><p>Because an id alone is ambiguous — both our buses have a device 10. Every constructor in the library takes a <code class="k">CANDeviceId</code>, so the bus travels with the id and can never be forgotten or mismatched. (Pattern credit: Team 254.)</p></div>
+  </section>
+
+  <!-- ==================================================== 6 ControlMode -->
+  <section id="controlmode">
+    <h2><span class="n">6</span><code>ControlMode</code> — which request family</h2>
+    <p class="lead">Selects which Phoenix 6 control-request family a mechanism uses for <em>all</em> of its closed- and open-loop calls. Set once per mechanism in its config.</p>
+    <div class="decide">
+      <div class="q"><span class="qm">?</span>Real robot, simulation, or first power-on?</div>
+      <div class="branches">
+        <div class="branch yes"><span class="lbl">TUNED REAL</span><div class="do"><code>ControlMode.TORQUE_CURRENT_FOC</code> — the library default and end-state<div class="why">Torque-native control: output is amps of torque current, so battery sag doesn't change behavior. Best control quality Phoenix offers. Requires Pro (we have it) and amp-based gains from SysId.</div></div></div>
+        <div class="branch alt"><span class="lbl">SIM / TODAY</span><div class="do"><code>ControlMode.VOLTAGE</code><div class="why">Simulation forces this regardless of what you set. Also where every migrated mechanism currently runs (ported volt-based gains). Always keep this path working — it's the fallback.</div></div></div>
+        <div class="branch no"><span class="lbl">BRING-UP</span><div class="do"><code>ControlMode.DUTY_CYCLE</code><div class="why">Open-loop percent output. Only for verifying wiring and direction on a fresh mechanism. Never ship it.</div></div></div>
+      </div>
+    </div>
+    <div class="tbl"><table>
+      <tr><th>Mode</th><th>Gain units</th><th>Sag-immune</th><th>Needs Pro</th><th>Requests used under the hood</th></tr>
+      <tr><td><code>TORQUE_CURRENT_FOC</code></td><td>amps / unit</td><td class="yeslot">yes</td><td class="yeslot">yes</td><td><code>MotionMagicExpoTorqueCurrentFOC</code>, <code>MotionMagicTorqueCurrentFOC</code>, <code>MotionMagicVelocityTorqueCurrentFOC</code>, <code>VelocityTorqueCurrentFOC</code>, <code>PositionTorqueCurrentFOC</code>, <code>TorqueCurrentFOC</code></td></tr>
+      <tr><td><code>VOLTAGE</code></td><td>volts / unit</td><td class="nolot">no</td><td class="nolot">no</td><td><code>MotionMagicExpoVoltage</code>, <code>MotionMagicVoltage</code>, <code>MotionMagicVelocityVoltage</code>, <code>VelocityVoltage</code>, <code>PositionVoltage</code>, <code>VoltageOut</code></td></tr>
+      <tr><td><code>DUTY_CYCLE</code></td><td>—</td><td class="nolot">no</td><td class="nolot">no</td><td><code>DutyCycleOut</code></td></tr>
+    </table></div>
+    <div class="box danger"><div class="h">🚫 Gains never cross modes</div><p>A kP of 60 V/rot and a kP of 60 A/rot are wildly different physical stiffnesses. Changing <code class="k">controlMode</code> without re-deriving gains (SysId, §35) is the classic way to make a mechanism violent. This is why every config carries a comment like <code class="k">// FOC after SysId</code>.</p></div>
+    <div class="box why"><div class="h">🧠 <span class="lvl deep" style="margin:0 6px 0 0">DEEP</span> All requests are pre-allocated</div><p><code class="k">Motor</code> constructs every request object once and mutates it per call (<code class="k">withPosition(...)</code>) — zero garbage on the hot path, which matters at 50&#160;Hz on the RIO. You get this for free; just don't create your own request objects per loop if you ever drop to the device layer.</p></div>
+  </section>
+
+  <!-- ==================================================== 7 GAINS -->
+  <section id="gains">
+    <h2><span class="n">7</span><code>Gains</code> — the closed-loop gain set</h2>
+    <p class="lead">An immutable record that becomes the device's <code class="k">Slot0Configs</code>. Understanding which term does what is 90% of tuning.</p>
+    <h3>Constructing</h3>
+    <div class="code"><div class="code-head"><span class="fname">every constructor &amp; wither</span><button class="copy">Copy</button></div><pre><code>new Gains()                                       // all zero (placeholder)
+new Gains(kP, kI, kD)                              // feedback only
+new Gains(kP, kI, kD, kS, kV, kA)                  // + feedforward
+gains.withSVA(kS, kV, kA)                          // copy with new feedforward
+gains.withGravity(kG, GravityTypeValue.Arm_Cosine) // copy with gravity comp (§13.5)
+gains.withStaticSign(StaticFeedforwardSignValue.UseClosedLoopSign)  // rarely needed (below)
+gains.toSlot0Configs()                             // → Phoenix Slot0Configs (library-internal)</code></pre></div>
+    <h3>Every field</h3>
+    <div class="tbl"><table>
+      <tr><th>Field</th><th>Physical meaning</th><th>Units (VOLTAGE / FOC)</th><th>How you get it</th></tr>
+      <tr><td><code>kP</code></td><td>Output per unit of error. The main stiffness knob.</td><td>V per unit / A per unit</td><td>Raise until it tracks, back off at oscillation</td></tr>
+      <tr><td><code>kI</code></td><td>Output per accumulated error. Kills small steady-state error — and causes windup if abused.</td><td>V·s⁻¹ / A·s⁻¹ per unit</td><td>Usually 0. Add tiny amounts last.</td></tr>
+      <tr><td><code>kD</code></td><td>Output per rate-of-change of error. Damping; fights overshoot.</td><td>V·s / A·s per unit</td><td>Add if kP alone oscillates</td></tr>
+      <tr><td><code>kS</code></td><td>Static friction breakaway — constant output in the direction of motion.</td><td>V / A</td><td><b>SysId</b></td></tr>
+      <tr><td><code>kV</code></td><td>Output per unit of <em>target velocity</em> — holds a speed with no error.</td><td>V per unit/s / A per unit/s</td><td><b>SysId</b></td></tr>
+      <tr><td><code>kA</code></td><td>Output per unit of target acceleration.</td><td>V per unit/s² / A per unit/s²</td><td><b>SysId</b></td></tr>
+      <tr><td><code>kG</code></td><td>Gravity hold. Scaled by <code>cos θ</code> (arm) or constant (elevator) — see §13.5.</td><td>V / A</td><td>SysId or "volts to hold it still"</td></tr>
+      <tr><td><code>gravityType</code></td><td><code>Arm_Cosine</code> or <code>Elevator_Static</code>.</td><td>—</td><td>By geometry (§13.5)</td></tr>
+      <tr><td><code>staticFeedforwardSign</code></td><td>Which direction kS pushes: with target velocity (default) or with the closed-loop error sign.</td><td>—</td><td>Default is right unless the mechanism dithers at rest near target — then <code>UseClosedLoopSign</code></td></tr>
+    </table></div>
+    <figure>
+      <svg viewBox="0 0 720 210" role="img">
+        <defs><marker id="a4" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--fg-3)"/></marker></defs>
+        <g class="svg-t">
+          <rect x="20" y="20"  width="220" height="30" rx="6" fill="var(--bg-3)" stroke="var(--border)"/><text x="30" y="40" fill="var(--fg)"><tspan fill="var(--accent)" font-weight="700">kP·e + kI·∫e + kD·ė</tspan>  feedback</text>
+          <rect x="20" y="56" width="220" height="30" rx="6" fill="var(--bg-3)" stroke="var(--border)"/><text x="30" y="76" fill="var(--fg)"><tspan fill="var(--accent-2)" font-weight="700">kS·sign(v)</tspan>  friction</text>
+          <rect x="20" y="92" width="220" height="30" rx="6" fill="var(--bg-3)" stroke="var(--border)"/><text x="30" y="112" fill="var(--fg)"><tspan fill="var(--accent-2)" font-weight="700">kV·v</tspan>  hold speed</text>
+          <rect x="20" y="128" width="220" height="30" rx="6" fill="var(--bg-3)" stroke="var(--border)"/><text x="30" y="148" fill="var(--fg)"><tspan fill="var(--accent-2)" font-weight="700">kA·a</tspan>  accelerate</text>
+          <rect x="20" y="164" width="220" height="30" rx="6" fill="var(--bg-3)" stroke="var(--border)"/><text x="30" y="184" fill="var(--fg)"><tspan fill="var(--accent-2)" font-weight="700">kG·(cos θ | 1)</tspan>  gravity</text>
+          <rect x="480" y="88" width="220" height="40" rx="8" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="590" y="113" text-anchor="middle" fill="var(--fg)" font-weight="700">motor output (V or A)</text>
+        </g>
+        <g stroke="var(--fg-3)"><path d="M240 35 C370 35, 370 100, 478 104" fill="none" marker-end="url(#a4)"/>
+          <path d="M240 71 C370 71, 370 104, 478 106" fill="none" marker-end="url(#a4)"/>
+          <path d="M240 107 L478 108" fill="none" marker-end="url(#a4)"/>
+          <path d="M240 143 C370 143, 370 110, 478 110" fill="none" marker-end="url(#a4)"/>
+          <path d="M240 179 C370 179, 370 116, 478 112" fill="none" marker-end="url(#a4)"/></g>
+        <text x="360" y="16" text-anchor="middle" class="svg-mono" fill="var(--fg-3)">Σ → output</text>
+      </svg>
+      <figcaption>The output is a sum. Feedback corrects what feedforward didn't predict — good FF makes small feedback enough.</figcaption>
+    </figure>
+    <h3>Symptom → term</h3>
+    <div class="tbl"><table>
+      <tr><th>Symptom</th><th>Touch this</th></tr>
+      <tr><td>Doesn't quite reach / small steady error</td><td>raise <code>kP</code>; last resort a whisper of <code>kI</code></td></tr>
+      <tr><td>Overshoots / oscillates around target</td><td>add <code>kD</code>, lower <code>kP</code></td></tr>
+      <tr><td>Needs a big error before it starts moving</td><td>add <code>kS</code></td></tr>
+      <tr><td>Lags behind a moving profile</td><td><code>kV</code> (then <code>kA</code> for aggressive accel)</td></tr>
+      <tr><td>Arm/elevator sags when "holding"</td><td><code>kG</code> + correct <code>GravityType</code></td></tr>
+      <tr><td>Buzzes/dithers at rest at the target</td><td>lower <code>kS</code>, or <code>withStaticSign(UseClosedLoopSign)</code></td></tr>
+    </table></div>
+    <div class="box tip"><div class="h">💡 Always two sets: real and sim</div><p><code class="k">.gains(REAL, SIM)</code> in the config. Sim physics never matches real friction/inertia, so sim gains are separate on purpose. The archetype picks the right set automatically.</p></div>
+  </section>
+
+  <!-- ==================================================== 8 MOTION -->
+  <section id="motion">
+    <h2><span class="n">8</span><code>MotionConstraints</code> — the motion profile</h2>
+    <p class="lead">Shapes <em>how</em> a mechanism approaches its setpoint. Runs onboard as MotionMagic. All units are mechanism units (rot/s, rot/s² — or m/s, m/s² for LinearExtension).</p>
+    <div class="code"><div class="code-head"><span class="fname">the two constructors</span><button class="copy">Copy</button></div><pre><code>new MotionConstraints(cruiseVel, accel, jerk)   // 3 args → TRAPEZOIDAL profile
+new MotionConstraints(expoKV, expoKA)            // 2 args → EXPONENTIAL (MotionMagicExpo)
+new MotionConstraints(expoKV, expoKA).withCruiseCap(maxVel)   // Expo with a speed ceiling</code></pre></div>
+    <div class="decide">
+      <div class="q"><span class="qm">?</span>How should it approach the setpoint?</div>
+      <div class="branches">
+        <div class="branch yes"><span class="lbl">DEFAULT</span><div class="do">2-arg <b>Expo</b><div class="why">Shaped by the motor's own kV/kA (always volts, even under FOC). Time-optimal, smooth at both ends, nothing to hand-tune. Pick this for positional moves. Starters: <code>expoKV ≈ 12 / free-speed-in-mech-units</code>, <code>expoKA ≈ 0.1–0.5</code> (higher = softer stop).</div></div></div>
+        <div class="branch alt"><span class="lbl">FIXED SPEED</span><div class="do">3-arg <b>trapezoidal</b><div class="why">A known, constant cruise speed: mechanisms that must move in lock-step, or a hard velocity cap that came from a mechanical/safety spec (the intake four-bar's 1.5&#160;rad/s is exactly this).</div></div></div>
+        <div class="branch no"><span class="lbl">NONE</span><div class="do">omit <code>.motion(...)</code><div class="why">Setpoint applied directly. Right for flywheels (velocity steps are fine); wrong for any position move with real inertia.</div></div></div>
+      </div>
+    </div>
+    <figure>
+      <svg viewBox="0 0 720 200" role="img">
+        <g stroke="var(--border)"><line x1="60" y1="160" x2="330" y2="160"/><line x1="60" y1="30" x2="60" y2="160"/></g>
+        <text x="195" y="185" text-anchor="middle" class="svg-mono" fill="var(--fg-3)">time</text>
+        <text x="40" y="95" text-anchor="middle" class="svg-mono" fill="var(--fg-3)" transform="rotate(-90 40 95)">velocity</text>
+        <polyline points="60,160 120,60 250,60 310,160" fill="none" stroke="var(--no)" stroke-width="2.5"/>
+        <text x="195" y="46" text-anchor="middle" class="svg-t" fill="var(--no)" font-weight="700">Trapezoidal</text>
+        <g stroke="var(--border)"><line x1="400" y1="160" x2="670" y2="160"/><line x1="400" y1="30" x2="400" y2="160"/></g>
+        <text x="535" y="185" text-anchor="middle" class="svg-mono" fill="var(--fg-3)">time</text>
+        <path d="M400,160 C430,70 470,58 520,58 C575,58 615,120 650,160" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+        <text x="535" y="46" text-anchor="middle" class="svg-t" fill="var(--accent)" font-weight="700">MotionMagicExpo</text>
+      </svg>
+      <figcaption>Velocity vs time. Expo has no corners to ring on and typically arrives sooner for the same peak effort.</figcaption>
+    </figure>
+    <div class="box why"><div class="h">🧠 <span class="lvl deep" style="margin:0 6px 0 0">DEEP</span> How the two-vs-three-arg overload works, and MotionMagicVelocity</div>
+      <p>The 3-arg form fills <code class="k">MotionMagicCruiseVelocity/Acceleration/Jerk</code>; the 2-arg form fills <code class="k">MotionMagicExpo_kV/_kA</code> and flags Expo. For a <code class="k">VelocityMechanism</code>, a nonzero accel (or Expo) makes setpoints run through <code class="k">MotionMagicVelocity</code> — a jerk-limited velocity ramp — instead of a raw velocity step. Jerk = 0 disables jerk limiting (fine for most mechanisms).</p></div>
+  </section>
+
+  <!-- ==================================================== 9 BUDGET -->
+  <section id="budget">
+    <h2><span class="n">9</span><code>CurrentBudget</code> — current &amp; breaker protection</h2>
+    <p class="lead">Every mechanism declares its current allowance. This is both a performance knob (torque) and the robot's brownout defense.</p>
+    <div class="code"><div class="code-head"><span class="fname">API</span><button class="copy">Copy</button></div><pre><code>new CurrentBudget(statorLimit, supplyLimit)          // the basic form (amps)
+budget.withSupplyLower(lowerLimit, lowerTimeSeconds) // drop to `lower` after sustained over-limit
+budget.withTorquePeaks(peakForward, peakReverse)     // FOC output clamp (peakReverse is negative)</code></pre></div>
+    <figure>
+      <svg viewBox="0 0 720 110" role="img">
+        <rect x="20" y="24" width="320" height="60" rx="8" fill="var(--bg-3)" stroke="var(--border)"/>
+        <text x="180" y="48" text-anchor="middle" class="svg-t" fill="var(--fg)" font-weight="700">Stator limit</text>
+        <text x="180" y="68" text-anchor="middle" class="svg-mono" fill="var(--fg-3)">torque &amp; heat · "how strong may this be"</text>
+        <rect x="380" y="24" width="320" height="60" rx="8" fill="var(--accent-soft)" stroke="var(--accent)"/>
+        <text x="540" y="44" text-anchor="middle" class="svg-t" fill="var(--fg)" font-weight="700">Supply limit (+ lower/time)</text>
+        <text x="540" y="62" text-anchor="middle" class="svg-mono" fill="var(--fg-3)">breaker &amp; battery · brownout guard</text>
+        <text x="540" y="78" text-anchor="middle" class="svg-mono" fill="var(--fg-3)">drops to `lower` after `time`s over-limit</text>
+      </svg>
+    </figure>
+    <div class="tbl"><table>
+      <tr><th>Mechanism kind</th><th>Stator (A)</th><th>Supply (A)</th><th>Notes</th></tr>
+      <tr><td>Swerve drive module</td><td>60–80</td><td>40–60</td><td>+ <code>withSupplyLower(35, 1.0)</code> for brownout margin</td></tr>
+      <tr><td>Flywheel / high-power</td><td>100–120</td><td>60–80</td><td>brief bursts; supply protects the breaker</td></tr>
+      <tr><td>Arm / pivot / four-bar</td><td>40–80</td><td>30–60</td><td>enough to hold + move briskly</td></tr>
+      <tr><td>Roller / intake</td><td>60–80</td><td>25–30</td><td>low supply so a stall reads clearly on <code>currentSpike</code></td></tr>
+      <tr><td>Hood / small servo-like</td><td>20–40</td><td>15–25</td><td>light loads</td></tr>
+    </table></div>
+    <div class="box warn"><div class="h">⚠️ Under FOC, the stator limit is not your output clamp</div><p>TorqueCurrentFOC requests command torque current directly and bypass the stator limit by design. The clamp that matters in FOC is <code class="k">withTorquePeaks(fwd, rev)</code>. The basic constructor defaults the peaks to ±stator, which is usually what you want — but know which knob is live in which mode.</p></div>
+    <div class="box tip"><div class="h">💡 Keep the whole robot's amps in one glance</div><p>Put every budget in the subsystem constants files (they already are), so a lead can review the robot's total current story in one pass. Idea from Team 6328's energy budget.</p></div>
+  </section>
+
+  <!-- ==================================================== 10 MOTOR -->
+  <section id="motor">
+    <h2><span class="n">10</span><code>Motor</code> — the TalonFX wrapper <span class="lvl deep">DEEP</span></h2>
+    <p class="lead">The device layer. Archetypes use it for you; you touch it directly only for exotic mechanisms. Knowing its surface tells you what any mechanism can ultimately do.</p>
+    <p>Construction: <code class="k">new Motor(name, canDeviceId, talonFXConfiguration, controlMode)</code> — applies the config <b>verified</b> (§11), registers all signals with <code class="k">SignalHub</code> (§12), and registers with <code class="k">FaultReporter</code> (§29). One object = one fully-managed TalonFX.</p>
+    <div class="tbl"><table>
+      <tr><th>Method</th><th>Does</th><th>Notes</th></tr>
+      <tr><td><code>setExpoPositionGoal(rot [, ff])</code></td><td>MotionMagicExpo move to a position</td><td>optional arbitrary feedforward (V or A by mode) — e.g. dynamic gravity</td></tr>
+      <tr><td><code>setTrapezoidPositionGoal(rot [, ff])</code></td><td>Trapezoidal MotionMagic move</td><td>same FF overload</td></tr>
+      <tr><td><code>setPlainPositionGoal(rot)</code></td><td>Unprofiled position closed loop</td><td>used when no motion constraints configured</td></tr>
+      <tr><td><code>setVelocityGoal(rps)</code></td><td>MotionMagicVelocity (ramped) velocity</td><td></td></tr>
+      <tr><td><code>setPlainVelocityGoal(rps)</code></td><td>Direct velocity closed loop</td><td>flywheel default</td></tr>
+      <tr><td><code>setAmps(a)</code> / <code>setVolts(v)</code> / <code>setDutyCycle(d)</code></td><td>Open-loop outputs</td><td><code>setAmps</code> only acts in FOC mode — it stops (neutral) in VOLTAGE mode rather than guessing</td></tr>
+      <tr><td><code>stop()</code></td><td>Neutral output (brake/coast per config)</td><td></td></tr>
+      <tr><td><code>follow(leader, oppose)</code></td><td>Hardware follower of another Motor</td><td>set once; runs on-device</td></tr>
+      <tr><td><code>positionRotations()</code> / <code>velocityRotationsPerSecond()</code></td><td>Cached mechanism-unit reads</td><td>fresh after <code>SignalHub.refreshAll()</code></td></tr>
+      <tr><td><code>positionRotationsCompensated()</code></td><td>Latency-compensated position (extrapolated by velocity)</td><td>use for fast-moving mechanisms feeding math (e.g. turret → vision)</td></tr>
+      <tr><td><code>volts()</code> / <code>supplyAmps()</code> / <code>statorAmps()</code> / <code>temperatureCelsius()</code></td><td>Cached diagnostics</td><td></td></tr>
+      <tr><td><code>connected()</code></td><td>Did the last refresh succeed?</td><td>feeds the debounced disconnect Alert</td></tr>
+      <tr><td><code>resetPosition(rot)</code></td><td>Overwrite mechanism position (homing)</td><td><b>blocking</b> — boot/home only, never per-loop</td></tr>
+      <tr><td><code>setNeutralMode(mode)</code></td><td>Brake/Coast</td><td><b>blocking</b> — use <code>Mechanism.setBrakeAsync</code> instead (§14)</td></tr>
+      <tr><td><code>unwrap()</code></td><td>The raw <code>TalonFX</code></td><td>escape hatch: sim state, exotic configs</td></tr>
+    </table></div>
+    <div class="box why"><div class="h">🧠 When would you use Motor directly?</div><p>A mechanism that fits no archetype — say, a differential wrist where two motors mix pitch and roll. You'd build the <code class="k">TalonFXConfiguration</code> yourself (or via a throwaway <code class="k">MechanismConfig</code>), construct two <code class="k">Motor</code>s, and write the mixing math in your subsystem. You still get verified config, managed signals, and fault registration — the floor never drops below that.</p></div>
+  </section>
+
+  <!-- ==================================================== 11 DEVICECONFIGS -->
+  <section id="deviceconfigs">
+    <h2><span class="n">11</span><code>DeviceConfigs</code> — apply · verify · retry <span class="lvl deep">DEEP</span></h2>
+    <p class="lead">Why a config problem on this robot is an Alert on the dashboard instead of a mystery at the match.</p>
+    <div class="code"><div class="code-head"><span class="fname">API</span><button class="copy">Copy</button></div><pre><code>DeviceConfigs.applyVerified("Shooter/Hood", talonFX, configuration)   // → boolean success
+DeviceConfigs.applyVerified("Hood/CANcoder", cancoder, configuration)
+DeviceConfigs.retry("name", () -&gt; someCtreCall())                      // retry any StatusCode call ≤5×</code></pre></div>
+    <p>What <code class="k">applyVerified</code> actually does, in order:</p>
+    <ol class="steps">
+      <li><b class="t">Apply</b> the full configuration with a 100&#160;ms timeout, retrying up to <b>5×</b> on any non-OK status (boot-time CAN hiccups are real, not hypothetical).</li>
+      <li><b class="t">Read back</b> the device's entire configuration.</li>
+      <li><b class="t">Compare</b> the serialized configs token-by-token, numeric tokens with a 10⁻³ tolerance (the device stores some values in fixed point — exact equality would false-alarm).</li>
+      <li><b class="t">On failure:</b> raise a persistent <code class="k">Alert</code> ("Device config verify FAILED: name") and log a DogLog fault. The boolean return lets callers gate readiness.</li>
+    </ol>
+    <div class="box why"><div class="h">🧠 Why verification matters</div><p>A brownout or CAN glitch mid-apply can leave a device with <em>half</em> its config — wrong soft limits, no current cap. Without read-back, nothing tells you until the mechanism misbehaves. With it, the failure is loud at boot, when it's cheap. (Pattern credit: 254/3061.)</p></div>
+  </section>
+
+  <!-- ==================================================== 12 SIGNALHUB -->
+  <section id="signalhub">
+    <h2><span class="n">12</span><code>SignalHub</code> — status-signal management <span class="lvl deep">DEEP</span></h2>
+    <p class="lead">All device telemetry (position, velocity, current…) arrives as CAN "status signals". SignalHub decides how often each is sent and refreshes them all in one batch per loop.</p>
+    <div class="tbl"><table>
+      <tr><th>Member</th><th>Does</th></tr>
+      <tr><td><code>Rate.FAST</code> (100&#160;Hz)</td><td>position, velocity — things control math reads</td></tr>
+      <tr><td><code>Rate.MEDIUM</code> (50&#160;Hz)</td><td>applied volts, supply/stator current</td></tr>
+      <tr><td><code>Rate.SLOW</code> (4&#160;Hz)</td><td>temperature, housekeeping</td></tr>
+      <tr><td><code>register(bus, rate, signals…)</code></td><td>Set rate + include in the per-loop batch refresh. <code>Motor</code> does this for its own signals.</td></tr>
+      <tr><td><code>setRateOnly(rate, signals…)</code></td><td>Set a rate without batching — for signals read on demand (fault scan uses this pattern).</td></tr>
+      <tr><td><code>registerDevice(device)</code></td><td>Include the device in <code>optimizeAll()</code>.</td></tr>
+      <tr><td><code>refreshAll()</code></td><td><b>One</b> batched CAN read per bus. Call once per loop, before the scheduler (§4).</td></tr>
+      <tr><td><code>optimizeAll()</code></td><td>Silences every <em>unregistered</em> signal on registered devices — big bus-load win. Once, after all devices exist.</td></tr>
+      <tr><td><code>latencyCompensated(value, slope)</code></td><td>Value extrapolated over its CAN latency by its derivative (position by velocity).</td></tr>
+    </table></div>
+    <div class="box warn"><div class="h">⚠️ The swerve does NOT go through SignalHub</div><p>CTRE's <code class="k">SwerveDrivetrain</code> runs its own 250&#160;Hz odometry thread with time-synced CANivore reads — it manages its own signals. Don't register swerve devices here; you'd fight it.</p></div>
+    <div class="box why"><div class="h">🧠 Why batching matters</div><p>Refreshing N signals individually = N blocking CAN transactions scattered through the loop. Refreshing them as one batch per bus = one wait, all values coherent from the same instant, and predictable loop time. It also makes "is this data fresh?" a single well-defined moment in the loop (§4).</p></div>
+  </section>
+
+  <!-- ==================================================== 13 MECHANISMCONFIG -->
+  <section id="config">
+    <h2><span class="n">13</span><code>MechanismConfig</code> — every field, in depth</h2>
+    <p class="lead">The heart of the library: one builder object describes a mechanism completely. This section is the field manual — each option with its signature, default, what it maps to on the device, when to use it, and what breaks without it.</p>
+    <div class="code"><div class="code-head"><span class="fname">shape</span><button class="copy">Copy</button></div><pre><code>new MechanismConfig("Subsystem/Name", new CANDeviceId(id))
+    .controlMode(...).gains(...).motion(...)          // chain what you need
+    .softLimits(...).currentBudget(...).tolerance(...)
+    .simArmModel(...);                                 // hand the result to an archetype</code></pre></div>
+
+    <h3>13.1 · Constructor — <code>name</code> and the leader motor</h3>
+    <p><code class="k">new MechanismConfig(String name, CANDeviceId motorId)</code></p>
+    <p><b>name</b> is the telemetry path. Every value the mechanism logs (<code class="k">Name/PositionRotations</code>, <code class="k">Name/GoalRotations</code>, <code class="k">Name/AppliedVolts</code>, <code class="k">Name/SupplyAmps</code>, <code class="k">Name/StatorAmps</code>, <code class="k">Name/TempCelsius</code>, <code class="k">Name/Connected</code>, <code class="k">Name/AtGoal</code>…) appears under it in AdvantageScope, and it names the config-verify and disconnect Alerts. Convention: <code class="k">"Subsystem/Mechanism"</code>. <b>motorId</b> is the leader TalonFX. <em>What breaks without care:</em> a lazy name makes logs unsearchable; there's no other cost.</p>
+
+    <h3>13.2 · <code>.follower(CANDeviceId, boolean opposed)</code></h3>
+    <p><b>Default:</b> none. Adds a second motor on the same shaft. It receives the <em>same verified configuration</em> and a hardware <code class="k">Follower</code> request — no second control loop, no RIO involvement, and it disappears from your code entirely.</p>
+    <div class="box why"><div class="h">🧠 <code style="color:inherit">opposed</code> is a physical fact, not a choice</div><p>Two motors mounted mirror-image spin opposite directions to produce the same mechanism motion → <code class="k">opposed = true</code>. Same orientation → <code class="k">false</code>. Get it wrong and the motors fight: huge current, no motion, hot motors. If bring-up shows exactly that, flip this flag first.</p></div>
+
+    <h3>13.3 · <code>.controlMode(ControlMode)</code></h3>
+    <p><b>Default:</b> <code class="k">TORQUE_CURRENT_FOC</code>. See §6 for the full decision. Sim always forces VOLTAGE regardless of what you set here. <em>Breaks without care:</em> switching this field without re-deriving gains — the gain units change from volts to amps, so old numbers become a violently wrong stiffness (§6, §35).</p>
+
+    <h3>13.4 · <code>.inverted(boolean clockwisePositive)</code> and <code>.neutralMode(NeutralModeValue)</code></h3>
+    <p><b>Defaults:</b> counter-clockwise-positive; <code class="k">Brake</code>. Inversion defines which physical direction is "positive" — set it so positive = the direction that makes geometric sense (arm up, elevator up, intake out). Neutral mode is what the motor does at zero output: <code class="k">Brake</code> resists motion (hold position-ish), <code class="k">Coast</code> spins free.</p>
+    <div class="decide">
+      <div class="q"><span class="qm">?</span>Brake or Coast?</div>
+      <div class="branches">
+        <div class="branch yes"><span class="lbl">BRAKE</span><div class="do">Elevators, anything that must not fall on disable, drive motors.</div></div>
+        <div class="branch alt"><span class="lbl">COAST</span><div class="do">Mechanisms you hand-position in the pit (four-bar, turret, hood) and flywheels (let them spin down).<div class="why">The intake four-bar is Coast for exactly this reason — see §21.</div></div></div>
+      </div>
+    </div>
+
+    <h3>13.5 · <code>.gains(Gains real, Gains sim)</code></h3>
+    <p><b>Default:</b> all-zero (the mechanism will not close a loop — a valid state only for rollers). Maps to the device's <code class="k">Slot0Configs</code>. Full field reference in §7; gravity type decision:</p>
+    <div class="decide">
+      <div class="q"><span class="qm">?</span>How does gravity load this mechanism?</div>
+      <div class="branches">
+        <div class="branch yes"><span class="lbl">ARM</span><div class="do"><code>.withGravity(kG, GravityTypeValue.Arm_Cosine)</code><div class="why">Load ∝ cos(angle): max horizontal, zero vertical. <b>Requires mechanism zero = horizontal</b> — the device computes cos of its own reported position.</div></div></div>
+        <div class="branch alt"><span class="lbl">ELEVATOR</span><div class="do"><code>.withGravity(kG, GravityTypeValue.Elevator_Static)</code><div class="why">Constant load regardless of position.</div></div></div>
+        <div class="branch no"><span class="lbl">NEITHER</span><div class="do">leave kG at 0<div class="why">Flywheels, rollers, horizontal slides.</div></div></div>
+      </div>
+    </div>
+
+    <h3>13.6 · <code>.motion(MotionConstraints)</code></h3>
+    <p><b>Default:</b> none (setpoints applied directly). Maps to <code class="k">MotionMagicConfigs</code>. Full treatment in §8. For a positional mechanism with no motion constraints, goals go through the <em>plain</em> position closed loop — legitimate for very light mechanisms, harsh for anything with inertia.</p>
+
+    <h3>13.7 · <code>.currentBudget(CurrentBudget)</code></h3>
+    <p><b>Default:</b> <code class="k">new CurrentBudget(40, 30)</code> — a deliberately conservative floor so an unconfigured mechanism can't cook itself. Maps to <code class="k">CurrentLimitsConfigs</code> + <code class="k">TorqueCurrentConfigs</code>. Full treatment in §9.</p>
+
+    <h3>13.8 · Feedback: <code>.rotorToMechanismRatio(double)</code> <em>or</em> <code>.fusedCANcoder(...)</code></h3>
+    <div class="decide">
+      <div class="q"><span class="qm">?</span>Is there an absolute encoder (CANcoder) on the mechanism?</div>
+      <div class="branches">
+        <div class="branch yes"><span class="lbl">YES</span><div class="do"><code>.fusedCANcoder(new CANDeviceId(encId), rotorToSensorRatio, sensorToMechanismRatio, Rotations.of(magnetOffset))</code> (+ <code>.cancoderDirection(...)</code> if needed)<div class="why">FusedCANcoder: the device blends the absolute sensor with the rotor — drift-free, survives power cycles, no boot homing. The library configures the CANcoder itself (magnet offset, direction) verified, before the motor references it. On real hardware only; sim falls back to rotor feedback automatically.</div></div></div>
+        <div class="branch no"><span class="lbl">NO</span><div class="do"><code>.rotorToMechanismRatio(r)</code> — rotor rotations per mechanism unit<div class="why">Relative feedback. You must seed position at boot: <code>mechanism.resetPosition(...)</code> from a known pose or a homing routine. Forget the seed and every angle is offset by wherever the rotor woke up.</div></div></div>
+      </div>
+    </div>
+    <div class="box warn"><div class="h">⚠️ The three ratios, precisely</div>
+      <p><code class="k">rotorToSensorRatio</code> = rotor turns per <b>CANcoder</b> turn (gearing between motor and sensor). <code class="k">sensorToMechanismRatio</code> = CANcoder turns per <b>mechanism</b> turn (1.0 when the sensor is on the output shaft). <code class="k">rotorToMechanismRatio</code> = rotor turns per mechanism unit — for LinearExtension, that's rotor turns per <b>meter</b>. Mixing these up produces "moves ~14× too far" bugs; if motion is wildly scaled, audit the ratio first.</p></div>
+
+    <h3>13.9 · <code>.softLimits(Angle rev, Angle fwd)</code> / <code>.softLimitsMeters(Distance, Distance)</code></h3>
+    <p><b>Default:</b> none. Two layers of protection: goals are <em>clamped</em> before being commanded (archetype), and <code class="k">SoftwareLimitSwitchConfigs</code> is set on the device so even a bug can't drive past (device). <em>Breaks without it:</em> a bad setpoint slams the mechanism into its hard stop at full current.</p>
+
+    <h3>13.10 · <code>.continuousWrap()</code></h3>
+    <p><b>Default:</b> off. For turrets: goals are wrapped to the <em>nearest equivalent angle</em> (mod one rotation) inside the soft-limit range — shortest legal path, never unwinding the cable loop. <b>Requires softLimits.</b> The wrap math: take the target mod 1 rotation nearest to the current position; if it falls outside the limits, shift by a full rotation back inside; clamp.</p>
+
+    <h3>13.11 · <code>.tolerance(Angle)</code> / <code>.toleranceMeters(Distance)</code></h3>
+    <p><b>Default:</b> 0.02 rotations. The "reached" window that drives <code class="k">atGoal</code>/<code class="k">atSpeed</code> triggers. Tune it against the mechanism's real noise floor: too tight → the trigger never fires and the superstructure waits forever; too loose → "ready" fires before the mechanism truly is (the shooter fires early). For a velocity mechanism the same number is read as rot/s.</p>
+
+    <h3>13.12 · <code>.peakVoltage(double fwd, double rev)</code></h3>
+    <p><b>Default:</b> ±12&#160;V. A hard output ceiling in voltage terms — an independent second clamp on top of the motion profile. Use for mechanisms whose speed was validated at a specific voltage (the intake four-bar ships ±1.5&#160;V, preserving its v1 behavior exactly).</p>
+
+    <h3>13.13 · <code>.ramps(double openLoopSeconds, double closedLoopSeconds)</code></h3>
+    <p><b>Default:</b> 0 (no ramp). Seconds from zero to full output. Use open-loop ramps to soften duty-cycle rollers that snap belts; closed-loop ramps sparingly (they fight the profile — prefer MotionConstraints for shaping).</p>
+
+    <h3>13.14 · Sim models: <code>.simRotationalModel</code> / <code>.simArmModel</code> / <code>.simElevatorModel</code> / <code>.simModel</code></h3>
+    <p><b>Default:</b> none — and then the mechanism does not move in simulation (logic runs, physics doesn't). Full model reference in §19. The generic <code class="k">.simModel(factory)</code> is the escape hatch for custom physics.</p>
+    <div class="box ok"><div class="h">✅ The minimum viable config per archetype</div>
+      <p><b>Roller:</b> name + id + currentBudget + sim model. <b>Velocity:</b> those + gains + tolerance (+ ratio). <b>Positional/Linear:</b> those + feedback ratio (or fused CANcoder) + motion + softLimits. Everything else is refinement.</p></div>
+
+    <h3>13.15 · Where the numbers come from</h3>
+    <div class="tbl"><table>
+      <tr><th>Number</th><th>How to get it</th></tr>
+      <tr><td>CAN ids</td><td>Read/set per device in Phoenix Tuner X.</td></tr>
+      <tr><td><code>rotorToMechanismRatio</code></td><td>Multiply the gearbox stages × any belt/chain ratio. For linear: rotor turns to move exactly 1&#160;m (compute from drum circumference).</td></tr>
+      <tr><td><code>kP kI kD kS kV kA kG</code></td><td>SysId (§35). Until then: modest kP, zeros elsewhere — enough to see motion in sim.</td></tr>
+      <tr><td>Expo <code>kV, kA</code></td><td>Start kV ≈ 12 / free-speed-in-mechanism-units; kA ≈ 0.1–0.5 (raise for a softer stop).</td></tr>
+      <tr><td>Soft limits</td><td>Measure the real travel by hand (coast mode helps), leave a small margin.</td></tr>
+      <tr><td>Current limits</td><td>Stator = "how strong" (§9's table by mechanism kind); supply = breaker size minus margin.</td></tr>
+      <tr><td>Sim MOI / mass / length</td><td>Rough estimates from CAD or intuition — sim is for logic, not physics (§19).</td></tr>
+      <tr><td>Tolerances</td><td>Start ~1° / 1&#160;cm / 2&#160;rot/s; tighten against the real mechanism's noise floor.</td></tr>
+    </table></div>
+  </section>
+
+  <!-- ==================================================== 14 MECH BASE -->
+  <section id="mechbase">
+    <h2><span class="n">14</span><code>Mechanism</code> — choosing an archetype, and the base they share</h2>
+    <p class="lead">Two questions pick the archetype; everything after that is which config fields you set on it (§13).</p>
+    <figure>
+      <svg viewBox="0 0 720 250" role="img">
+        <defs><marker id="a3" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--fg-3)"/></marker></defs>
+        <polygon points="360,10 440,40 360,70 280,40" fill="var(--accent-soft)" stroke="var(--accent)"/>
+        <text x="360" y="45" text-anchor="middle" class="svg-t" fill="var(--fg)" font-weight="700">holds a position?</text>
+        <line x1="300" y1="55" x2="180" y2="95" stroke="var(--fg-3)" marker-end="url(#a3)"/><text x="215" y="72" class="svg-mono" fill="var(--yes)">yes</text>
+        <polygon points="180,90 250,116 180,142 110,116" fill="var(--bg-3)" stroke="var(--border)"/>
+        <text x="180" y="120" text-anchor="middle" class="svg-t" fill="var(--fg)">linear or rotary?</text>
+        <line x1="420" y1="55" x2="540" y2="95" stroke="var(--fg-3)" marker-end="url(#a3)"/><text x="470" y="72" class="svg-mono" fill="var(--no)">no</text>
+        <polygon points="540,90 610,116 540,142 470,116" fill="var(--bg-3)" stroke="var(--border)"/>
+        <text x="540" y="120" text-anchor="middle" class="svg-t" fill="var(--fg)">holds a speed?</text>
+        <g class="svg-t" font-weight="700">
+          <line x1="150" y1="135" x2="95" y2="180" stroke="var(--fg-3)" marker-end="url(#a3)"/><text x="100" y="158" class="svg-mono" fill="var(--fg-2)">rotary</text>
+          <rect x="20" y="180" width="150" height="46" rx="8" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="95" y="200" text-anchor="middle" fill="var(--fg)">PositionalMechanism</text><text x="95" y="216" text-anchor="middle" class="svg-mono" fill="var(--fg-3)">§15 · arm·pivot·hood·turret</text>
+          <line x1="210" y1="135" x2="265" y2="180" stroke="var(--fg-3)" marker-end="url(#a3)"/><text x="250" y="158" class="svg-mono" fill="var(--fg-2)">linear</text>
+          <rect x="190" y="180" width="150" height="46" rx="8" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="265" y="200" text-anchor="middle" fill="var(--fg)">LinearExtension</text><text x="265" y="216" text-anchor="middle" class="svg-mono" fill="var(--fg-3)">§16 · elevator·slide</text>
+          <line x1="515" y1="135" x2="455" y2="180" stroke="var(--fg-3)" marker-end="url(#a3)"/><text x="452" y="158" class="svg-mono" fill="var(--yes)">yes</text>
+          <rect x="380" y="180" width="150" height="46" rx="8" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="455" y="200" text-anchor="middle" fill="var(--fg)">VelocityMechanism</text><text x="455" y="216" text-anchor="middle" class="svg-mono" fill="var(--fg-3)">§17 · flywheel·drum</text>
+          <line x1="565" y1="135" x2="625" y2="180" stroke="var(--fg-3)" marker-end="url(#a3)"/><text x="628" y="158" class="svg-mono" fill="var(--no)">no</text>
+          <rect x="550" y="180" width="150" height="46" rx="8" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="625" y="200" text-anchor="middle" fill="var(--fg)">RollerMechanism</text><text x="625" y="216" text-anchor="middle" class="svg-mono" fill="var(--fg-3)">§18 · intake·feeder</text>
+        </g>
+      </svg>
+      <figcaption>Does it hold a <b>position</b>? (rotary → Positional §15, linear → LinearExtension §16). If not — does it hold a <b>speed</b>? (yes → Velocity §17, no → Roller §18).</figcaption>
+    </figure>
+    <div class="tbl"><table class="matrix">
+      <tr><th>Capability</th><th>Positional §15</th><th>Linear §16</th><th>Velocity §17</th><th>Roller §18</th></tr>
+      <tr><td>Unit</td><td>rad</td><td>m</td><td>rot/s</td><td>duty / V / A</td></tr>
+      <tr><td>Closed loop</td><td class="yeslot">MotionMagic</td><td class="yeslot">MotionMagic</td><td class="yeslot">velocity</td><td class="nolot">open-loop</td></tr>
+      <tr><td>Motion profile</td><td class="yeslot">Expo / Trap</td><td class="yeslot">Expo / Trap</td><td class="mid">optional ramp</td><td class="nolot">—</td></tr>
+      <tr><td>Gravity FF</td><td class="yeslot">Arm_Cosine</td><td class="yeslot">static / dynamic</td><td class="nolot">—</td><td class="nolot">—</td></tr>
+      <tr><td>Soft limits</td><td class="yeslot">angle</td><td class="yeslot">meters</td><td class="nolot">—</td><td class="nolot">—</td></tr>
+      <tr><td>Continuous wrap</td><td class="yeslot">turret</td><td class="nolot">—</td><td class="nolot">—</td><td class="nolot">—</td></tr>
+      <tr><td>"Reached" trigger</td><td><code>atGoal</code></td><td><code>atGoal</code></td><td><code>atSpeed</code></td><td><code>currentSpike</code></td></tr>
+      <tr><td>Sim helper</td><td><code>simArmModel</code></td><td><code>simElevatorModel</code></td><td><code>simRotationalModel</code></td><td><code>simRotationalModel</code></td></tr>
+    </table></div>
+    <h3>The shared base</h3>
+    <p class="lead">Whatever archetype you pick, these members exist. This is also the list of everything the library does for you per mechanism.</p>
+    <div class="tbl"><table>
+      <tr><th>Member</th><th>Does</th><th>Rules</th></tr>
+      <tr><td><code>periodic()</code></td><td>Steps the sim model, updates the debounced disconnect Alert, logs everything to DogLog.</td><td><b>Call from your subsystem's periodic(). Non-negotiable.</b></td></tr>
+      <tr><td><code>stop()</code></td><td>Neutral output; archetypes also clear their goal (so atGoal goes false).</td><td></td></tr>
+      <tr><td><code>setBrakeAsync(boolean)</code></td><td>Brake/Coast off the main loop.</td><td>The CTRE call blocks ~ms — this queues it on a worker thread. Never call <code>Motor.setNeutralMode</code> on the loop.</td></tr>
+      <tr><td><code>coastCommand(subsystem)</code></td><td>Coast while held, restore configured neutral on release. Works while disabled.</td><td>Bind for the pit crew.</td></tr>
+      <tr><td><code>setVolts(double)</code></td><td>Raw voltage out.</td><td>Bring-up and characterization only.</td></tr>
+      <tr><td><code>sysIdQuasistatic / sysIdDynamic (subsystem, direction)</code></td><td><b>Voltage</b> characterization routines (→ volt-based gains for <code>VOLTAGE</code> mode), recorded via Phoenix SignalLogger into the hoot log.</td><td>§35 for the full procedure.</td></tr>
+      <tr><td><code>sysIdQuasistaticTorque / sysIdDynamicTorque (subsystem, direction)</code></td><td><b>Torque-current</b> characterization (→ amp-based gains for <code>TORQUE_CURRENT_FOC</code>), the volts-as-amps idiom, clamped by the budget's torque peaks.</td><td>§35.5. Real hardware only.</td></tr>
+      <tr><td><code>name()</code></td><td>The telemetry name.</td><td></td></tr>
+    </table></div>
+    <div class="box tip"><div class="h">💡 What gets logged automatically, per mechanism, every loop</div><p>Position, velocity, applied volts, supply amps, stator amps, temperature, connected — plus the archetype extras (goal, hasGoal, atGoal / atSpeed / output volts). You add domain-specific logs only.</p></div>
+  </section>
+
+  <!-- ==================================================== 15 POSITIONAL -->
+  <section id="positional">
+    <h2><span class="n">15</span><code>PositionalMechanism</code> — arm · pivot · hood · turret</h2>
+    <p class="lead">Anything that rotates to and holds an angle. MotionMagic (Expo by default) + gravity FF onboard.</p>
+    <h3>Full worked declaration</h3>
+    <div class="code"><div class="code-head"><span class="fname">a hood, complete</span><button class="copy">Copy</button></div><pre><code>private final PositionalMechanism hood = new PositionalMechanism(
+    new MechanismConfig("Shooter/Hood", new CANDeviceId(30))
+        .controlMode(ControlMode.VOLTAGE)                     // FOC after SysId (§35)
+        .rotorToMechanismRatio(74.9)                          // or .fusedCANcoder(...) — §13.8
+        .gains(new Gains(68, 0, 0.9, 0.31, 0, 0), new Gains(40, 0, 0))
+        .motion(new MotionConstraints(3.0, 5.0))              // Expo
+        .softLimits(Radians.of(0.0), Radians.of(0.9))
+        .tolerance(Radians.of(0.02))
+        .currentBudget(new CurrentBudget(40, 30))
+        .neutralMode(NeutralModeValue.Coast)
+        .simArmModel(DCMotor.getKrakenX60Foc(1), 74.9, 0.05, 0.15, 0.0, 0.9, 0.0));
+
+// use:
+public Command aimAt(Supplier&lt;Angle&gt; a){ return run(() -&gt; hood.setGoal(a.get())); }
+public Trigger ready(){ return hood.atGoal; }
+@Override public void periodic(){ hood.periodic(); }</code></pre></div>
+    <h3>Full API</h3>
+    <div class="tbl"><table>
+      <tr><th>Member</th><th>Does</th></tr>
+      <tr><td><code>setGoal(Angle)</code> / <code>setGoalRotations(double)</code></td><td>Profiled move. Clamped to soft limits; wrapped if <code>continuousWrap</code>. Calling every loop is fine — the profile runs onboard.</td></tr>
+      <tr><td><code>atGoal</code> (Trigger)</td><td>Has an active goal AND within tolerance. Goes false after <code>stop()</code>.</td></tr>
+      <tr><td><code>getPosition()</code> / <code>getPositionRotations()</code></td><td>Current mechanism angle.</td></tr>
+      <tr><td><code>getVelocityRotationsPerSecond()</code> · <code>getGoalRotations()</code></td><td>Reads.</td></tr>
+      <tr><td><code>resetPosition(Angle)</code></td><td>Homing / boot seed (needed without a fused CANcoder).</td></tr>
+      <tr><td><code>stop()</code></td><td>Neutral + clears the goal.</td></tr>
+    </table></div>
+    <h3>Turret variant — two extra lines</h3>
+    <div class="code"><div class="code-head"><span class="fname">turret config additions</span><button class="copy">Copy</button></div><pre><code>.softLimits(Radians.of(-5.4), Radians.of(1.5))   // the full legal range (&gt; one rotation is fine)
+.continuousWrap()                                 // goals wrap to nearest legal equivalent</code></pre></div>
+    <div class="box danger"><div class="h">🚫 Pitfalls</div><p>① No feedback config → the mechanism thinks 1 rotor turn = 1 mechanism turn and moves 15–100× too far. ② No boot seed (without fused CANcoder) → every angle offset by the boot pose. ③ <code class="k">Arm_Cosine</code> with a non-horizontal zero → gravity comp pushes the wrong amount at every angle. ④ Forgetting <code class="k">periodic()</code> → no sim, no logs, no alerts.</p></div>
+  </section>
+
+  <!-- ==================================================== 16 LINEAR -->
+  <section id="linear">
+    <h2><span class="n">16</span><code>LinearExtension</code> — elevator · slide · telescope</h2>
+    <p class="lead">Positional control where the mechanism unit is <b>meters</b>. Same MotionMagic engine; meters-aware config helpers; two gravity modes.</p>
+    <div class="code"><div class="code-head"><span class="fname">a vertical elevator, complete</span><button class="copy">Copy</button></div><pre><code>private final LinearExtension lift = new LinearExtension(
+    new MechanismConfig("Elevator", new CANDeviceId(50))
+        .controlMode(ControlMode.VOLTAGE)
+        .rotorToMechanismRatio(ROTOR_PER_METER)               // rotor turns per METER here
+        .gains(new Gains(30, 0, 0, 0, 12, 0).withGravity(0.4, GravityTypeValue.Elevator_Static),
+               new Gains(30, 0, 0))
+        .motion(new MotionConstraints(2.0, 4.0))              // m/s, m/s² (Expo)
+        .softLimitsMeters(Meters.of(0.0), Meters.of(1.2))
+        .toleranceMeters(Meters.of(0.01))
+        .currentBudget(new CurrentBudget(60, 40))
+        .simElevatorModel(DCMotor.getKrakenX60Foc(2), ROTOR_PER_METER, 5.0, 0.02, 0.0, 1.2, 0.0));</code></pre></div>
+    <div class="decide">
+      <div class="q"><span class="qm">?</span>Which gravity mode?</div>
+      <div class="branches">
+        <div class="branch yes"><span class="lbl">VERTICAL</span><div class="do"><code>new LinearExtension(config)</code> with <code>kG + Elevator_Static</code> in the gains<div class="why">Constant load; the device holds it onboard.</div></div></div>
+        <div class="branch alt"><span class="lbl">ON AN ARM</span><div class="do"><code>new LinearExtension(config, () -&gt; armAngleRadians, kG)</code> — and keep the gains' kG at 0<div class="why">A slide on a pivoting arm: gravity along the slide axis is <code>kG·sin(armAngle)</code>, which the device can't know. The archetype applies it as supplemental feedforward on every command, from your angle supplier.</div></div></div>
+      </div>
+    </div>
+    <h3>Full API</h3>
+    <div class="tbl"><table>
+      <tr><th>Member</th><th>Does</th></tr>
+      <tr><td><code>setLength(Distance)</code> / <code>setLengthMeters(double)</code></td><td>Profiled move, clamped to limits, with gravity FF.</td></tr>
+      <tr><td><code>atGoal</code> (Trigger) · <code>getLength()</code> / <code>getLengthMeters()</code> · <code>getVelocityMetersPerSecond()</code> · <code>getGoalMeters()</code></td><td>Reads.</td></tr>
+      <tr><td><code>resetLength(Distance)</code> · <code>stop()</code></td><td>Homing · neutral+clear.</td></tr>
+    </table></div>
+    <div class="box why"><div class="h">🧠 <span class="lvl deep" style="margin:0 6px 0 0">DEEP</span> "Meters" is just the mechanism unit</div><p>There's no separate linear pipeline: the device's <code class="k">SensorToMechanismRatio</code> is set to rotor-turns-per-<em>meter</em>, so the same rotations-named machinery underneath carries meters. That's why the config helpers are <code class="k">softLimitsMeters</code>/<code class="k">toleranceMeters</code> — same fields, meters semantics.</p></div>
+  </section>
+
+  <!-- ==================================================== 17 VELOCITY -->
+  <section id="velocity">
+    <h2><span class="n">17</span><code>VelocityMechanism</code> — flywheel · drum · belt</h2>
+    <p class="lead">Holds a speed. Setpoints run through MotionMagicVelocity if you configured motion constraints, else the plain velocity loop.</p>
+    <div class="code"><div class="code-head"><span class="fname">a two-motor flywheel, complete</span><button class="copy">Copy</button></div><pre><code>private final VelocityMechanism wheel = new VelocityMechanism(
+    new MechanismConfig("Shooter/Flywheel", new CANDeviceId(31))
+        .follower(new CANDeviceId(32), false)
+        .controlMode(ControlMode.VOLTAGE)
+        .rotorToMechanismRatio(1.2)
+        .gains(new Gains(0.2, 0, 0, 0.33, 0.156, 0), new Gains(0.05, 0, 0, 0, 0.11, 0))
+        .currentBudget(new CurrentBudget(120, 80))
+        .tolerance(Rotations.of(2))                            // ± rot/s "at speed" window
+        .simRotationalModel(DCMotor.getKrakenX60Foc(2), 0.01, 1.2));
+        // no .motion(...) → raw velocity steps, right for a flywheel</code></pre></div>
+    <div class="tbl"><table>
+      <tr><th>Member</th><th>Does</th></tr>
+      <tr><td><code>setVelocity(AngularVelocity)</code> / <code>setVelocityRotationsPerSecond(double)</code></td><td>Command a speed. Profiled iff motion constraints exist.</td></tr>
+      <tr><td><code>atSpeed</code> (Trigger)</td><td>Active setpoint AND within tolerance. The shooter-ready building block.</td></tr>
+      <tr><td><code>getVelocity()</code> / <code>getVelocityRotationsPerSecond()</code> · <code>getGoalRotationsPerSecond()</code></td><td>Reads.</td></tr>
+      <tr><td><code>stop()</code></td><td>Neutral + clears setpoint (atSpeed → false).</td></tr>
+    </table></div>
+    <div class="box tip"><div class="h">💡 kV is the flywheel's soul</div><p>For a velocity mechanism, <code class="k">kV</code> does ~95% of the work (output ∝ speed) and <code class="k">kP</code> just trims error. If your flywheel hunts, your kV is off — fix it before touching kP. Recovery-after-shot speed is governed by available current (§9), not gains.</p></div>
+  </section>
+
+  <!-- ==================================================== 18 ROLLER -->
+  <section id="roller">
+    <h2><span class="n">18</span><code>RollerMechanism</code> — intake · feeder · indexer</h2>
+    <p class="lead">Deliberately open-loop: rollers move game pieces, they don't hold states. Its special power is current-spike detection.</p>
+    <div class="code"><div class="code-head"><span class="fname">an intake roller, complete</span><button class="copy">Copy</button></div><pre><code>private final RollerMechanism roller = new RollerMechanism(
+    new MechanismConfig("Intake/Roller", new CANDeviceId(13))
+        .controlMode(ControlMode.VOLTAGE)
+        .currentBudget(new CurrentBudget(80, 30))
+        .simRotationalModel(DCMotor.getKrakenX60Foc(1), 0.002, 3.0));
+
+public Command intake()   { return runEnd(() -&gt; roller.runDutyCycle(0.8), roller::stop); }
+public Command eject()    { return runEnd(() -&gt; roller.runDutyCycle(-0.8), roller::stop); }
+public Trigger hasPiece() { return roller.currentSpike(40, 0.2); }   // 40 A held for 0.2 s</code></pre></div>
+    <div class="tbl"><table>
+      <tr><th>Member</th><th>Does</th></tr>
+      <tr><td><code>runDutyCycle(-1..1)</code> · <code>runVolts(v)</code> · <code>runAmps(a)</code></td><td>Open-loop outputs. <code>runAmps</code> = constant torque (FOC only — see §10).</td></tr>
+      <tr><td><code>currentSpike(amps, seconds)</code></td><td>Builds a Trigger: stator current above the threshold, debounced. The stall = game-piece detector.</td></tr>
+      <tr><td><code>getStatorAmps()</code> · <code>getVelocityRotationsPerSecond()</code> · <code>stop()</code></td><td>Reads · neutral.</td></tr>
+    </table></div>
+    <div class="box why"><div class="h">🧠 How currentSpike works, and how to tune it</div><p>A game piece jams the roller → speed drops → the motor draws more stator current to keep pushing. The trigger fires when current stays above <code class="k">thresholdAmps</code> for <code class="k">debounceSeconds</code>. Tune with a log: watch <code class="k">Intake/Roller/StatorAmps</code> during a real intake — set threshold between free-spinning draw and jammed draw, and debounce past the inrush spike at start-up (~0.1–0.3&#160;s). A too-low supply limit clips the spike; that's why roller budgets keep supply modest but not tiny (§9).</p></div>
+  </section>
+
+  <!-- ==================================================== 19 MECHSIM -->
+  <section id="mechsim">
+    <h2><span class="n">19</span><code>MechanismSim</code> — physics for free</h2>
+    <p class="lead">Each config's <code class="k">sim*Model</code> attaches a WPILib physics model that the mechanism steps automatically in simulation: the TalonFX's simulated output voltage drives the model, and the model's position/velocity feed back as the rotor.</p>
+    <div class="tbl"><table>
+      <tr><th>Helper</th><th>Model</th><th>Parameters, in order</th></tr>
+      <tr><td><code>.simRotationalModel(gearbox, moi, gearing)</code></td><td><code>DCMotorSim</code></td><td>the motors (e.g. <code>DCMotor.getKrakenX60Foc(2)</code>) · moment of inertia kg·m² at the mechanism · rotor turns per mechanism turn</td></tr>
+      <tr><td><code>.simArmModel(gearbox, gearing, moi, length, minRad, maxRad, startRad)</code></td><td><code>SingleJointedArmSim</code> (gravity on)</td><td>motors · gearing · MOI about the joint · CoM distance (m) · travel min/max (rad, 0 = horizontal) · initial pose</td></tr>
+      <tr><td><code>.simElevatorModel(gearbox, gearing, massKg, drumRadius, minM, maxM, startM)</code></td><td><code>ElevatorSim</code> (gravity on)</td><td>motors · rotor turns per meter · carriage mass · drum/pulley radius · travel · start</td></tr>
+      <tr><td><code>.simModel(factory)</code></td><td>anything</td><td>implement <code>MechanismSim.Model</code> (setInputVoltage / update / positionRotations / velocityRotationsPerSecond) for custom physics</td></tr>
+    </table></div>
+    <div class="box ok"><div class="h">✅ Estimates are fine — sim is for logic</div><p>Rough MOI/mass gets you a mechanism that moves believably, which is all you need to exercise state machines, readiness gating, autos, and dashboards. Sim always runs VOLTAGE with the sim gain set (§7); inversion is mirrored so signs match the real robot.</p></div>
+  </section>
+
+  <!-- ==================================================== 20 STATE MACHINE -->
+  <section id="statemachine">
+    <h2><span class="n">20</span><code>StateMachine&lt;S&gt;</code> — declared modes, enforced rules</h2>
+    <p class="lead">Every subsystem with named modes gets one. It replaces flag booleans, polled enum fields, and if-chains with a declared, guarded, logged transition table.</p>
+    <h3>Declaring one</h3>
+    <div class="code"><div class="code-head"><span class="fname">declaration — the exact order</span><button class="copy">Copy</button></div><pre><code>public enum IntakeState { CLOSED, OPEN, PUMP }
+
+private final StateMachine&lt;IntakeState&gt; machine =
+    new StateMachine&lt;&gt;("Intake", IntakeState.CLOSED)          // name (telemetry) + initial state
+        // -- actions --
+        .onEnter(IntakeState.CLOSED, () -&gt; fourBar.setGoal(CLOSED_ANGLE))   // fires once at entry
+        .whileIn(IntakeState.OPEN,  run(() -&gt; { /* every loop while OPEN */ }))
+        .onExit(IntakeState.PUMP,   roller::stop)                            // fires once at exit
+        // -- legal moves (everything else is DENIED) --
+        .transition(IntakeState.CLOSED, IntakeState.OPEN)                    // plain edge
+        .transition(IntakeState.OPEN,   IntakeState.PUMP, armHomed)          // guarded edge
+        .transitionFromAny(IntakeState.CLOSED);                              // universal escape</code></pre></div>
+    <figure>
+      <svg viewBox="0 0 720 220" role="img">
+        <defs><marker id="a5" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--accent)"/></marker>
+        <marker id="a5g" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--no)"/></marker></defs>
+        <circle cx="130" cy="110" r="46" fill="var(--bg-3)" stroke="var(--border)"/><text x="130" y="115" text-anchor="middle" class="svg-t" fill="var(--fg)" font-weight="700">CLOSED</text>
+        <circle cx="360" cy="60" r="46" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="360" y="65" text-anchor="middle" class="svg-t" fill="var(--fg)" font-weight="700">OPEN</text>
+        <circle cx="360" cy="170" r="46" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="360" y="175" text-anchor="middle" class="svg-t" fill="var(--fg)" font-weight="700">PUMP</text>
+        <path d="M175 98 C240 70, 290 66, 314 62" fill="none" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#a5)"/>
+        <path d="M372 105 C378 125, 372 140, 366 124" fill="none" stroke="var(--no)" stroke-width="1.8" marker-end="url(#a5g)"/>
+        <text x="392" y="118" class="svg-mono" fill="var(--no)">guard: armHomed</text>
+        <path d="M400 92 C405 110, 405 122, 400 138" fill="none" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#a5)"/>
+        <path d="M360 216 C250 240, 120 200, 120 158" fill="none" stroke="var(--fg-3)" stroke-dasharray="5 4" marker-end="url(#a5)"/>
+        <text x="215" y="212" class="svg-mono" fill="var(--fg-3)">transitionFromAny(CLOSED)</text>
+        <path d="M175 122 C240 160, 290 168, 314 172" fill="none" stroke="var(--danger)" stroke-width="1.4" stroke-dasharray="3 4"/>
+        <text x="235" y="160" class="svg-mono" fill="var(--danger)">undeclared → denied</text>
+      </svg>
+      <figcaption>Solid = legal · amber = guarded (pends until true) · dashed grey = from-any · red = undeclared, denied &amp; logged.</figcaption>
+    </figure>
+    <h3>Full API + exact semantics</h3>
+    <div class="tbl"><table>
+      <tr><th>Member</th><th>Semantics — precisely</th></tr>
+      <tr><td><code>request(S)</code></td><td>Same state → true, clears pending. Legal edge + guard true → transitions NOW (onExit → onEnter → schedule whileIn), returns true. Legal edge + guard false → becomes <b>pending</b>, retried every periodic() until it passes or another request replaces it; returns false. No edge → <b>denied</b>: logged as a DogLog fault (<code>…/IllegalTransition/A-&gt;B</code>), pending cleared, returns false.</td></tr>
+      <tr><td><code>requestCommand(S)</code></td><td>An instant Command wrapping request(). Put it on buttons and in autos.</td></tr>
+      <tr><td><code>requestAndWaitCommand(S)</code></td><td>Requests, then finishes only when the machine is actually in the state — for sequencing ("open, THEN feed").</td></tr>
+      <tr><td><code>in(S)</code></td><td>A Trigger, true while in the state. Compose with <code>.and()</code> etc.</td></tr>
+      <tr><td><code>getCurrentState()</code> · <code>getPending()</code></td><td>Reads (pending = guard-blocked request or null).</td></tr>
+      <tr><td><code>forceState(S)</code></td><td>Bypasses the table (runs exit/enter actions). Reset/fault recovery ONLY.</td></tr>
+      <tr><td><code>periodic()</code></td><td>Retries pending, publishes State/Pending/LastDenied to DogLog. <b>Call every loop.</b></td></tr>
+    </table></div>
+    <div class="box why"><div class="h">🧠 whileIn vs onEnter — the decision that matters most</div>
+      <p><code class="k">onEnter</code> fires <b>once</b>. <code class="k">whileIn</code> schedules a Command that runs the <b>entire time</b> and is cancelled at exit. Use onEnter when a single call sticks (MotionMagic goal — the device keeps chasing it). Use whileIn when something must be maintained every loop (a roller's duty cycle, a tracking goal that follows a moving target, a timed oscillation). The intake uses whileIn for all three states because the roller output needs continuous commanding.</p></div>
+    <div class="box why"><div class="h">🧠 whileIn commands and requirements</div>
+      <p>Build them with the subsystem's <code class="k">run(...)</code>/<code class="k">runEnd(...)</code> factories so they <b>require the subsystem</b>. That integrates with the scheduler: a manual command on the same subsystem interrupts the state's command cleanly, and vice versa. A bare Command with no requirement would fight other commands invisibly.</p></div>
+    <div class="box warn"><div class="h">⚠️ Startup semantics</div><p>The initial state's onEnter/whileIn fire on the machine's <b>first periodic() or first request()</b> — not at construction. Declare everything first; the first tick starts it. (This is why you can build the machine as a field and chain declarations safely.)</p></div>
+    <div class="box danger"><div class="h">🚫 Pitfalls</div><p>① Forgetting <code class="k">machine.periodic()</code> → pending requests never retry, no state telemetry. ② Reusing one Command object as whileIn for two states — each state needs its own instance. ③ Guards with side effects — keep them pure reads. ④ Using forceState as a normal transition — it skips your safety table.</p></div>
+  </section>
+
+  <!-- ==================================================== 21 ANATOMY -->
+  <section id="anatomy">
+    <h2><span class="n">21</span>A full subsystem, dissected — the real Intake</h2>
+    <p class="lead">Everything above, assembled. This is the actual competition <code class="k">Intake.java</code> — a four-bar (two motors), a roller, and a three-state machine — with the reasoning on every decision.</p>
+    <figure>
+      <svg viewBox="0 0 720 290" role="img">
+        <defs><marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--accent)"/></marker></defs>
+        <rect x="10" y="10" width="700" height="270" rx="12" fill="none" stroke="var(--border)"/>
+        <text x="26" y="34" class="svg-t" fill="var(--fg)" font-weight="700">Intake (SubsystemBase)</text>
+        <rect x="26" y="50" width="240" height="145" rx="9" fill="var(--accent-soft)" stroke="var(--accent)"/>
+        <text x="40" y="72" class="svg-t" fill="var(--fg)" font-weight="700">machine : StateMachine</text>
+        <circle cx="80" cy="118" r="25" fill="var(--bg-3)" stroke="var(--border)"/><text x="80" y="122" text-anchor="middle" class="svg-mono" fill="var(--fg)">CLOSE</text>
+        <circle cx="160" cy="103" r="25" fill="var(--bg-2)" stroke="var(--accent)"/><text x="160" y="107" text-anchor="middle" class="svg-mono" fill="var(--fg)">OPEN</text>
+        <circle cx="160" cy="165" r="25" fill="var(--bg-2)" stroke="var(--accent)"/><text x="160" y="169" text-anchor="middle" class="svg-mono" fill="var(--fg)">PUMP</text>
+        <rect x="300" y="50" width="390" height="66" rx="9" fill="var(--bg-3)" stroke="var(--border)"/>
+        <text x="316" y="72" class="svg-t" fill="var(--fg)" font-weight="700">fourBar : PositionalMechanism</text>
+        <text x="316" y="92" class="svg-mono" fill="var(--fg-2)">MotionMagic → angle · Arm_Cosine gravity · leader #10 + follower #34 (opposed)</text>
+        <rect x="300" y="126" width="390" height="56" rx="9" fill="var(--bg-3)" stroke="var(--border)"/>
+        <text x="316" y="148" class="svg-t" fill="var(--fg)" font-weight="700">roller : RollerMechanism</text>
+        <text x="316" y="168" class="svg-mono" fill="var(--fg-2)">open-loop duty · motor #13</text>
+        <rect x="26" y="212" width="664" height="52" rx="9" fill="var(--bg-2)" stroke="var(--border)"/>
+        <text x="42" y="234" class="svg-t" fill="var(--fg)" font-weight="700">periodic() — ticks all three, every 20 ms</text>
+        <text x="42" y="252" class="svg-mono" fill="var(--fg-3)">fourBar.periodic() · roller.periodic() · machine.periodic()</text>
+        <path d="M266 98 C285 88, 292 84, 300 82" fill="none" stroke="var(--accent)" stroke-width="1.6" marker-end="url(#ar)"/>
+        <path d="M266 155 C285 158, 292 158, 300 155" fill="none" stroke="var(--accent)" stroke-width="1.6" marker-end="url(#ar)"/>
+      </svg>
+    </figure>
+    <div class="code"><div class="code-head"><span class="fname">Intake.java — the real file</span><button class="copy">Copy</button></div><pre><code>public class Intake extends SubsystemBase {
+
+    private final PositionalMechanism fourBar = new PositionalMechanism(
+            new MechanismConfig("Intake/FourBar", new CANDeviceId(LEFT_FOUR_BAR_MOTOR_ID))
+                    .follower(new CANDeviceId(RIGHT_FOUR_BAR_MOTOR_ID), true)   // mirror-mounted → opposed
+                    .controlMode(ControlMode.VOLTAGE)      // ported v1 volt gains; FOC after SysId
+                    .rotorToMechanismRatio(GEARING)        // 14.14 rotor turns per four-bar turn
+                    .gains(FOUR_BAR_GAINS, FOUR_BAR_SIM_GAINS)   // kP=4π V/rot (v1's 2 V/rad), kG=0.8 Arm_Cosine
+                    .motion(FOUR_BAR_MOTION)               // trapezoid @ 1.5 rad/s — v1's velocity clamp
+                    .softLimits(Radians.of(INTAKE_MIN_ANGLE_RAD), Radians.of(INTAKE_MAX_ANGLE_RAD))
+                    .peakVoltage(FOUR_BAR_PEAK_VOLTS, -FOUR_BAR_PEAK_VOLTS)     // ±1.5 V — v1's 2nd clamp
+                    .currentBudget(FOUR_BAR_BUDGET)
+                    .tolerance(Radians.of(INTAKE_ANGLE_TOLERANCE_RAD))
+                    .neutralMode(Coast)                    // hand-positionable in the pit
+                    .simArmModel(DCMotor.getKrakenX60Foc(2), GEARING, 0.3, 0.3,
+                            INTAKE_MIN_ANGLE_RAD, INTAKE_MAX_ANGLE_RAD, START_ANGLE_RAD));
+
+    private final RollerMechanism roller = new RollerMechanism(
+            new MechanismConfig("Intake/Roller", new CANDeviceId(ROLLER_MOTOR_ID))
+                    .controlMode(ControlMode.VOLTAGE)
+                    .currentBudget(ROLLER_BUDGET)
+                    .simRotationalModel(DCMotor.getKrakenX60Foc(1), 0.002, 3.0));
+
+    private final StateMachine&lt;IntakeStates&gt; machine;
+    public final Trigger atPositionTrigger;
+
+    public Intake() {
+        fourBar.resetPosition(Radians.of(START_ANGLE_RAD));   // no fused CANcoder yet → boot seed
+
+        machine = new StateMachine&lt;&gt;("Intake", CLOSE)
+                .whileIn(OPEN,  run(() -&gt; { fourBar.setGoal(Radians.of(OPEN.angle));  roller.runDutyCycle(OPEN.voltage); }))
+                .whileIn(CLOSE, run(() -&gt; { fourBar.setGoal(Radians.of(CLOSE.angle)); roller.runDutyCycle(CLOSE.voltage); }))
+                .whileIn(PUMP,  pumpCommand())
+                .transitionFromAny(OPEN).transitionFromAny(CLOSE).transitionFromAny(PUMP);
+                // ^ every move legal — intentional: this mechanism has no unsafe orderings
+
+        atPositionTrigger = new Trigger(() -&gt; Math.abs(
+                machine.getCurrentState().angle - fourBar.getPosition().in(Radians)) &lt; INTAKE_ANGLE_TOLERANCE_RAD);
+    }
+
+    private Command pumpCommand() {                            // shake pieces in: oscillate + feed
+        return Commands.repeatingSequence(
+                run(() -&gt; { fourBar.setGoal(Radians.of(PUMP_HIGH_ANGLE_RAD)); roller.runDutyCycle(PUMP.voltage); }).withTimeout(PUMP_PERIOD_SECONDS),
+                run(() -&gt; { fourBar.setGoal(Radians.of(PUMP_LOW_ANGLE_RAD));  roller.runDutyCycle(PUMP.voltage); }).withTimeout(PUMP_PERIOD_SECONDS))
+            .withName("Intake Pump");
+    }
+
+    public Command setStateCommand(IntakeStates s) { return machine.requestCommand(s); }  // buttons/autos
+    public void requestState(IntakeStates s)       { machine.request(s); }                // superstructure fan-out
+    public Command coastCommand()                  { return fourBar.coastCommand(this); } // pit crew
+
+    @Override public void periodic() { fourBar.periodic(); roller.periodic(); machine.periodic(); }
+}</code></pre></div>
+    <p class="lead" style="margin-top:26px">Now the dissection — every block of that file, with what it does, <em>why it's written that way</em>, and what would break without it.</p>
+
+    <h3>21.1 · The four-bar's config, line by line</h3>
+    <div class="tbl"><table>
+      <tr><th>Line</th><th>What it does · why · what breaks without it</th></tr>
+      <tr><td><code>new MechanismConfig("Intake/FourBar", …)</code></td><td>The name is the telemetry path — every logged value and every alert for this mechanism appears under it. A lazy name costs you searchable logs; nothing else. The id is the <b>leader</b> motor (left, #10) on the RIO bus.</td></tr>
+      <tr><td><code>.follower(new CANDeviceId(34), true)</code></td><td>The second Kraken. It gets the <em>same verified config</em> and a hardware <code>Follower</code> request — no second loop, no RIO involvement, and it never appears in the code again. <code>true</code> = opposed, because the motors are mirror-mounted and must spin opposite directions for the same four-bar motion. <b>Wrong flag = the motors fight:</b> huge current, zero motion, hot motors. That symptom on bring-up → flip this first.</td></tr>
+      <tr><td><code>.controlMode(VOLTAGE)</code></td><td>The gains below are v1's volt-based numbers, so the mechanism must run the Voltage request family. The comment marks the upgrade path: SysId → amp gains → flip to <code>TORQUE_CURRENT_FOC</code> (one word, §35). Running FOC with these gains would be a violently wrong stiffness.</td></tr>
+      <tr><td><code>.rotorToMechanismRatio(GEARING)</code></td><td>14.14 rotor turns per four-bar turn, written into the device's <code>SensorToMechanismRatio</code>. This is what makes <code>setGoal(Radians.of(…))</code> possible — the TalonFX itself thinks in four-bar radians. Wrong ratio = motion scaled by ~14× (§37's "moves too far" row).</td></tr>
+      <tr><td><code>.gains(FOUR_BAR_GAINS, FOUR_BAR_SIM_GAINS)</code></td><td>Real: <code>new Gains(2·2π, 0, 0).withGravity(0.8, Arm_Cosine)</code>. The odd <code>2·2π</code> is deliberate: v1's kP was 2&#160;V/<em>rad</em>; the device works in <em>rotations</em>, so the same stiffness is 2×2π V/rot — leaving the conversion visible preserves the provenance. <code>Arm_Cosine</code> scales the 0.8&#160;kG by cos(angle): full hold horizontal, none vertical — which is why the geometry convention puts 0 at horizontal. Sim set is separate because sim physics ≠ real friction.</td></tr>
+      <tr><td><code>.motion(FOUR_BAR_MOTION)</code> + <code>.peakVoltage(±1.5)</code></td><td><b>Two independent speed clamps, both ported from v1 on purpose.</b> The trapezoid (cruise 1.5&#160;rad/s) reproduces v1's velocity clamp — a fixed cruise is exactly what trapezoid gives, which is why it isn't Expo here. The ±1.5&#160;V peak reproduces v1's separate output clamp. Belt and suspenders, because that's how this mechanism was competition-validated. This is "refactor, not redesign" in one pair of lines.</td></tr>
+      <tr><td><code>.softLimits(0, 2.4 rad)</code></td><td>Goals are clamped by the archetype <em>and</em> the device refuses to drive past — two layers. Without it, one bad setpoint slams the four-bar into its hard stop at full current.</td></tr>
+      <tr><td><code>.currentBudget(80, 60)</code></td><td>80&#160;A stator (enough torque to move a two-motor four-bar briskly, not enough to bend it), 60&#160;A supply (breaker protection).</td></tr>
+      <tr><td><code>.tolerance(0.003 rad)</code></td><td>≈0.17° — the "arrived" window feeding <code>atPositionTrigger</code>. Tight because the superstructure gates on it; too loose and the robot acts before the intake is truly placed.</td></tr>
+      <tr><td><code>.neutralMode(Coast)</code></td><td>So the pit crew can back-drive it by hand (stow, hand-zero) and so it goes limp on disable instead of locking. Brake would fight you.</td></tr>
+      <tr><td><code>.simArmModel(2 Krakens, GEARING, 0.3, 0.3, min, max, start)</code></td><td>Attaches a WPILib <code>SingleJointedArmSim</code> — the one line that makes this mechanism move in <code>simulateJava</code>. MOI/length are estimates; sim is for logic, not physics homework. Delete it and the sim silently does nothing.</td></tr>
+    </table></div>
+
+    <h3>21.2 · Why the roller is only four lines</h3>
+    <p>A roller is open-loop: it holds no position and no speed, it just spins. So there are no gains (nothing to close), no motion profile (nothing to shape), no soft limits (free spinning), no tolerance (no target). What it <em>still</em> gets from those four lines: a verified config, batched signals, DogLog telemetry, a debounced disconnect Alert, a sim model — and <code class="k">currentSpike()</code> on demand. Less config because there is genuinely less to decide, not because it's second-class.</p>
+
+    <h3>21.3 · The constructor — seeding, then the machine</h3>
+    <div class="box why"><div class="h">🧠 <code style="color:inherit">fourBar.resetPosition(Radians.of(START_ANGLE_RAD))</code> — the magic-number seed</div>
+      <p>No fused CANcoder yet (§13.8), so the four-bar's position is <em>relative</em>: at power-on it only knows "zero is wherever I woke up." The robot always boots stowed, so we declare "you are at the stow angle." The constant <code class="k">π − 0.732601 − 0.159</code> is the empirically measured stow angle carried over from v1 — left un-collapsed so the calibration history stays legible. Skip this line and every angle the mechanism ever reports is offset by the boot pose. When the CANcoder gets fused (offset calibration pending), this line and the constant disappear.</p></div>
+    <div class="box why"><div class="h">🧠 Why <code style="color:inherit">whileIn</code> for all three states, not <code style="color:inherit">onEnter</code></div>
+      <p><code class="k">onEnter</code> fires once; <code class="k">whileIn</code> schedules a command that runs the entire time and is cancelled at exit. The four-bar goal alone could be a one-shot (MotionMagic keeps chasing it onboard), but the <b>roller duty-cycle must be commanded continuously</b> — so each state's behavior is a <code class="k">whileIn</code> that does both, every loop. One consistent pattern instead of a mixed one.</p></div>
+    <div class="box why"><div class="h">🧠 Why <code style="color:inherit">run(…)</code> and not a bare lambda</div>
+      <p><code class="k">run(…)</code> is <code class="k">SubsystemBase.run</code>: it builds a <code class="k">RunCommand</code> <b>that requires this subsystem</b>. The requirement is the point — it means a manual intake command interrupts the state's command cleanly through the scheduler, and two things can never drive the roller at once. A plain <code class="k">Runnable</code> would have no requirement and no scheduling semantics.</p></div>
+    <div class="box why"><div class="h">🧠 Why <code style="color:inherit">transitionFromAny</code> on every state</div>
+      <p>The intake has no unsafe orderings — CLOSE→PUMP, OPEN→CLOSE, anything goes. Declaring <code class="k">transitionFromAny</code> for all three states says that <em>explicitly</em>. In a default-deny machine, freedom must be declared just like restriction — so when a reader sees this, they know "all moves legal" was a decision, not an omission. A mechanism with real interlocks (say, "never extend while climbing") would instead list only its legal edges and let everything else be denied.</p></div>
+    <div class="box why"><div class="h">🧠 <code style="color:inherit">atPositionTrigger</code> — one trigger, correct in every state</div>
+      <p>It compares the four-bar's angle to <code class="k">machine.getCurrentState().angle</code> — the <em>current state's</em> target — not to a fixed constant. So the same trigger answers "is the intake where its current mode wants it?" in CLOSE, OPEN, and PUMP alike. The superstructure consumes it as a readiness gate.</p></div>
+
+    <h3>21.4 · The pump command — composition as the timing engine</h3>
+    <p>PUMP physically shakes pieces in: the four-bar oscillates 1.6&#160;rad ↔ 0&#160;rad every half-second while the roller keeps feeding (v1 behavior, preserved). Look at what is <em>not</em> in the implementation: no timers, no counters, no "phase" flag, no cleanup code. <code class="k">repeatingSequence(high.withTimeout(0.5), low.withTimeout(0.5))</code> — the command framework does the timing, the alternation, and (because it's a <code class="k">whileIn</code>) the instant cancellation when the state changes. This is the house style: express time-structured behavior as command composition, never as hand-rolled state.</p>
+
+    <h3>21.5 · The public API — three methods, three audiences</h3>
+    <div class="tbl"><table>
+      <tr><th>Method</th><th>Audience · why this shape</th></tr>
+      <tr><td><code>setStateCommand(IntakeStates)</code></td><td><b>Buttons &amp; autos</b> — a schedulable, interruptible <code>Command</code>. State requests as first-class actions.</td></tr>
+      <tr><td><code>requestState(IntakeStates)</code></td><td><b>The superstructure</b> — it calls from inside its own machine's <code>onEnter</code> and wants a plain synchronous poke, not a nested command. Same intent, second shape, because the caller is different.</td></tr>
+      <tr><td><code>coastCommand()</code></td><td><b>The pit crew</b> — hold to let the four-bar go limp for hand positioning; restores the configured neutral on release; works while disabled.</td></tr>
+    </table></div>
+
+    <h3>21.6 · <code>periodic()</code> — three lines, non-negotiable</h3>
+    <div class="box danger"><div class="h">🚫 The #1 forgotten thing in new subsystems</div>
+      <p><code class="k">fourBar.periodic()</code> steps the sim, updates the disconnect alert, logs telemetry. <code class="k">roller.periodic()</code> same. <code class="k">machine.periodic()</code> retries pending transitions and logs state. Miss any of them and that piece goes silently dark — no error, no exception, it just doesn't move / doesn't log / doesn't transition. If a mechanism "ignores commands", check these three lines before anything else (§37).</p></div>
+
+    <h3>21.7 · What those ~80 lines switched on</h3>
+    <div class="tbl"><table>
+      <tr><th>Invisible work, running right now</th><th>Came from</th></tr>
+      <tr><td>Three motors configured + <b>verified</b> (apply → read-back → compare → retry ×5, Alert on failure)</td><td><code>MechanismConfig</code> → <code>DeviceConfigs</code> (§11)</td></tr>
+      <tr><td>Hardware follower, opposed, set once</td><td><code>.follower(…)</code></td></tr>
+      <tr><td>Every status signal at a deliberate rate, batch-refreshed once per loop</td><td><code>SignalHub</code> (§12)</td></tr>
+      <tr><td>MotionMagic + arm-cosine gravity at 1&#160;kHz on the device</td><td><code>PositionalMechanism</code> (§15)</td></tr>
+      <tr><td>Position/goal/volts/currents/temp/at-goal logged per mechanism</td><td><code>Mechanism.periodic()</code> (§14)</td></tr>
+      <tr><td>Debounced disconnect Alerts + fault scanning</td><td><code>Mechanism</code> + <code>FaultReporter</code> (§29)</td></tr>
+      <tr><td>Physics simulation stepped every loop</td><td><code>.simArmModel / .simRotationalModel</code> (§19)</td></tr>
+      <tr><td>SysId routines available on demand</td><td><code>Mechanism.sysId*</code> (§35)</td></tr>
+      <tr><td>State telemetry + illegal-transition logging</td><td><code>StateMachine</code> (§20)</td></tr>
+    </table></div>
+
+    <h3>21.8 · The same intake in v1 — the contrast that explains the library</h3>
+    <div class="tbl"><table>
+      <tr><th>Concern</th><th>v1 — written by hand</th><th>v2 — declared</th></tr>
+      <tr><td>Control loop</td><td>Hand control law: velocity setpoint = <code>error / 0.02</code>, clamped, + ks/kv/kg feedforward + RIO <code>PIDController</code>, voltage out, 50&#160;Hz</td><td>MotionMagic on the device, 1&#160;kHz — <code>.motion(…)</code> + <code>.gains(…)</code></td></tr>
+      <tr><td>Units</td><td>Manual conversion factors on every motor; "raw ticks are meaningless" warnings in the docs</td><td><code>.rotorToMechanismRatio(…)</code>; the device thinks in radians</td></tr>
+      <tr><td>Follower</td><td>A <code>MotorGroup</code>, inversion wired by hand</td><td><code>.follower(id, true)</code></td></tr>
+      <tr><td>State</td><td>Enum field mutated by <code>InstantCommand</code>, polled by a <code>ConditionalCommand</code> default command with <code>.until(…)</code></td><td>A declared, guarded, logged transition table</td></tr>
+      <tr><td>Sim</td><td>None — nothing moved in simulation</td><td><code>.simArmModel(…)</code></td></tr>
+      <tr><td>Telemetry / health</td><td>Hand-placed <code>@Log.NT</code> getters; no disconnect detection</td><td>Automatic per mechanism + FaultReporter</td></tr>
+    </table></div>
+    <div class="box ok"><div class="h">✅ Same competition behavior, a fraction of the surface</div><p>The migration preserved the intake's behavior exactly — angles, pump timing, the two speed clamps, the boot seed — while deleting the hand-written control, unit, follower, state, sim, and telemetry plumbing. What remains is the file you read at the top of this section, and now every line of it has a reason you can point to. When you write your next subsystem, this is the shape you're copying.</p></div>
+  </section>
+
+  <!-- ==================================================== 22 SUPERSTRUCTURE -->
+  <section id="superstructure">
+    <h2><span class="n">22</span><code>Superstructure&lt;G&gt;</code> — one robot goal, fanned out</h2>
+    <p class="lead">The top layer: a single goal enum for the whole robot, where each goal is a tuple of subsystem states. Enter a goal → every subsystem gets its state. Illegal combinations don't exist as values.</p>
+    <div class="code"><div class="code-head"><span class="fname">the goal enum — one row per robot behavior</span><button class="copy">Copy</button></div><pre><code>public enum RobotState {
+    //           intake              shooter                 transport
+    IDLE      (IntakeStates.CLOSE,  ShooterStates.IDLE,      TransportStates.IDLE),
+    AIM_HUB   (IntakeStates.CLOSE,  ShooterStates.LOOK_HUB,  TransportStates.IDLE),
+    SHOOT_HUB (IntakeStates.PUMP,   ShooterStates.SHOOT_HUB, TransportStates.TRANSPORT);
+
+    final IntakeStates intakeState; final ShooterStates shooterState; final TransportStates transportState;
+    RobotState(IntakeStates i, ShooterStates s, TransportStates t){ intakeState=i; shooterState=s; transportState=t; }
+}</code></pre></div>
+    <div class="code"><div class="code-head"><span class="fname">the fan-out — one loop builds the machine</span><button class="copy">Copy</button></div><pre><code>StateMachine&lt;RobotState&gt; machine = new StateMachine&lt;&gt;("Superstructure", RobotState.IDLE);
+for (RobotState goal : RobotState.values()) {
+    machine.onEnter(goal, () -&gt; {
+        intake.requestState(goal.intakeState);        // synchronous pokes into each
+        shooter.requestState(goal.shooterState);      //   subsystem's own machine
+        transport.requestState(goal.transportState);
+    });
+    machine.transitionFromAny(goal);
+}
+// the concrete class extends frc.excalib2.superstructure.Superstructure&lt;RobotState&gt;
+// and passes this machine to super(...)</code></pre></div>
+    <figure>
+      <svg viewBox="0 0 720 185" role="img">
+        <defs><marker id="a6" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--accent)"/></marker></defs>
+        <rect x="270" y="16" width="180" height="52" rx="9" fill="var(--accent-soft)" stroke="var(--accent)"/>
+        <text x="360" y="38" text-anchor="middle" class="svg-t" fill="var(--fg)" font-weight="700">RobotState.SHOOT_HUB</text>
+        <text x="360" y="56" text-anchor="middle" class="svg-mono" fill="var(--fg-3)">(intake, shooter, transport)</text>
+        <g class="svg-t" font-weight="700" fill="var(--fg)">
+          <rect x="70"  y="124" width="170" height="46" rx="8" fill="var(--bg-3)" stroke="var(--border)"/><text x="155" y="146" text-anchor="middle">Intake.PUMP</text><text x="155" y="162" text-anchor="middle" class="svg-mono" fill="var(--fg-3)">requestState(...)</text>
+          <rect x="275" y="124" width="170" height="46" rx="8" fill="var(--bg-3)" stroke="var(--border)"/><text x="360" y="146" text-anchor="middle">Shooter.SHOOT_HUB</text><text x="360" y="162" text-anchor="middle" class="svg-mono" fill="var(--fg-3)">requestState(...)</text>
+          <rect x="480" y="124" width="170" height="46" rx="8" fill="var(--bg-3)" stroke="var(--border)"/><text x="565" y="146" text-anchor="middle">Transport.FEED</text><text x="565" y="162" text-anchor="middle" class="svg-mono" fill="var(--fg-3)">gated on shooter ready</text>
+        </g>
+        <g stroke="var(--accent)" stroke-width="1.6" fill="none">
+          <path d="M320 68 C250 92, 170 96, 155 122" marker-end="url(#a6)"/>
+          <path d="M360 68 L360 122" marker-end="url(#a6)"/>
+          <path d="M400 68 C470 92, 550 96, 565 122" marker-end="url(#a6)"/>
+        </g>
+      </svg>
+      <figcaption>One goal, three synchronized subsystem states. Interlocks live as guards in the subsystems' own machines (or as gating logic like the transport's shooter-ready check).</figcaption>
+    </figure>
+    <div class="tbl"><table>
+      <tr><th>Base-class API</th><th>Does</th></tr>
+      <tr><td><code>request(G)</code> / <code>requestAndWait(G)</code></td><td>Command that requests a goal (instant / finishes on arrival). Bind to buttons; register as auto named commands — teleop and auto share the exact same path.</td></tr>
+      <tr><td><code>currentGoal()</code> · <code>in(G)</code></td><td>Read the goal · Trigger for bindings (e.g. LEDs by goal).</td></tr>
+      <tr><td><code>periodic()</code></td><td>Ticks the goal machine (the concrete class calls super.periodic()).</td></tr>
+    </table></div>
+    <div class="box tip"><div class="h">💡 Trigger wiring — where goals get chosen</div><p>Driver buttons, field zones (§32), and game-state (hub shifts) compose into Triggers that request goals:<br><code class="k">intakeButton.and(inAllianceZone).and(hubActive).onTrue(superstructure.request(SHOOT_HUB));</code></p></div>
+  </section>
+
+  <!-- ==================================================== 23 SWERVE -->
+  <section id="swerve">
+    <h2><span class="n">23</span><code>SwerveSubsystem</code> — the drivetrain, complete</h2>
+    <p class="lead">Built on CTRE's <code class="k">SwerveDrivetrain</code> (its own 250&#160;Hz odometry thread, time-synced CANivore reads, built-in sim) and extended with every drive command, vision fusion, PathPlanner wiring, and SysId.</p>
+    <h3>Constructing</h3>
+    <div class="code"><div class="code-head"><span class="fname">RobotContainer — construct + wire (the real code)</span><button class="copy">Copy</button></div><pre><code>public final SwerveSubsystem swerve = new SwerveSubsystem(
+    SwerveConfig.DRIVETRAIN,
+    SwerveConfig.FRONT_LEFT, SwerveConfig.FRONT_RIGHT,
+    SwerveConfig.BACK_LEFT,  SwerveConfig.BACK_RIGHT);
+
+// in the constructor body:
+swerve.withLimelight("limelight-turret",
+        () -&gt; swerve.getHeading().plus(TurretOffsetGetter.instance.getTurretOffset()),
+        TurretOffsetGetter.instance::isFast)                       // §24
+     .withVisionPoseTransform(SwerveConfig::turretPoseToRobotPose);
+swerve.configureAutoBuilder(SwerveConfig.PP_TRANSLATION_GAINS, SwerveConfig.PP_ROTATION_GAINS);
+
+swerve.setDefaultCommand(swerve.fieldCentricDriveCommand(
+    () -&gt; -controller.getLeftY(), () -&gt; -controller.getLeftX(), () -&gt; -controller.getRightX(),
+    SwerveConfig.MAX_SPEED_MPS, SwerveConfig.MAX_OMEGA_RAD_PER_SEC, CONTROLLER_DEADBAND));</code></pre></div>
+    <div class="box warn"><div class="h">⚠️ SwerveConfig needs on-robot verification</div><p>The module constants (inversions, CANcoder offsets, coupling ratio, gains) were hand-derived from v1 values and are <b>not yet robot-verified</b>. Before real driving: check each module's direction, verify offsets against Tuner X, and expect a gain re-tune. The teleop limits (2&#160;m/s, 1.5&#160;rad/s) are still cautious test values.</p></div>
+    <h3>Every drive command</h3>
+    <div class="tbl"><table>
+      <tr><th>Command</th><th>Parameters</th><th>Use</th></tr>
+      <tr><td><code>fieldCentricDriveCommand</code></td><td>x, y, ω suppliers [-1..1] · maxSpeed · maxOmega · deadband</td><td>Default teleop. Operator-perspective aware (auto-flips on red). Deadband is <b>rescaled</b> — no output step at the edge.</td></tr>
+      <tr><td><code>robotCentricDriveCommand</code></td><td>same</td><td>Robot-relative nudging (e.g. camera-guided pickup).</td></tr>
+      <tr><td><code>headingLockedDriveCommand</code></td><td>x, y · target-heading supplier · maxSpeed · deadband · headingKp</td><td>Translate freely while heading locks to a target (face the hub while strafing). Heading loop runs in the request.</td></tr>
+      <tr><td><code>driveToPoseCommand</code></td><td>target supplier · translationKp · headingKp · translation + heading TrapezoidProfile.Constraints · tolerances</td><td>Short-range precision alignment (§25).</td></tr>
+      <tr><td><code>pathfindToPoseCommand</code></td><td>target Pose2d · PathConstraints</td><td>Long moves around obstacles (PathPlanner pathfinding).</td></tr>
+      <tr><td><code>pathfindThenFollowPathCommand</code></td><td>path name · PathConstraints</td><td>Pathfind to a drawn path's start, then follow it. Missing file → Alert + no-op, never a crash.</td></tr>
+      <tr><td><code>pathfindWithOverrideCommand</code></td><td>target · constraints · x,y,ω · maxes · deadband</td><td>Pathfinds, but the driver's sticks take over instantly; resumes when released.</td></tr>
+      <tr><td><code>brakeCommand()</code> / <code>idleCommand()</code></td><td>—</td><td>X-stance to resist pushing / no output.</td></tr>
+      <tr><td><code>applyRequest(supplier)</code></td><td>any <code>SwerveRequest</code></td><td>Escape hatch for custom CTRE requests.</td></tr>
+    </table></div>
+    <h3>Housekeeping, getters, SysId</h3>
+    <div class="tbl"><table>
+      <tr><th>Member</th><th>Does</th></tr>
+      <tr><td><code>getPose()</code> · <code>getHeading()</code> · <code>getSpeeds()</code> · <code>getVelocityMagnitude()</code></td><td>Odometry reads (blue-origin field frame). These feed the shooter's targeting.</td></tr>
+      <tr><td><code>resetHeadingCommand()</code></td><td>Re-zero field-forward to the current heading (driver re-orient). Works disabled.</td></tr>
+      <tr><td><code>resetPoseCommand(supplier)</code> / <code>resetPose(pose)</code></td><td>Overwrite odometry (auto start poses do this via PathPlanner).</td></tr>
+      <tr><td><code>coastCommand()</code></td><td>All modules coast while held — push the robot in the pit. Works disabled.</td></tr>
+      <tr><td><code>driveRobotRelative(speeds)</code></td><td>Direct ChassisSpeeds — what PathPlanner drives through.</td></tr>
+      <tr><td><code>sawTagRecently(seconds)</code></td><td>Trigger: a vision estimate was fused within the window (§24).</td></tr>
+      <tr><td><code>configureAutoBuilder(transPID, rotPID)</code></td><td>Wires PathPlanner incl. wheel-force feedforwards. Once, after construction (§26).</td></tr>
+      <tr><td><code>sysIdTranslation(dir, dynamic)</code> / <code>sysIdSteer(dir, dynamic)</code></td><td>Drivetrain characterization → hoot log (§35).</td></tr>
+    </table></div>
+    <div class="box why"><div class="h">🧠 <span class="lvl deep" style="margin:0 6px 0 0">DEEP</span> Operator perspective &amp; the Field2d</div><p>The subsystem re-applies the operator-perspective (blue = 0°, red = 180°) whenever disabled, so alliance flips mid-event Just Work — "stick forward" is always away from your driver station. It also publishes a <code class="k">Field2d</code> to the dashboard and logs Pose/Speeds/ModuleStates/Targets/OdometryPeriod to DogLog every loop.</p></div>
+  </section>
+
+  <!-- ==================================================== 24 VISION -->
+  <section id="vision">
+    <h2><span class="n">24</span>Vision — <code>LimelightMegaTag2</code></h2>
+    <p class="lead">MegaTag2 solves the robot's <em>translation</em> given its <em>heading</em>. So the contract is: feed it your heading every loop, take back a pose estimate, fuse with scaled trust.</p>
+    <div class="tbl"><table>
+      <tr><th>Member</th><th>Does</th></tr>
+      <tr><td><code>new LimelightMegaTag2(name)</code></td><td>Binds to the Limelight's NT table (e.g. <code>"limelight-turret"</code>).</td></tr>
+      <tr><td><code>setRobotOrientation(yaw, yawRateDegPerSec)</code></td><td>The heading feed. For a turret-mounted camera: the <b>turret platform's</b> field heading = robot heading + turret angle.</td></tr>
+      <tr><td><code>getEstimate() → Optional&lt;Estimate&gt;</code></td><td>Latest unconsumed estimate: <code>pose</code>, <code>timestampSeconds</code> (FPGA time, latency-corrected), <code>tagCount</code>, <code>avgTagDistanceMeters</code>. Empty when no new frame or no tags.</td></tr>
+      <tr><td><code>stdDevs(estimate)</code></td><td>Trust scaling: grows with distance², halves with ≥2 tags, heading never trusted (the gyro wins).</td></tr>
+    </table></div>
+    <p>You rarely touch this directly — <code class="k">swerve.withLimelight(name, cameraYawSupplier, rejectGate)</code> runs the whole cycle in the swerve's periodic. The pieces you own:</p>
+    <div class="tbl"><table>
+      <tr><th>Hook</th><th>Our robot's value</th><th>Why</th></tr>
+      <tr><td>camera yaw supplier</td><td><code>swerve.getHeading().plus(turretOffset)</code></td><td>The camera rides the turret, so its platform heading includes the turret angle.</td></tr>
+      <tr><td>reject gate</td><td><code>TurretOffsetGetter.instance::isFast</code></td><td>While the turret/robot spins fast, the solve smears — discard those frames.</td></tr>
+      <tr><td><code>withVisionPoseTransform</code></td><td><code>SwerveConfig::turretPoseToRobotPose</code></td><td>The returned pose is turret-centered; this converts it to the robot's frame (rotate the offset by the corrected heading).</td></tr>
+    </table></div>
+    <div class="box tip"><div class="h">💡 A chassis-mounted camera is simpler</div><p>Then the yaw supplier is just <code class="k">swerve::getHeading</code>, the gate can be <code class="k">() -&gt; false</code>, and no pose transform is needed. The turret machinery exists because our camera moves.</p></div>
+  </section>
+
+  <!-- ==================================================== 25 DRIVETOPOSE -->
+  <section id="drivetopose">
+    <h2><span class="n">25</span><code>DriveToPose</code> — the precision aligner</h2>
+    <p class="lead">Three profiled PID controllers (x, y, heading) driving field-centric velocity requests, finishing at tolerance. Use for the last half-meter; use pathfinding (§23) for the journey there.</p>
+    <div class="code"><div class="code-head"><span class="fname">via the swerve factory</span><button class="copy">Copy</button></div><pre><code>swerve.driveToPoseCommand(
+    () -&gt; AllianceFlip.apply(TARGET_POSE_BLUE),         // pass alliance-corrected targets (§31)
+    3.0,                                                 // translation kP (m/s per m of error)
+    4.0,                                                 // heading kP    (rad/s per rad)
+    new TrapezoidProfile.Constraints(2.0, 3.0),          // translation vel/accel caps
+    new TrapezoidProfile.Constraints(6.0, 10.0),         // heading caps
+    0.02,                                                // finish tolerance, meters
+    Math.toRadians(1.5));                                // finish tolerance, radians</code></pre></div>
+    <div class="box why"><div class="h">🧠 Behavior details worth knowing</div><p>On initialize it seeds the profiles from the robot's <em>current</em> velocity (no jerk when engaged while moving). The target is a <b>supplier</b>, so a moving target re-profiles live. Heading input is continuous (no ±π seam). It requires the swerve, ends with an Idle request, and logs its target to <code class="k">Swerve/DriveToPose/Target</code>.</p></div>
+  </section>
+
+  <!-- ==================================================== 26 AUTO -->
+  <section id="auto">
+    <h2><span class="n">26</span>Autonomous — PathPlanner end to end</h2>
+    <ol class="steps">
+      <li><b class="t">Draw</b> paths and autos in the PathPlanner desktop app → saved under <code class="k">src/main/deploy/pathplanner/</code>. Deploy ships them to the RIO.</li>
+      <li><b class="t">Wire the drivetrain once:</b> <code class="k">swerve.configureAutoBuilder(transPID, rotPID)</code> — supplies pose, odometry reset, speeds, and the drive callback <em>with wheel-force feedforwards</em> to PathPlanner. Failure → Alert (e.g. missing GUI settings), never a crash.</li>
+      <li><b class="t">Register every named command BEFORE building the chooser:</b>
+        <div class="code"><div class="code-head"><span class="fname">RobotContainer.registerCommands()</span><button class="copy">Copy</button></div><pre><code>NamedCommands.registerCommand("shoot",  superstructure.request(RobotState.SHOOT_HUB));
+NamedCommands.registerCommand("intake", superstructure.request(RobotState.INTAKE_AIM_HUB));
+NamedCommands.registerCommand("idle",   superstructure.request(RobotState.IDLE));
+// or in bulk:  Autos.registerNamedCommands(Map.of("shoot", ..., "intake", ...));</code></pre></div></li>
+      <li><b class="t">Build the chooser:</b> <code class="k">Autos.buildChooser()</code> returns a <code class="k">SendableChooser&lt;Command&gt;</code> with every <code class="k">.auto</code> file and a safe "Do Nothing" default, already published to the dashboard. <code class="k">getAutonomousCommand()</code> = <code class="k">chooser.getSelected()</code>.</li>
+    </ol>
+    <div class="box danger"><div class="h">🚫 The silent auto killer</div><p>A named command used in a <code class="k">.auto</code> but never registered becomes a <b>silent no-op</b> — the robot drives the path and simply never shoots. This exact bug shipped once (the registration call was commented out). Rule: registration happens before the chooser, and every name in every auto has a registration. Check the DS console for PathPlanner warnings on boot.</p></div>
+    <div class="box tip"><div class="h">💡 Auto and teleop can't drift apart</div><p>Named commands call <code class="k">superstructure.request(goal)</code> — the same entry point your buttons use. There is no separate "auto behavior" to maintain.</p></div>
+  </section>
+
+  <!-- ==================================================== 27 TELEMETRY -->
+  <section id="telemetry">
+    <h2><span class="n">27</span>Telemetry — DogLog + SignalLogger</h2>
+    <p class="lead">Two recorders, one viewer. <b>DogLog</b> is the log of record for robot logic (WPILib DataLog + optional NT). <b>Phoenix SignalLogger</b> captures device-rate data into <code class="k">.hoot</code> files. Both open in AdvantageScope.</p>
+    <div class="code"><div class="code-head"><span class="fname">setup + everyday use</span><button class="copy">Copy</button></div><pre><code>// once, first line of the Robot constructor:
+Telemetry.init(false, powerDistributionHub);   // (competition?, PDH or null)
+//   competition=true  → NT publishing OFF (bandwidth), file logging only
+//   pdh != null       → automatic battery voltage + per-channel current logging
+
+// anywhere, any time — log a value under a path:
+DogLog.log("Shooter/DistanceToTarget", distance);
+DogLog.log("Superstructure/Goal", currentGoal().name());
+DogLog.log("Swerve/Vision/Pose", pose);            // geometry types supported
+DogLog.logFault("MyFault/SomethingBadHappened");   // fault markers (searchable)</code></pre></div>
+    <h3>Conventions</h3>
+    <ul class="check">
+      <li>Paths are <code class="k">Area/Thing</code> — mechanisms already log under their config name (§13.1); match their style.</li>
+      <li>Log <em>decisions</em>, not just sensors: goals, state names, gate booleans. Future-you debugs from these.</li>
+      <li>Mechanism basics are automatic — don't re-log position/current yourself.</li>
+      <li>At competition, call <code class="k">Telemetry.init(true, …)</code> — file-only logging.</li>
+    </ul>
+    <div class="box why"><div class="h">🧠 <span class="lvl deep" style="margin:0 6px 0 0">DEEP</span> When to look at which log</div><p>Robot logic questions ("why didn't it shoot?") → DogLog's <code class="k">.wpilog</code> (state names, triggers, goals). Control questions ("why does the flywheel dip?") → the <code class="k">.hoot</code> (kHz-rate currents, closed-loop error). SysId analysis also reads the hoot. AdvantageScope opens both, even side-by-side.</p></div>
+  </section>
+
+  <!-- ==================================================== 28 TUNABLE -->
+  <section id="tunable">
+    <h2><span class="n">28</span><code>TunableNumber</code> — live tuning without redeploying</h2>
+    <div class="code"><div class="code-head"><span class="fname">full pattern</span><button class="copy">Copy</button></div><pre><code>// dev builds only — once at startup (never at competition):
+TunableNumber.enableTuning();
+
+// declare (publishes under /Tuning/&lt;key&gt; when tuning is on):
+private final TunableNumber flywheelRps = new TunableNumber("Shooter/FlywheelRPS", 38.0);
+
+// read live (returns the compiled default when tuning is off):
+wheel.setVelocityRotationsPerSecond(flywheelRps.get());
+
+// react-on-change — e.g. re-apply gains only when edited:
+TunableNumber.ifChanged(hashCode(), vals -&gt; applyGains(vals[0], vals[1]), kP, kD);</code></pre></div>
+    <div class="box why"><div class="h">🧠 Why the on/off switch and the hash</div><p>Off = zero NT traffic and the constant is exactly the compiled default — tuning can't leak into a match. <code class="k">hasChanged(callerId)</code>/<code class="k">ifChanged</code> track last-seen values <em>per caller</em> (pass <code class="k">hashCode()</code>), so two subsystems watching the same tunable each get their own change notification. Edit the values live from AdvantageScope's or Elastic's NT tree. (Pattern credit: 6328.)</p></div>
+  </section>
+
+  <!-- ==================================================== 29 FAULTS -->
+  <section id="faults">
+    <h2><span class="n">29</span><code>FaultReporter</code> — device health, automatic</h2>
+    <p class="lead">Every <code class="k">Motor</code> self-registers. You just call <code class="k">FaultReporter.poll()</code> in the loop (§4). It rate-limits itself to 1&#160;Hz and skips entirely in sim (fault signals aren't modeled there).</p>
+    <div class="tbl"><table>
+      <tr><th>It watches</th><th>Surfaces as</th></tr>
+      <tr><td>Hardware fault · over-temperature</td><td><code>Alert</code>: "<i>name</i>: hardware fault / overtemperature"</td></tr>
+      <tr><td>Sticky boot-during-enable · sticky undervoltage</td><td><code>Alert</code> warnings (brownout forensics: undervoltage stickies after a match = shave the current budgets, §9)</td></tr>
+      <tr><td>RIO CAN bus: utilization %, bus-off, TX-full, RX/TX errors</td><td>DogLog under <code>CAN/…</code> + an Alert at &gt;90% utilization</td></tr>
+      <tr><td>Every fault it raises</td><td>Also a DogLog fault marker — searchable post-match</td></tr>
+    </table></div>
+    <div class="box tip"><div class="h">💡 Where you see it</div><p>Alerts render in Elastic's alerts widget and in AdvantageScope. Disconnects (device stops answering) are separate — they're the per-mechanism debounced alert from §14, live within half a second.</p></div>
+  </section>
+
+  <!-- ==================================================== 30 LOOPTIMER -->
+  <section id="looptimer">
+    <h2><span class="n">30</span><code>LoopTimer</code> — is the loop healthy?</h2>
+    <div class="code"><div class="code-head"><span class="fname">API (already wired in Robot)</span><button class="copy">Copy</button></div><pre><code>LoopTimer.start();   // top of robotPeriodic
+LoopTimer.end();     // bottom — logs Robot/LoopMs, Robot/MaxLoopMs, Robot/LoopOverruns
+LoopTimer.reset();   // clear max/overrun stats (e.g. at auto start)</code></pre></div>
+    <p>The loop budget is 20&#160;ms; <code class="k">end()</code> counts anything over it as an overrun. A climbing <code class="k">Robot/LoopOverruns</code> means something blocking crept onto the main loop — the usual suspects are device config calls (use <code class="k">setBrakeAsync</code>, §14), file I/O, or console spam. Power draw isn't here: <code class="k">DogLog.setPdh</code> via <code class="k">Telemetry.init</code> covers battery/channels.</p>
+  </section>
+
+  <!-- ==================================================== 31 ALLIANCE -->
+  <section id="alliance">
+    <h2><span class="n">31</span><code>AllianceFlip</code> — author blue, run anywhere</h2>
+    <p class="lead">All field geometry is authored in <b>blue-alliance coordinates</b>; this flips it 180° about the field center when you're red. Configure once at boot (§4) — the library stays season-agnostic.</p>
+    <div class="code"><div class="code-head"><span class="fname">full API</span><button class="copy">Copy</button></div><pre><code>AllianceFlip.configure(16.54, 8.07);        // season field length/width — once, at boot
+AllianceFlip.isBlue();                      // true on blue OR unknown (safe pre-match default)
+AllianceFlip.flip(translation|rotation|pose);   // unconditional 180° rotational flip
+AllianceFlip.apply(translation|rotation|pose);  // blue-frame in → correct-for-alliance out
+AllianceFlip.fieldLength(); AllianceFlip.fieldWidth();
+
+// Field constants as values that flip themselves:
+AllianceFlip.AllianceTranslation HUB = new AllianceFlip.AllianceTranslation(4.69, 4.03);
+HUB.get();       // alliance-corrected Translation2d — call at use time, not statically!
+HUB.getBlue();   // the authored blue-frame value
+
+AllianceFlip.AlliancePose NET = new AllianceFlip.AlliancePose(4.62, 3.29, 0);  // x, y, rotRad
+NET.get(); NET.getBlue();</code></pre></div>
+    <div class="box danger"><div class="h">🚫 The classic alliance bug</div><p>Caching <code class="k">.get()</code>'s result in a field at construction — before the DS knows the alliance — bakes in blue forever. Store the <code class="k">AllianceTranslation</code>/<code class="k">AlliancePose</code> object and call <code class="k">.get()</code> at the moment of use (the shooter's targeting does exactly this every loop).</p></div>
+  </section>
+
+  <!-- ==================================================== 32 ZONES -->
+  <section id="zones">
+    <h2><span class="n">32</span><code>Zones</code> — field areas as Triggers</h2>
+    <div class="code"><div class="code-head"><span class="fname">API + example</span><button class="copy">Copy</button></div><pre><code>// fixed field-frame rectangle:
+Trigger inClimbBox = Zones.inRectangle(swerve::getPose, new Rectangle2d(cornerA, cornerB));
+
+// authored blue-frame, auto-flipped on red:
+Trigger inAllianceZone = Zones.inAllianceRectangle(swerve::getPose,
+        new Rectangle2d(new Translation2d(0, 0), new Translation2d(4.0, 8.07)));
+
+// compose into behavior:
+intakeButton.and(inAllianceZone).onTrue(superstructure.request(RobotState.SHOOT_HUB));</code></pre></div>
+    <p>That's the whole class — two factories returning Triggers. Their power is composition: zones × buttons × game state make the superstructure's goal-selection logic read like the rulebook. (The current robot's zone triggers are intentionally stubbed pending strategy — the real rectangles drop in here.)</p>
+  </section>
+
+  <!-- ==================================================== 33 LEDS -->
+  <section id="leds">
+    <h2><span class="n">33</span><code>LedStrip</code> — driver feedback</h2>
+    <p class="lead">A thin subsystem over WPILib's <code class="k">LEDPattern</code> library — solid, blink, rainbow, gradients, progress bars all come from WPILib; this class owns the strip and the command lifecycle.</p>
+    <div class="code"><div class="code-head"><span class="fname">full usage (the real robot's wiring)</span><button class="copy">Copy</button></div><pre><code>private final LedStrip leds = new LedStrip(8, 22);        // PWM port, LED count
+
+leds.setDefaultPattern(LEDPattern.solid(Color.kBlue));    // shown when nothing runs
+
+// bind patterns to state — blink orange while the flywheel spins:
+superstructure.shooter.flywheelSpinning.whileTrue(
+    leds.runPatternCommand(LEDPattern.solid(Color.kOrange).blink(Seconds.of(0.2))));
+
+// more WPILib patterns to reach for:
+LEDPattern.rainbow(255, 128);
+LEDPattern.gradient(GradientType.kContinuous, Color.kRed, Color.kBlue);
+LEDPattern.progressMaskLayer(() -&gt; elevator.getLengthMeters() / MAX_HEIGHT);</code></pre></div>
+    <div class="box tip"><div class="h">💡 It's a subsystem on purpose</div><p><code class="k">runPatternCommand</code> requires the strip, so competing patterns interrupt each other cleanly, the default restores automatically, and it runs while disabled (pre-match status lights). Keep LED <em>bindings</em> in RobotContainer — mechanisms expose Triggers (like <code class="k">flywheelSpinning</code>), and the UI decision of what blinks lives with the other UI wiring.</p></div>
+  </section>
+
+  <!-- ==================================================== 34 SIMFLOW -->
+  <section id="simflow">
+    <h2><span class="n">34</span>The simulation workflow</h2>
+    <ol class="steps">
+      <li><b class="t">Launch:</b> <code class="k">./gradlew simulateJava "-Dorg.gradle.java.home=C:/Users/Public/wpilib/2026/jdk"</code> (or <code class="k">launch_sim.bat</code>). The Sim GUI opens; the robot program boots exactly like on the RIO.</li>
+      <li><b class="t">Connect AdvantageScope:</b> File → Connect to Simulator. Add plots for your mechanism paths (<code class="k">Intake/FourBar/PositionRotations</code> vs <code class="k">…/GoalRotations</code>) and the 3D field for the swerve pose.</li>
+      <li><b class="t">Drive it:</b> set an alliance + attach a joystick (or keyboard) in the Sim GUI, enable teleop. Mechanisms with sim models move; the swerve drives via CTRE's built-in sim.</li>
+      <li><b class="t">Test autos:</b> pick one in the chooser, enable autonomous, watch the field. This catches path/named-command mistakes for free.</li>
+      <li><b class="t">Iterate on logic in sim first, always.</b> State machines, readiness gating, superstructure sequencing, LED bindings — all fully testable with zero robot time.</li>
+    </ol>
+    <div class="box tip"><div class="h">💡 What sim can and can't tell you</div><p><b>Can:</b> logic, sequencing, direction conventions, dashboards, autos' shape. <b>Can't:</b> real gains, real currents, mechanical fit. Expect the sim gain set to behave differently from the real one — that's why they're separate (§7). Console notes: "DS alliance empty" until you set one, and stale-CAN fault spam is suppressed (FaultReporter skips sim).</p></div>
+  </section>
+
+  <!-- ==================================================== 35 TUNING -->
+  <section id="tuning">
+    <h2><span class="n">35</span>SysId &amp; tuning — concept, code, and the FOC path</h2>
+    <p class="lead">SysId replaces gain-guessing with measurement. This section covers what it measures, exactly what the library's routines do in code, how to run and analyze a session, and — separately — how to characterize for <b>TorqueCurrentFOC</b>, whose gains are amps-based and need their own routines.</p>
+
+    <h3>35.1 · What SysId measures, and how</h3>
+    <p>The routine drives the mechanism with two stimulus shapes while recording position, velocity, and output:</p>
+    <div class="tbl"><table>
+      <tr><th>Test</th><th>Stimulus</th><th>What it reveals</th></tr>
+      <tr><td><b>Quasistatic</b></td><td>A slow output <em>ramp</em> (acceleration ≈ 0)</td><td><code>kS</code> (the output where motion starts) and <code>kV</code> (the output-vs-velocity slope)</td></tr>
+      <tr><td><b>Dynamic</b></td><td>An output <em>step</em> (constant output)</td><td><code>kA</code> (how much output acceleration costs)</td></tr>
+    </table></div>
+    <p>Each is run <b>forward and reverse</b> — four runs total per mechanism. The analyzer fits <code class="k">output = kS·sign(v) + kV·v + kA·a</code> to the data (plus <code class="k">kG</code> for gravity mechanisms) and hands you the feedforward set; you add feedback (kP/kD) by hand afterwards (§7's symptom table).</p>
+
+    <h3>35.2 · The code — what the routines actually are <span class="lvl deep">DEEP</span></h3>
+    <p>Every mechanism carries two lazily-built WPILib <code class="k">SysIdRoutine</code>s. The <b>voltage</b> routine (for <code class="k">ControlMode.VOLTAGE</code> gains) is, inside the library:</p>
+    <div class="code"><div class="code-head"><span class="fname">inside Mechanism — the voltage routine (you don't write this; know what it does)</span><button class="copy">Copy</button></div><pre><code>new SysIdRoutine(
+    new SysIdRoutine.Config(
+        null,                 // ramp rate: null → WPILib default, 1 V/s (quasistatic)
+        Volts.of(4),          // step size: 4 V (dynamic)
+        null,                 // timeout: null → default 10 s safety cutoff
+        state -&gt; SignalLogger.writeString(config.name + "/SysIdState", state.toString())),
+    new SysIdRoutine.Mechanism(
+        (Voltage volts) -&gt; motor.setVolts(volts.in(Volts)),   // the drive callback
+        null,                 // no WPILib log callback — Phoenix records instead (below)
+        subsystem));          // requirement → interruptible like any command</code></pre></div>
+    <div class="box why"><div class="h">🧠 The three things worth understanding in that snippet</div>
+      <p><b>① The state string is the synchronization key.</b> Each loop, the routine writes its test state (<code class="k">quasistatic-forward</code>, <code class="k">dynamic-reverse</code>, <code class="k">none</code>…) into the hoot via <code class="k">SignalLogger</code>. The analyzer uses this channel to slice the log into the four runs — it's how "which samples belong to which test" is known.</p>
+      <p><b>② The device is the data logger.</b> We pass <code class="k">null</code> for WPILib's per-loop log callback on purpose: the TalonFX's own position/velocity/voltage/current signals are already streaming into the hoot at device rate, which is better data than 50&#160;Hz RIO sampling. The routine only needs to drive and label.</p>
+      <p><b>③ It's just a Command.</b> <code class="k">quasistatic(direction)</code> / <code class="k">dynamic(direction)</code> return Commands that require the subsystem — so they bind to buttons, are interruptible by disable, and can't fight your other commands.</p></div>
+    <p>What you actually write — four temporary bindings:</p>
+    <div class="code"><div class="code-head"><span class="fname">RobotContainer — temporary characterization bindings</span><button class="copy">Copy</button></div><pre><code>// expose the routines on the subsystem (one-liners delegating to the mechanism):
+public Command hoodSysIdQuasistatic(SysIdRoutine.Direction d) { return hood.sysIdQuasistatic(this, d); }
+public Command hoodSysIdDynamic(SysIdRoutine.Direction d)     { return hood.sysIdDynamic(this, d); }
+
+// bind — whileTrue so releasing the button stops the test instantly:
+controller.povUp().whileTrue(shooter.hoodSysIdQuasistatic(SysIdRoutine.Direction.kForward));
+controller.povDown().whileTrue(shooter.hoodSysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+controller.povRight().whileTrue(shooter.hoodSysIdDynamic(SysIdRoutine.Direction.kForward));
+controller.povLeft().whileTrue(shooter.hoodSysIdDynamic(SysIdRoutine.Direction.kReverse));
+
+// drivetrain equivalents (voltage-based, built into SwerveSubsystem):
+controller.triangle().whileTrue(swerve.sysIdTranslation(SysIdRoutine.Direction.kForward, false)); // quasistatic
+controller.square().whileTrue(swerve.sysIdTranslation(SysIdRoutine.Direction.kForward, true));    // dynamic
+// steer motors: swerve.sysIdSteer(direction, dynamic)</code></pre></div>
+
+    <h3>35.3 · Running a session</h3>
+    <ol class="steps">
+      <li><b class="t">Bench-prep.</b> Mechanism free over its full travel; soft limits verified (they're your run-stopper); battery fresh (a sagging battery skews voltage data); someone's hand on the disable key.</li>
+      <li><b class="t">Deploy with the bindings</b>, enable teleop, and run each of the four tests: hold the button, let the mechanism sweep until it reaches a soft limit or steady speed, release. <b>Release at the limit</b> — samples pushed against a stop are garbage the analyzer must not see.</li>
+      <li><b class="t">Between runs, return</b> the mechanism near the opposite end so each run gets full travel.</li>
+      <li><b class="t">Grab the hoot.</b> Phoenix wrote everything to the RIO (or the CANivore's USB drive if attached). Pull it via Tuner X or AdvantageScope's log download.</li>
+    </ol>
+
+    <h3>35.4 · Analyzing</h3>
+    <ol class="steps">
+      <li><b class="t">Open the hoot</b> in AdvantageScope → the <b>SysId</b> tool (or CTRE Tuner X's analyzer).</li>
+      <li><b class="t">Map the fields:</b> test state = <code class="k">&lt;Name&gt;/SysIdState</code> · position/velocity = the device's Position/Velocity signals · applied output = MotorVoltage (or TorqueCurrent for §35.5).</li>
+      <li><b class="t">Read the fit:</b> it yields <code class="k">kS, kV, kA</code> (and <code class="k">kG</code> if you select the arm/elevator mechanism type — it separates gravity from friction using the forward/reverse asymmetry). Sanity-check the fit quality (r²) before trusting numbers.</li>
+      <li><b class="t">Fill the constants:</b> put them in the subsystem's <code class="k">Gains</code>; start <code class="k">kP</code> modest, raise until tracking is crisp, add <code class="k">kD</code> if it rings (§7). Update the MotionConstraints if the measured free speed says your profile was optimistic.</li>
+    </ol>
+
+    <h3>35.5 · FOC-wise — torque-current characterization</h3>
+    <div class="box danger"><div class="h">🚫 Why you cannot reuse the voltage results</div>
+      <p>Voltage SysId answers "volts per unit of speed/accel". FOC closed loops output <b>amps of torque current</b> — a different physical quantity, and the relationship between them shifts with battery state (that immunity is FOC's whole appeal). So FOC needs its own characterization that <em>drives amps</em>, not volts.</p></div>
+    <p>The wrinkle: WPILib's SysId API is volts-typed — there is no amps overload. The standard CTRE idiom (which the library implements for you) is to <b>reinterpret the routine's "volts" as amps</b>:</p>
+    <div class="code"><div class="code-head"><span class="fname">inside Mechanism — the torque routine (the volts-as-amps idiom)</span><button class="copy">Copy</button></div><pre><code>new SysIdRoutine(
+    new SysIdRoutine.Config(
+        Volts.of(5).per(Second),   // read as: 5 AMPS per second quasistatic ramp
+        Volts.of(20),              // read as: a 20 AMP dynamic step
+        null,
+        state -&gt; SignalLogger.writeString(config.name + "/SysIdTorqueState", state.toString())),
+    new SysIdRoutine.Mechanism(
+        (Voltage amps) -&gt; motor.forceAmps(amps.in(Volts)),   // "volts" driven as TorqueCurrentFOC amps
+        null, subsystem));</code></pre></div>
+    <p>You call it exactly like the voltage pair — same binding pattern, different methods:</p>
+    <div class="code"><div class="code-head"><span class="fname">torque-current characterization bindings</span><button class="copy">Copy</button></div><pre><code>controller.povUp().whileTrue(shooter.hoodSysIdQuasistaticTorque(SysIdRoutine.Direction.kForward));
+controller.povDown().whileTrue(shooter.hoodSysIdQuasistaticTorque(SysIdRoutine.Direction.kReverse));
+controller.povRight().whileTrue(shooter.hoodSysIdDynamicTorque(SysIdRoutine.Direction.kForward));
+controller.povLeft().whileTrue(shooter.hoodSysIdDynamicTorque(SysIdRoutine.Direction.kReverse));</code></pre></div>
+    <div class="box why"><div class="h">🧠 The details that make this work</div>
+      <p><b>① It runs while the mechanism is still in VOLTAGE mode.</b> The drive callback uses <code class="k">Motor.forceAmps(…)</code>, which applies a <code class="k">TorqueCurrentFOC</code> request regardless of the configured control mode — so you characterize <em>before</em> the switch, breaking the chicken-and-egg. (Regular <code class="k">setAmps</code> deliberately refuses outside FOC mode; <code class="k">forceAmps</code> is the characterization exception.)</p>
+      <p><b>② The output is clamped by your CurrentBudget's torque peaks</b> (§9) — the 20&#160;A step can't exceed what you declared safe.</p>
+      <p><b>③ In the analyzer, select TorqueCurrent as the "voltage" channel</b> and state = <code class="k">&lt;Name&gt;/SysIdTorqueState</code>. The resulting "volt" gains <b>are amp gains</b> — no conversion, drop them straight in.</p>
+      <p><b>④ Real hardware only.</b> Torque-current isn't meaningfully simulated; run this on the robot.</p></div>
+    <p>Then complete the switch — two edits in the subsystem's constants/config:</p>
+    <div class="code"><div class="code-head"><span class="fname">the FOC switch itself</span><button class="copy">Copy</button></div><pre><code>// 1) the amp gains from the torque analysis (note: these are AMPS per unit):
+public static final Gains HOOD_GAINS_FOC = new Gains(kP_amps, 0, kD_amps, kS_amps, kV_amps, kA_amps)
+        .withGravity(kG_amps, GravityTypeValue.Arm_Cosine);
+
+// 2) in the mechanism config:
+.controlMode(ControlMode.TORQUE_CURRENT_FOC)     // was VOLTAGE
+.gains(HOOD_GAINS_FOC, SIM_GAINS)                // sim set unchanged — sim always runs VOLTAGE
+// keep .withTorquePeaks(...) on the CurrentBudget — it's the output clamp in FOC (§9)</code></pre></div>
+    <p>First enable after the switch: treat it like a new mechanism (§36) — small setpoints, hand on disable. Expect crisper tracking and identical behavior at 12.6&#160;V and 11.2&#160;V; that's the point.</p>
+    <div class="box warn"><div class="h">⚠️ MotionMagicExpo's kV/kA stay in volts</div><p>Even in FOC mode, the <b>profile-shaping</b> <code class="k">MotionConstraints</code> Expo kV/kA are always volt-referenced (a Phoenix convention — they describe the motor, not the loop). Only the <code class="k">Gains</code> change units at the switch.</p></div>
+    <div class="box tip"><div class="h">💡 The drivetrain</div><p><code class="k">swerve.sysIdTranslation / sysIdSteer</code> are the <b>voltage</b> routines (CTRE's stock SysId requests). Torque-current drive characterization for the swerve needs a custom request applying TorqueCurrentFOC per module — a flagged follow-up; until then, drive modules switch to FOC using Tuner X's swerve tuning flow.</p></div>
+
+    <h3>35.6 · After SysId — the polish loop</h3>
+    <ol class="steps">
+      <li><b class="t">Feedback by symptom</b> — §7's table: kP up to crisp, kD against ringing, kI almost never.</li>
+      <li><b class="t">Live-polish with TunableNumber</b> (§28) for setpoint-shaped values (shooter RPM points, tolerances) — no redeploys.</li>
+      <li><b class="t">Log-verify</b>: in AdvantageScope, overlay goal vs position — you're done when the traces hug through the whole profile, not just at the ends.</li>
+    </ol>
+    <div class="box warn"><div class="h">⚠️ Tuning-sacred data</div><p>The shooter's interpolation maps (distance → hood angle / flywheel RPS / time-of-flight) are competition-proven measurements. Tuning sessions <em>append or adjust points</em>; they never restructure that code.</p></div>
+  </section>
+
+  <!-- ==================================================== 36 DEPLOY -->
+  <section id="deploy">
+    <h2><span class="n">36</span>Deploy &amp; bring-up</h2>
+    <ol class="steps">
+      <li><b class="t">Connect</b> to the robot (radio Wi-Fi or USB/Ethernet tether).</li>
+      <li><b class="t">Green build first:</b> <code class="k">./gradlew build</code>. Never deploy red.</li>
+      <li><b class="t">Deploy:</b> <code class="k">./gradlew deploy</code> — pushes the jar + the <code class="k">deploy/</code> folder (paths!) to the RIO.</li>
+      <li><b class="t">Before enabling, read the dashboard:</b> zero config-verify alerts, zero disconnect alerts, correct alliance, an auto selected.</li>
+      <li><b class="t">First power-on of a new mechanism:</b> mechanism at a known pose (boot seeds assume it — §21), hand on <kbd>Enter</kbd> (disable), first setpoints tiny, watch stator current live in AdvantageScope. Current limits + soft limits + config verify are the net — don't test the net.</li>
+      <li><b class="t">Verify direction conventions</b> once per mechanism: positive = the geometric positive you declared (§13.4). If reversed, flip <code class="k">.inverted(...)</code> — don't negate setpoints.</li>
+    </ol>
+  </section>
+
+  <!-- ==================================================== 37 TROUBLE -->
+  <section id="trouble">
+    <h2><span class="n">37</span>Troubleshooting</h2>
+    <div class="tbl"><table>
+      <tr><th>Symptom</th><th>Cause → fix</th></tr>
+      <tr><td><code>Invalid MSVC Runtime</code> on test/sim</td><td>Wrong JDK → run Gradle on the WPILib JDK (§1, §2).</td></tr>
+      <tr><td>Alert: <b>"Device config … FAILED"</b></td><td>Device unpowered / wrong id / wrong bus / CAN wiring → verify in Tuner X. It already retried 5×.</td></tr>
+      <tr><td>Mechanism ignores commands in <b>sim</b></td><td>No <code>simModel</code> on the config, or its <code>periodic()</code> isn't called.</td></tr>
+      <tr><td>Mechanism ignores commands on the <b>robot</b></td><td>In order: disconnect Alert? gains all zero? <code>periodic()</code> missing? soft limit clamping the goal? wrong bus in the CANDeviceId?</td></tr>
+      <tr><td>Moves ~15×/100× too far or too little</td><td>Feedback ratio wrong (§13.8) — audit rotor↔sensor↔mechanism ratios.</td></tr>
+      <tr><td>Two-motor mechanism buzzes, huge current, no motion</td><td>Follower <code>opposed</code> flag inverted (§13.2).</td></tr>
+      <tr><td>Mechanism violent after a "small" gain change</td><td>You changed <code>controlMode</code> without re-deriving gains (§6) — V and A gains are different numbers.</td></tr>
+      <tr><td>State never changes / request "does nothing"</td><td><code>machine.periodic()</code> missing; or the transition was never declared (check DogLog <code>…/IllegalTransition/…</code>); or a guard is stuck false (check <code>…/Pending</code>).</td></tr>
+      <tr><td>Auto drives but never intakes/shoots</td><td>Unregistered named command → silent no-op (§26).</td></tr>
+      <tr><td>Turret takes the long way / winds the cable</td><td>Missing <code>.continuousWrap()</code> or its soft limits (§13.10).</td></tr>
+      <tr><td>Everything mirrored on red alliance</td><td>Cached <code>.get()</code> of an alliance value at construction (§31); or DS alliance not set in sim.</td></tr>
+      <tr><td>Odometry drifts during matches</td><td>Vision not fusing: check <code>Swerve/Vision/Rejected</code> spam (gate stuck?), <code>sawTagRecently</code>, and the limelight's NT name.</td></tr>
+      <tr><td><code>Robot/LoopOverruns</code> climbing</td><td>Blocking call on the loop — brake-mode changes not via <code>setBrakeAsync</code>, config calls, file I/O, print spam (§30).</td></tr>
+      <tr><td>Brownouts / undervoltage stickies after driving hard</td><td>Sum of current budgets too rich → trim supply limits, add <code>withSupplyLower</code> on the drive (§9).</td></tr>
+    </table></div>
+  </section>
+
+  <!-- ==================================================== 38 CHECKLISTS -->
+  <section id="checklists">
+    <h2><span class="n">38</span>Checklists</h2>
+    <h3>Adding a mechanism</h3>
+    <ul class="check">
+      <li>Archetype chosen by physics (position / meters / speed / open-loop).</li>
+      <li>Constants file: data only — ids, ratios, gains (real+sim), budget, limits, tolerance.</li>
+      <li>Feedback: fused CANcoder, or ratio + boot seed.</li>
+      <li>Motion profile chosen (Expo default; trapezoid only for a fixed-speed spec; none for flywheels/rollers).</li>
+      <li>Current budget entered — with FOC torque peaks if that's the mode.</li>
+      <li>Soft limits + tolerance set; <code class="k">continuousWrap</code> if it's a turret.</li>
+      <li>Sim model attached; verified moving in sim.</li>
+      <li><code class="k">periodic()</code> chained in the subsystem.</li>
+    </ul>
+    <h3>Before every commit</h3>
+    <ul class="check">
+      <li><code class="k">./gradlew build</code> green (compiles + tests).</li>
+      <li>Sim launches and behaves.</li>
+      <li>On a feature branch; one concern; explicit staging; message says why.</li>
+    </ul>
+    <h3>Before a match</h3>
+    <ul class="check">
+      <li>Every device answers in Tuner X, licensed.</li>
+      <li>Zero config-verify / disconnect alerts.</li>
+      <li>Swerve constants robot-verified (offsets, inversions, coupling).</li>
+      <li>Every named command in the selected auto is registered.</li>
+      <li><code class="k">Telemetry.init(true, …)</code>; <code class="k">TunableNumber</code> tuning OFF.</li>
+      <li>Correct alliance on the DS; heading re-zeroed if needed.</li>
+    </ul>
+  </section>
+
+  <!-- ==================================================== 39 GLOSSARY -->
+  <section id="glossary">
+    <h2><span class="n">39</span>Glossary &amp; document index</h2>
+    <div class="tbl"><table>
+      <tr><th>Term</th><th>Meaning</th></tr>
+      <tr><td><b>FOC / TorqueCurrentFOC</b></td><td>Field-oriented control: output = torque current (amps). Sag-immune, Phoenix Pro. The library's target mode.</td></tr>
+      <tr><td><b>MotionMagic / Expo</b></td><td>Onboard motion profiling. Expo = exponential profile shaped by motor kV/kA; smooth and time-optimal.</td></tr>
+      <tr><td><b>Mechanism units</b></td><td>The unit you command in (rad / m / rot/s) after the device knows its ratio. Ticks don't exist here.</td></tr>
+      <tr><td><b>Status signal</b></td><td>A device value delivered over CAN; managed by SignalHub (§12).</td></tr>
+      <tr><td><b>Fused CANcoder</b></td><td>Absolute encoder blended with the rotor onboard — drift-free absolute position.</td></tr>
+      <tr><td><b>Archetype</b></td><td>A ready-to-configure mechanism template (§15–18).</td></tr>
+      <tr><td><b>Guard</b></td><td>A BooleanSupplier gating a state transition; the interlock primitive (§20).</td></tr>
+      <tr><td><b>Default-deny</b></td><td>Undeclared transitions are illegal — the state table is a whitelist.</td></tr>
+      <tr><td><b>MegaTag2</b></td><td>Limelight pose solve seeded by your heading (§24).</td></tr>
+      <tr><td><b>hoot / wpilog</b></td><td>Phoenix's device-rate log / WPILib's DataLog (DogLog writes here). Both open in AdvantageScope.</td></tr>
+      <tr><td><b>SysId</b></td><td>System identification — measures kS/kV/kA/kG so gains aren't guesses (§35).</td></tr>
+      <tr><td><b>Operator perspective</b></td><td>CTRE swerve feature: field-centric "forward" is away from <em>your</em> driver station on either alliance.</td></tr>
+    </table></div>
+    <h3>The other documents</h3>
+    <div class="tbl"><table>
+      <tr><th>Doc</th><th>When to open it</th></tr>
+      <tr><td><code>docs/BRINGUP_TESTPLAN.html</code></td><td><b>At the workshop, running the robot for the first time.</b> Ordered on-robot bring-up: pre-power, deploy, prove logging, the Test-mode harness, per-mechanism + swerve + vision tests with exact inputs/keys/pass-fail.</td></tr>
+      <tr><td><code>docs/ADDING_A_SUBSYSTEM.md</code></td><td>The two-minute recipe version of Parts IV–VI.</td></tr>
+      <tr><td><code>docs/V1_TO_V2_MAPPING.md</code></td><td>"Where did old class X go?" — every v1 class → its v2 answer.</td></tr>
+      <tr><td><code>docs/DESIGN.md</code> · <code>AUDIT.md</code> · <code>RESEARCH.md</code></td><td>Why the library is built this way (approved design, v1 pain points, patterns mined from 254/6328/3061/1678/TRIGON/MA5951/CTRE).</td></tr>
+      <tr><td><code>NOTICE.md</code></td><td>Credits for every adapted pattern.</td></tr>
+    </table></div>
+    <div class="box ok" style="margin-top:24px"><div class="h">✅ You have the whole library now</div><p>Value types → device layer → config → archetypes → state → superstructure → drive/vision/auto → observability → utilities → workflows. When in doubt: copy a working subsystem, change the numbers, and let the alerts and logs tell you the truth.</p></div>
+  </section>
+</main>
+</div>
+
+<div class="toolbar">
+  <button id="theme" title="Theme">☀️</button>
+  <button id="totop" title="Top">↑</button>
+  <button class="menu-btn" id="menu" title="Menu">☰</button>
+</div>
+
+<script>
+(function(){
+  var RE=/(\/\/[^\n]*|\/\*[\s\S]*?\*\/)|("(?:\\.|[^"\\])*")|(@\w+)|\b(\d[\d_.]*[fFlLdD]?)\b|\b(public|private|protected|static|final|class|interface|enum|extends|implements|new|return|void|int|long|double|float|boolean|char|if|else|for|while|switch|case|default|this|super|import|package|try|catch|finally|throw|throws|true|false|null|var|record|abstract|instanceof)\b/g;
+  function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  document.querySelectorAll('.code code').forEach(function(c){
+    c.innerHTML=esc(c.textContent).replace(RE,function(m,com,str,ann,num,kw){
+      if(com)return '<span class="c-com">'+com+'</span>';if(str)return '<span class="c-str">'+str+'</span>';
+      if(ann)return '<span class="c-ann">'+ann+'</span>';if(num)return '<span class="c-num">'+num+'</span>';
+      if(kw)return '<span class="c-kw">'+kw+'</span>';return m;});
+  });
+  document.querySelectorAll('.copy').forEach(function(b){
+    b.addEventListener('click',function(){var code=b.closest('.code').querySelector('code');
+      navigator.clipboard.writeText(code.textContent).then(function(){var o=b.textContent;b.textContent='Copied ✓';setTimeout(function(){b.textContent=o;},1200);});});
+  });
+  var links=[].slice.call(document.querySelectorAll('nav a[href^="#"]'));
+  var secs=links.map(function(a){return document.getElementById(a.getAttribute('href').slice(1));});
+  var bar=document.getElementById('progress');
+  function sp(){var y=window.scrollY+120,c=0;for(var i=0;i<secs.length;i++){if(secs[i]&&secs[i].offsetTop<=y)c=i;}
+    links.forEach(function(a){a.classList.remove('active');});if(links[c])links[c].classList.add('active');
+    var h=document.documentElement.scrollHeight-window.innerHeight;bar.style.width=(h>0?window.scrollY/h*100:0)+'%';}
+  window.addEventListener('scroll',sp,{passive:true});sp();
+  // search filter
+  var search=document.getElementById('search');
+  search.addEventListener('input',function(){
+    var q=search.value.toLowerCase();
+    links.forEach(function(a){a.style.display = a.textContent.toLowerCase().indexOf(q)>=0 ? '' : 'none';});
+  });
+  document.addEventListener('keydown',function(e){
+    if(e.key==='/' && document.activeElement!==search){e.preventDefault();search.focus();}
+  });
+  var tb=document.getElementById('theme');
+  tb.addEventListener('click',function(){var r=document.documentElement,d=r.getAttribute('data-theme')==='light';
+    r.setAttribute('data-theme',d?'dark':'light');tb.textContent=d?'☀️':'🌙';});
+  document.getElementById('totop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  var nav=document.getElementById('nav');
+  document.getElementById('menu').addEventListener('click',function(){nav.classList.toggle('open');});
+  nav.addEventListener('click',function(e){if(e.target.tagName==='A')nav.classList.remove('open');});
+})();
+</script>
+</body>
+</html>

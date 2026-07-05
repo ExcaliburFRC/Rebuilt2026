@@ -46,8 +46,10 @@ public class PositionalMechanism extends Mechanism {
         hasGoal = true;
         if (config.motion.useExpo()) {
             motor.setExpoPositionGoal(target);
-        } else {
+        } else if (config.motion.cruiseVelocity() > 0) {
             motor.setTrapezoidPositionGoal(target);
+        } else {
+            motor.setPlainPositionGoal(target); // no motion constraints configured
         }
     }
 

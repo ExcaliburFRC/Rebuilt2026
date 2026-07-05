@@ -72,8 +72,14 @@ public final class FaultReporter {
         DEVICES.add(new MonitoredDevice(name, talon));
     }
 
+    private static final Alert CAN_UTILIZATION_ALERT =
+            new Alert("RIO CAN bus utilization critical (>90%)", Alert.AlertType.kWarning);
+
     /** Scans all registered devices at most once per second. Call every loop. */
     public static void poll() {
+        if (edu.wpi.first.wpilibj.RobotBase.isSimulation()) {
+            return; // fault signals are not modeled in sim — refreshing them just spams stale-CAN warnings
+        }
         double now = Timer.getFPGATimestamp();
         if (now - lastScanTimestamp < SCAN_PERIOD_SECONDS) {
             return;
@@ -82,5 +88,17 @@ public final class FaultReporter {
         for (MonitoredDevice device : DEVICES) {
             device.scan();
         }
+        scanCanBusHealth();
+    }
+
+    /** RIO CAN bus health logging + utilization alert (v1 {@code CANHealthMonitor} equivalent). */
+    private static void scanCanBusHealth() {
+        var canStatus = edu.wpi.first.wpilibj.RobotController.getCANStatus();
+        DogLog.log("CAN/RioUtilizationPercent", canStatus.percentBusUtilization * 100.0);
+        DogLog.log("CAN/BusOffCount", canStatus.busOffCount);
+        DogLog.log("CAN/TxFullCount", canStatus.txFullCount);
+        DogLog.log("CAN/ReceiveErrorCount", canStatus.receiveErrorCount);
+        DogLog.log("CAN/TransmitErrorCount", canStatus.transmitErrorCount);
+        CAN_UTILIZATION_ALERT.set(canStatus.percentBusUtilization > 0.9);
     }
 }

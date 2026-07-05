@@ -5,22 +5,10 @@
 package frc.robot;
 
 import com.ctre.phoenix6.CANBus;
-import com.ctre.phoenix6.hardware.CANcoder;
-import com.pathplanner.lib.config.PIDConstants;
-import com.pathplanner.lib.path.PathConstraints;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
-import edu.wpi.first.math.util.Units;
-import frc.excalib.additional_utilities.AllianceUtils;
-import frc.excalib.control.gains.Gains;
-import frc.excalib.control.imu.IMU;
-import frc.excalib.control.imu.Pigeon;
-import frc.excalib.control.motor.controllers.TalonFXMotor;
-import frc.excalib.swerve.ModulesHolder;
-import frc.excalib.swerve.Swerve;
-import frc.excalib.swerve.SwerveModule;
+import frc.excalib2.util.AllianceFlip;
 
 public final class Constants {
     public static final Pose2d INITIAL_POSE = new Pose2d();
@@ -35,171 +23,38 @@ public final class Constants {
 
     public static final CANBus SUBSYSTEMS_CANBUS = new CANBus("");
 
-    public static class SwerveConstants {
-        public static final int FRONT_RIGHT_DRIVE_ID = 10;
-        public static final int FRONT_LEFT_DRIVE_ID = 20;
-        public static final int BACK_LEFT_DRIVE_ID = 30;
-        public static final int BACK_RIGHT_DRIVE_ID = 40;
-
-        public static final int FRONT_RIGHT_ROTATION_ID = 12;
-        public static final int FRONT_LEFT_ROTATION_ID = 22;
-        public static final int BACK_LEFT_ROTATION_ID = 32;
-        public static final int BACK_RIGHT_ROTATION_ID = 42;
-
-        public static final int GYRO_ID = 2;
-        public static final CANBus SWERVE_CANBUS = new CANBus("SwerveCANivore");
-
-        private static final double PID_TOLERANCE = 0.01;
-
-        public static final double TRACK_WIDTH = 0.69; // m
-
-        public static final Translation2d FRONT_LEFT_TRANSLATION =
-                new Translation2d(
-                        TRACK_WIDTH / 2, TRACK_WIDTH / 2
-                );
-        public static final Translation2d FRONT_RIGHT_TRANSLATION =
-                new Translation2d(
-                        TRACK_WIDTH / 2, -TRACK_WIDTH / 2
-                );
-        public static final Translation2d BACK_LEFT_TRANSLATION =
-                new Translation2d(
-                        -TRACK_WIDTH / 2, TRACK_WIDTH / 2
-                );
-        public static final Translation2d BACK_RIGHT_TRANSLATION =
-                new Translation2d(
-                        -TRACK_WIDTH / 2, -TRACK_WIDTH / 2
-                );
-
-        public static final double MAX_MODULE_VEL = 1.5;
-        public static final double MAX_VEL = 2;
-
-        public static final double MAX_FRONT_ACC = 1;
-        public static final double MAX_SIDE_ACC = 1;
-        public static final double MAX_SKID_ACC = 1;
-        public static final double MAX_FORWARD_ACC = 1;
-        public static final double MAX_OMEGA_RAD_PER_SEC = 1.5;
-        public static final double MAX_OMEGA_RAD_PER_SEC_SQUARE = 1;
-
-        public static final PathConstraints MAX_PATH_CONSTRAINTS = new PathConstraints(
-                MAX_VEL,
-                MAX_SKID_ACC,
-                MAX_OMEGA_RAD_PER_SEC,
-                MAX_OMEGA_RAD_PER_SEC_SQUARE,
-                12.0,
-                false
-        );
-
-        public static final CANcoder FRONT_RIGHT_ABS_ENCODER = new CANcoder(11, SWERVE_CANBUS);
-        private static final CANcoder FRONT_LEFT_ABS_ENCODER = new CANcoder(21, SWERVE_CANBUS);
-        private static final CANcoder BACK_LEFT_ABS_ENCODER = new CANcoder(31, SWERVE_CANBUS);
-        private static final CANcoder BACK_RIGHT_ABS_ENCODER = new CANcoder(41, SWERVE_CANBUS);
-
-        private static final double VELOCITY_CONVERSION_FACTOR = Units.inchesToMeters(4) * Math.PI / 5.27;
-        private static final double POSITION_CONVERSION_FACTOR = Units.inchesToMeters(4) * Math.PI / 5.27;
-        private static final double ROTATION_VELOCITY_CONVERSION_FACTOR = (2 * Math.PI) / (26.09090909090909);
-
-        public static final PIDConstants TRANSLATION_PID_PP_CONSTANTS = new PIDConstants(10.0, 0.0, 0.0); //TODO
-        public static final PIDConstants ANGLE_PID_PP_CONSTANTS = new PIDConstants(5.0, 0.0, 0.0);
-        public static final Gains ANGLE_PID_GAINS = new Gains();
-        public static final Gains TRANSLATION_PID_GAINS = new Gains();
-
-        private static final IMU GYRO = new Pigeon(GYRO_ID, SWERVE_CANBUS.getName(), new Rotation3d(0, 0, Math.PI / 2));
-
-        public static Swerve configureSwerve(Pose2d initialPose) {
-            return new Swerve(
-                    new ModulesHolder(
-                            new SwerveModule(
-                                    new TalonFXMotor(FRONT_LEFT_DRIVE_ID, SWERVE_CANBUS),
-                                    new TalonFXMotor(FRONT_LEFT_ROTATION_ID, SWERVE_CANBUS),
-                                    new Gains(5.2, 0, 0, 0, 0, 0, 0),
-                                    new Gains(0, 0, 0, 0.2, 2.008314, 0, 0),
-                                    PID_TOLERANCE,
-                                    FRONT_LEFT_TRANSLATION,
-                                    () -> FRONT_LEFT_ABS_ENCODER.getAbsolutePosition().getValueAsDouble() * 2 * Math.PI,
-                                    MAX_MODULE_VEL,
-                                    VELOCITY_CONVERSION_FACTOR,
-                                    POSITION_CONVERSION_FACTOR,
-                                    ROTATION_VELOCITY_CONVERSION_FACTOR,
-                                    false
-                            ),
-                            new SwerveModule(
-                                    new TalonFXMotor(FRONT_RIGHT_DRIVE_ID, SWERVE_CANBUS),
-                                    new TalonFXMotor(FRONT_RIGHT_ROTATION_ID, SWERVE_CANBUS),
-                                    new Gains(5.2, 0, 0, 0, 0, 0, 0),
-                                    new Gains(0, 0, 0, 0.2, 2.008314, 0, 0),
-                                    PID_TOLERANCE,
-                                    FRONT_RIGHT_TRANSLATION,
-                                    () -> FRONT_RIGHT_ABS_ENCODER.getAbsolutePosition().getValueAsDouble() * 2 * Math.PI,
-                                    MAX_MODULE_VEL,
-                                    VELOCITY_CONVERSION_FACTOR,
-                                    POSITION_CONVERSION_FACTOR,
-                                    ROTATION_VELOCITY_CONVERSION_FACTOR,
-                                    false
-                            ),
-                            new SwerveModule(
-                                    new TalonFXMotor(BACK_LEFT_DRIVE_ID, SWERVE_CANBUS),
-                                    new TalonFXMotor(BACK_LEFT_ROTATION_ID, SWERVE_CANBUS),
-                                    new Gains(5.2, 0, 0, 0, 0, 0, 0),
-                                    new Gains(0, 0, 0, 0.42, 2.1496566873600003, 0, 0),
-                                    PID_TOLERANCE,
-                                    BACK_LEFT_TRANSLATION,
-                                    () -> BACK_LEFT_ABS_ENCODER.getAbsolutePosition().getValueAsDouble() * 2 * Math.PI,
-                                    MAX_MODULE_VEL,
-                                    VELOCITY_CONVERSION_FACTOR,
-                                    POSITION_CONVERSION_FACTOR,
-                                    ROTATION_VELOCITY_CONVERSION_FACTOR,
-                                    false
-                            ),
-                            new SwerveModule(
-                                    new TalonFXMotor(BACK_RIGHT_DRIVE_ID, SWERVE_CANBUS),
-                                    new TalonFXMotor(BACK_RIGHT_ROTATION_ID, SWERVE_CANBUS),
-                                    new Gains(5.2, 0, 0, 0, 0, 0, 0),
-                                    new Gains(0, 0, 0, 0.42, 2.065 * 0.976, 0, 0),
-                                    PID_TOLERANCE,
-                                    BACK_RIGHT_TRANSLATION,
-                                    () -> BACK_RIGHT_ABS_ENCODER.getAbsolutePosition().getValueAsDouble() * 2 * Math.PI,
-                                    MAX_MODULE_VEL,
-                                    VELOCITY_CONVERSION_FACTOR,
-                                    POSITION_CONVERSION_FACTOR,
-                                    ROTATION_VELOCITY_CONVERSION_FACTOR,
-                                    false
-                            )),
-                    GYRO,
-                    initialPose
-            );
-        }
-
-    }
-
     public static class FieldConstants {
         // all the units of length are in meters
-        public static final AllianceUtils.AllianceTranslation BLUE_HUB_CENTER_POSE = new
-                AllianceUtils.AllianceTranslation(4.69115, 4.03);
-        public static final AllianceUtils.AllianceTranslation DELIVERY_FAR_POSE = new
-                AllianceUtils.AllianceTranslation(2, 7.41);
-        public static final AllianceUtils.AllianceTranslation DELIVERY_CLOSE_POSE = new
-                AllianceUtils.AllianceTranslation(2, 0.63);
-        public static final AllianceUtils.AlliancePose NET_END_RIGHT_POSE = new
-                AllianceUtils.AlliancePose(4.62, 3.29, 0);
-        public static final AllianceUtils.AlliancePose NET_END_LEFT_POSE = new
-                AllianceUtils.AlliancePose(4.62, 4.77, 0);
+        public static final double FIELD_LENGTH_METERS = 16.54;
+        public static final double FIELD_WIDTH_METERS = 8.07;
+
+        public static final AllianceFlip.AllianceTranslation BLUE_HUB_CENTER_POSE = new
+                AllianceFlip.AllianceTranslation(4.69115, 4.03);
+        public static final AllianceFlip.AllianceTranslation DELIVERY_FAR_POSE = new
+                AllianceFlip.AllianceTranslation(2, 7.41);
+        public static final AllianceFlip.AllianceTranslation DELIVERY_CLOSE_POSE = new
+                AllianceFlip.AllianceTranslation(2, 0.63);
+        public static final AllianceFlip.AlliancePose NET_END_RIGHT_POSE = new
+                AllianceFlip.AlliancePose(4.62, 3.29, 0);
+        public static final AllianceFlip.AlliancePose NET_END_LEFT_POSE = new
+                AllianceFlip.AlliancePose(4.62, 4.77, 0);
         public static final Translation3d BLUE_CLIMB_TOWER_POSE_L1 = new
                 Translation3d(1.05, 3.74, 0.6858);
         public static final Translation3d BLUE_CLIMB_TOWER_POSE_L2 = new
                 Translation3d(1.05, 3.74, 1.143);
         public static final Translation3d BLUE_CLIMB_TOWER_POSE_L3 = new
                 Translation3d(1.05, 3.74, 1.6002);
-        public static final AllianceUtils.AlliancePose BLUE_OUTPOST_POSE_CENTER = new
-                AllianceUtils.AlliancePose(0, 0.63, 0);
-        public static final AllianceUtils.AlliancePose BLUE_DOWN_FIELD_TRENCH_POSE = new
-                AllianceUtils.AlliancePose(4.62, 0.63, 0);
-        public static final AllianceUtils.AlliancePose BLUE_UP_FIELD_TRENCH_POSE = new
-                AllianceUtils.AlliancePose(4.62, 7.43, 0);
-        public static final AllianceUtils.AlliancePose BLUE_UP_FIELD_PICKUP_FUEL_PLACEMENT = new
-                AllianceUtils.AlliancePose(0.39, 6.06, 0);
+        public static final AllianceFlip.AlliancePose BLUE_OUTPOST_POSE_CENTER = new
+                AllianceFlip.AlliancePose(0, 0.63, 0);
+        public static final AllianceFlip.AlliancePose BLUE_DOWN_FIELD_TRENCH_POSE = new
+                AllianceFlip.AlliancePose(4.62, 0.63, 0);
+        public static final AllianceFlip.AlliancePose BLUE_UP_FIELD_TRENCH_POSE = new
+                AllianceFlip.AlliancePose(4.62, 7.43, 0);
+        public static final AllianceFlip.AlliancePose BLUE_UP_FIELD_PICKUP_FUEL_PLACEMENT = new
+                AllianceFlip.AlliancePose(0.39, 6.06, 0);
 
         public static double CLOSE_TRENCH_TO_BUMP_X = 1.65;
-        public static double FAR_TRENCH_TO_BUMP_X = AllianceUtils.FIELD_WIDTH_METERS - CLOSE_TRENCH_TO_BUMP_X;
+        public static double FAR_TRENCH_TO_BUMP_X = FIELD_WIDTH_METERS - CLOSE_TRENCH_TO_BUMP_X;
 
         public static final double FUEL_DIAMETER = 0.15;
 

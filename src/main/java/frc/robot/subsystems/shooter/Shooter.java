@@ -1,247 +1,194 @@
 package frc.robot.subsystems.shooter;
 
 import com.ctre.phoenix6.hardware.CANcoder;
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.geometry.*;
+import dev.doglog.DogLog;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.wpilibj2.command.*;
+import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.excalib.additional_utilities.AllianceUtils;
-import frc.excalib.additional_utilities.Color;
-import frc.excalib.additional_utilities.LEDs;
-import frc.excalib.control.limits.SoftLimit;
-import frc.excalib.control.math.EMAFilter;
-import frc.excalib.control.math.periodics.PeriodicScheduler;
-import frc.excalib.control.motor.controllers.MotorGroup;
-import frc.excalib.control.motor.controllers.TalonFXMotor;
-import frc.excalib.control.motor.motor_specs.DirectionState;
-import frc.excalib.control.motor.motor_specs.IdleState;
-import frc.excalib.mechanisms.Mechanism;
-import frc.excalib.mechanisms.fly_wheel.FlyWheel;
-import frc.excalib.mechanisms.turret.Turret;
-import frc.robot.util.TurretOffsetGetter;
+import frc.excalib2.util.AllianceFlip;
+import frc.excalib2.control.ControlMode;
+import frc.excalib2.device.CANDeviceId;
+import frc.excalib2.mechanisms.MechanismConfig;
+import frc.excalib2.mechanisms.PositionalMechanism;
+import frc.excalib2.mechanisms.VelocityMechanism;
+import frc.excalib2.statemachine.StateMachine;
 import frc.robot.util.BallCounter;
-import monologue.Logged;
+import frc.robot.util.TurretOffsetGetter;
 
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
-import static frc.excalib.additional_utilities.AllianceUtils.FIELD_LENGTH_METERS;
-import static frc.excalib.additional_utilities.AllianceUtils.FIELD_WIDTH_METERS;
-import static frc.robot.Constants.DISABLE_SUBSYSTEMS;
+import static com.ctre.phoenix6.signals.NeutralModeValue.*;
+import static edu.wpi.first.units.Units.Radians;
 import static frc.robot.Constants.FieldConstants.*;
 import static frc.robot.Constants.PhysicalConstants.TURRET_OFFSET_TRANSLATION;
 import static frc.robot.Constants.SUBSYSTEMS_CANBUS;
 import static frc.robot.subsystems.shooter.ShooterConstants.*;
 import static frc.robot.subsystems.shooter.ShooterStates.IDLE;
-import static frc.robot.subsystems.shooter.ShooterStates.LOOK_HUB;
 import static frc.robot.subsystems.shooter.TargetHeight.HIGH;
-import static monologue.Annotations.Log.*;
 
-public class Shooter extends SubsystemBase implements Logged {
+/**
+ * Shooter on ExcaLib v2: turret + hood as {@link PositionalMechanism}s (turret with
+ * continuous-wrap goals inside its ±limits, hood with a trench-aware dynamic max) and the
+ * two-Kraken flywheel as a {@link VelocityMechanism}, coordinated by a state machine over
+ * {@link ShooterStates}.
+ *
+ * <p>The proven competition logic is preserved unchanged: interpolation maps
+ * (distance → hood angle / flywheel velocity / time of flight, HIGH and LOW goals),
+ * the 3-iteration shot-lead fixed point, moving-shot radial-velocity compensation, and
+ * the flywheel-dip {@link BallCounter}.
+ */
+public class Shooter extends SubsystemBase {
+    private static final double EMA_ALPHA = 0.05; // v1 flywheel velocity filter
 
-    private final TalonFXMotor hoodMotor, flyWheelMotorTop, flyWheelMotorLow, turretMotor;
-    private final MotorGroup shooterMotorGroup;
-    private final CANcoder hoodEncoder, turretEncoder;
-    private final PIDController angleController;
+    // ── Mechanisms ───────────────────────────────────────────────────────────
 
-    public final Turret turretMechanism;
-    public final DoubleSupplier turretAngleSupplier;
+    public final VelocityMechanism flywheel = new VelocityMechanism(
+            new MechanismConfig("Shooter/Flywheel",
+                            new CANDeviceId(FLYWHEEL_MOTOR_LOW_ID, SUBSYSTEMS_CANBUS.getName()))
+                    .follower(new CANDeviceId(FLYWHEEL_MOTOR_TOP_ID, SUBSYSTEMS_CANBUS.getName()), false)
+                    .controlMode(ControlMode.VOLTAGE) // ported v1 volts gains; FOC after SysId
+                    .rotorToMechanismRatio(FLYWHEEL_ROTOR_PER_MECHANISM)
+                    .gains(FLYWHEEL_GAINS, FLYWHEEL_SIM_GAINS)
+                    .currentBudget(FLYWHEEL_BUDGET)
+                    .tolerance(Radians.of(FLYWHEEL_TOLERANCE_RPS)) // rot/s tolerance
+                    .simRotationalModel(DCMotor.getKrakenX60Foc(2), 0.01, FLYWHEEL_ROTOR_PER_MECHANISM));
 
-    public final DoubleSupplier turretRelativeAngleToTarget;
+    public final PositionalMechanism hood = new PositionalMechanism(
+            new MechanismConfig("Shooter/Hood",
+                            new CANDeviceId(HOOD_MOTOR_ID, SUBSYSTEMS_CANBUS.getName()))
+                    .controlMode(ControlMode.VOLTAGE)
+                    .rotorToMechanismRatio(HOOD_ROTOR_PER_MECHANISM)
+                    .gains(HOOD_GAINS, HOOD_SIM_GAINS)
+                    .softLimits(Radians.of(HOOD_MIN_ANGLE_RAD), Radians.of(HOOD_MAX_ANGLE_RAD))
+                    .currentBudget(HOOD_BUDGET)
+                    .tolerance(Radians.of(HOOD_TOLERANCE_RAD))
+                    .neutralMode(Coast)
+                    .simArmModel(DCMotor.getKrakenX60Foc(1), HOOD_ROTOR_PER_MECHANISM, 0.05, 0.15,
+                            HOOD_MIN_ANGLE_RAD, HOOD_MAX_ANGLE_RAD, 0));
 
-    private ShooterStates currentState;
+    public final PositionalMechanism turret = new PositionalMechanism(
+            new MechanismConfig("Shooter/Turret",
+                            new CANDeviceId(TURRET_MOTOR_ID, SUBSYSTEMS_CANBUS.getName()))
+                    .controlMode(ControlMode.VOLTAGE)
+                    .inverted(true) // v1: REVERSE
+                    .rotorToMechanismRatio(TURRET_ROTOR_PER_MECHANISM)
+                    .gains(TURRET_GAINS, TURRET_SIM_GAINS)
+                    .motion(TURRET_MOTION)
+                    .softLimits(Radians.of(TURRET_MIN_ANGLE_RAD), Radians.of(TURRET_MAX_ANGLE_RAD))
+                    .continuousWrap()
+                    .currentBudget(TURRET_BUDGET)
+                    .tolerance(Radians.of(TURRET_TOLERANCE_RAD))
+                    .neutralMode(Coast)
+                    .simRotationalModel(DCMotor.getKrakenX60Foc(1), 0.5, TURRET_ROTOR_PER_MECHANISM));
 
-    private final FlyWheel flyWheelMechanism;
-    private final Mechanism hoodMechanism;
-
-    private DoubleSupplier hoodAngleSupplier;
-    private final SoftLimit hoodSoftLimit;
+    // ── Targeting state ──────────────────────────────────────────────────────
 
     private final Supplier<Pose2d> robotPositionSupplier;
+    private final Supplier<ChassisSpeeds> swerveSpeeds;
+    private final StateMachine<ShooterStates> machine;
 
-    private final DoubleSupplier turretRelativeDistanceFromTarget;
+    private final InterpolatingDoubleTreeMap highAngleDistanceMap = new InterpolatingDoubleTreeMap();
+    private final InterpolatingDoubleTreeMap highVelocityDistanceMap = new InterpolatingDoubleTreeMap();
+    private final InterpolatingDoubleTreeMap highDistanceTimeOfFlightMap = new InterpolatingDoubleTreeMap();
+    private final InterpolatingDoubleTreeMap lowAngleDistanceMap = new InterpolatingDoubleTreeMap();
+    private final InterpolatingDoubleTreeMap lowVelocityDistanceMap = new InterpolatingDoubleTreeMap();
+    private final InterpolatingDoubleTreeMap lowDistanceTimeOfFlightMap = new InterpolatingDoubleTreeMap();
 
-    public Supplier<Translation2d> turretToHubVector;
-
-    private DoubleSupplier flywheelVelocitySetpoint;
-    private DoubleSupplier hoodAngleSetpoint;
-
-    private final EMAFilter flywheelVelocityFilter;
+    private double flywheelVelocitySetpoint = 0;
+    private double hoodAngleSetpoint = 0;
+    private double filteredFlywheelVelocity = 0;
 
     private final BallCounter ballCounter;
 
-    private final InterpolatingDoubleTreeMap highAngleDistanceMap;
-    private final InterpolatingDoubleTreeMap highVelocityDistanceMap;
-    private final InterpolatingDoubleTreeMap highDistanceTimeOfFlightMap;
+    // ── Triggers (v1 semantics preserved) ────────────────────────────────────
 
-    private final InterpolatingDoubleTreeMap lowAngleDistanceMap;
-    private final InterpolatingDoubleTreeMap lowVelocityDistanceMap;
-    private final InterpolatingDoubleTreeMap lowDistanceTimeOfFlightMap;
-
-    private final Trigger volatileTrenchHoodTrigger;
-
-    private final Trigger activateLedsTrigger;
+    public final Trigger isTurretAligned;
     private final Trigger flyWheelReadyTrigger;
     private final Trigger hoodAdjustedTrigger;
-    public final Trigger isTurretAligned;
-
+    private final Trigger volatileTrenchHoodTrigger;
     public final Trigger shooterReady;
-
-    private Supplier<ChassisSpeeds> swerveSpeeds;
+    /** Flywheel spinning above idle — used for driver feedback (LEDs). */
+    public final Trigger flywheelSpinning;
 
     public Shooter(Supplier<Pose2d> poseSupplier, Supplier<ChassisSpeeds> swerveSpeeds) {
-        hoodMotor = new TalonFXMotor(HOOD_MOTOR_ID, SUBSYSTEMS_CANBUS);
-        hoodMotor.setCurrentLimit(40, 30);
-        flyWheelMotorLow = new TalonFXMotor(FLYWHEEL_MOTOR_LOW_ID, SUBSYSTEMS_CANBUS);
-        flyWheelMotorTop = new TalonFXMotor(FLYWHEEL_MOTOR_TOP_ID, SUBSYSTEMS_CANBUS);
-        hoodEncoder = new CANcoder(HOOD_ENCODER_ID, SUBSYSTEMS_CANBUS);
-
+        this.robotPositionSupplier = poseSupplier;
         this.swerveSpeeds = swerveSpeeds;
-        shooterMotorGroup = new MotorGroup(flyWheelMotorLow, flyWheelMotorTop);
-        shooterMotorGroup.setIdleState(IdleState.BRAKE);
-        shooterMotorGroup.setMotorPosition(0);
-        shooterMotorGroup.setVelocityConversionFactor((double) 40 / 48);
-        shooterMotorGroup.setPositionConversionFactor((double) 40 / 48);
 
-        flyWheelMotorLow.setInverted(DirectionState.FORWARD);
-        flyWheelMotorTop.setInverted(DirectionState.FORWARD);
+        // Seed mechanism positions from the absolute encoders (v1 boot behavior; the
+        // CANcoders are not yet fused as device feedback — planned follow-up).
+        CANcoder hoodEncoder = new CANcoder(HOOD_ENCODER_ID, SUBSYSTEMS_CANBUS);
+        CANcoder turretEncoder = new CANcoder(TURRET_ENCODER_ID, SUBSYSTEMS_CANBUS);
+        hood.resetPosition(Radians.of(
+                hoodEncoder.getAbsolutePosition().getValueAsDouble() * HOOD_RAD_PER_ENCODER_ROTATION));
+        turret.resetPosition(Radians.of(
+                turretEncoder.getAbsolutePosition().getValueAsDouble() * TURRET_RAD_PER_ENCODER_ROTATION));
 
-        currentState = LOOK_HUB;
-
-        flyWheelMotorTop.setCurrentLimit(120, 80);
-        flyWheelMotorLow.setCurrentLimit(120, 80);
-
-        turretMotor = new TalonFXMotor(TURRET_MOTOR_ID, SUBSYSTEMS_CANBUS);
-        turretEncoder = new CANcoder(TURRET_ENCODER_ID, SUBSYSTEMS_CANBUS);
-        turretEncoder.setPosition(turretEncoder.getAbsolutePosition().getValueAsDouble());
-        turretAngleSupplier = () -> turretEncoder.getPosition().getValueAsDouble() * ENCODER_POSITION_CONVERSION_FACTOR;
-        turretMotor.setMotorPosition(turretEncoder.getPosition().getValueAsDouble());
-
-        turretMotor.setCurrentLimit(120, 80);
-        this.turretRelativeAngleToTarget = () -> getTurretToTargetVector().get().getAngle().getRadians();
-        turretMotor.setInverted(DirectionState.REVERSE);
-
-        turretMotor.setIdleState(IdleState.COAST);
-        turretMotor.setMotorPosition(turretAngleSupplier.getAsDouble());
-        turretMotor.setPositionConversionFactor(MOTOR_POSITION_CONVERSION_FACTOR);
-        turretMotor.setVelocityConversionFactor(MOTOR_POSITION_CONVERSION_FACTOR);
-
-        turretMechanism = new frc.excalib.mechanisms.turret.Turret(
-                turretMotor,
-                TURRET_CONTINUOUS_SOFTLIMIT,
-                TURRET_GAINS,
-                PID_TOLERANCE,
-                turretMotor::getMotorPosition,
-                new TrapezoidProfile.Constraints(Math.PI * 2, Math.PI * 100)
-        );
-
-        isTurretAligned = new Trigger(
-                () -> Math.abs(
-                        turretMechanism.getPosition().getRadians() -
-                                SOFT_LIMIT.limit(
-                                        TURRET_CONTINUOUS_SOFTLIMIT.getSetpoint(
-                                                turretAngleSupplier.getAsDouble(),
-                                                turretRelativeAngleToTarget.getAsDouble()))) < PID_TOLERANCE
-
-        );
-
-        hoodEncoder.setPosition(hoodEncoder.getAbsolutePosition().getValueAsDouble());
-
-        highDistanceTimeOfFlightMap = new InterpolatingDoubleTreeMap();
-
-        turretToHubVector = getTurretToTargetVector();
-
-        angleController = new PIDController(HOOD_GAINS.kp, HOOD_GAINS.ki, HOOD_GAINS.kd);
-        angleController.setTolerance(0.01);
-
-        hoodMotor.setIdleState(IdleState.BRAKE);
-        hoodMotor.setInverted(DirectionState.FORWARD);
-        hoodAngleSupplier = () -> (hoodEncoder.getPosition().getValueAsDouble() * POSITION_CONVERSION_FACTOR);
-
-        hoodMotor.setPositionConversionFactor(POSITION_CONVERSION_FACTOR * ((double) -0.208 / 1.497) * 1.0231);
-        hoodMotor.setMotorPosition(hoodAngleSupplier.getAsDouble());
-
-        flywheelVelocitySetpoint = () -> 0;
-        hoodAngleSetpoint = () -> 0;
-        hoodMotor.setIdleState(IdleState.COAST);
-
-        flyWheelMechanism = new FlyWheel(shooterMotorGroup, FLYWHEEL_MAX_ACCELERATION, FLYWHEEL_MAX_JERK, FLYWHEEL_GAINS);
-
-        flywheelVelocityFilter = new EMAFilter(
-                flyWheelMechanism::getVelocity,
-                0.05,
-                PeriodicScheduler.PERIOD.MILLISECONDS_20);
-
-        ballCounter = new BallCounter(
-                () -> flywheelVelocitySetpoint.getAsDouble(),
-                flywheelVelocityFilter::getValue
-        );
-
-        PeriodicScheduler.PERIOD.MILLISECONDS_20.add(flywheelVelocityFilter);
-
-        robotPositionSupplier = poseSupplier;
-
-        highAngleDistanceMap = new InterpolatingDoubleTreeMap();
         initAngleMap();
-
-        highVelocityDistanceMap = new InterpolatingDoubleTreeMap();
         initVelocityMap();
+        initDistanceTimeOfFlightMap();
+        initLowMaps();
 
-        lowAngleDistanceMap = new InterpolatingDoubleTreeMap();
-        lowDistanceTimeOfFlightMap = new InterpolatingDoubleTreeMap();
-        lowVelocityDistanceMap = new InterpolatingDoubleTreeMap();
+        machine = new StateMachine<>("Shooter", ShooterStates.LOOK_HUB)
+                .whileIn(IDLE, idleCommand())
+                .whileIn(ShooterStates.SHOOT_HUB, trackCommand())
+                .whileIn(ShooterStates.LOOK_HUB, trackCommand())
+                .whileIn(ShooterStates.SHOOT_FAR_DELIVERY, trackCommand())
+                .whileIn(ShooterStates.LOOK_FAR_DELIVERY, trackCommand())
+                .whileIn(ShooterStates.SHOOT_CLOSE_DELIVERY, trackCommand())
+                .whileIn(ShooterStates.LOOK_CLOSE_DELIVERY, trackCommand())
+                .transitionFromAny(IDLE)
+                .transitionFromAny(ShooterStates.SHOOT_HUB)
+                .transitionFromAny(ShooterStates.LOOK_HUB)
+                .transitionFromAny(ShooterStates.SHOOT_FAR_DELIVERY)
+                .transitionFromAny(ShooterStates.LOOK_FAR_DELIVERY)
+                .transitionFromAny(ShooterStates.SHOOT_CLOSE_DELIVERY)
+                .transitionFromAny(ShooterStates.LOOK_CLOSE_DELIVERY);
 
-        flyWheelReadyTrigger = new Trigger(() -> Math.abs(flywheelVelocityFilter.getValue() - flywheelVelocitySetpoint.getAsDouble()) < FLYWHEEL_TOLERANCE);
-
-        hoodAdjustedTrigger = new Trigger(() -> Math.abs(hoodAngleSupplier.getAsDouble() - hoodAngleSetpoint.getAsDouble()) < HOOD_TOLERANCE);
-
-        activateLedsTrigger = new Trigger(() -> flyWheelMechanism.getVelocity() > 3);
-        activateLedsTrigger.onTrue(LEDs.getInstance().setPattern(LEDs.LEDPattern.BLINKING, Color.Colors.ORANGE.color).andThen(LEDs.getInstance().restoreLEDs()));
+        isTurretAligned = turret.atGoal;
+        flyWheelReadyTrigger = new Trigger(
+                () -> Math.abs(filteredFlywheelVelocity - flywheelVelocitySetpoint) < FLYWHEEL_TOLERANCE_RPS);
+        hoodAdjustedTrigger = new Trigger(
+                () -> Math.abs(hood.getPosition().in(Radians) - hoodAngleSetpoint) < HOOD_TOLERANCE_RAD);
+        shooterReady = isTurretAligned.and(flyWheelReadyTrigger).and(hoodAdjustedTrigger);
 
         volatileTrenchHoodTrigger = new Trigger(() -> {
             Pose2d pose = poseSupplier.get();
-            if (AllianceUtils.isBlueAlliance()) {
-                return (pose.getX() > FRONT_TRENCH_SIDEX_LINE_DIST_METERS && pose.getY() < TRENCH_SIDEY_LINE_DIST_METERS) && (pose.getX() < BACK_TRENCH_SIDEX_LINE_DIST_METERS);
-            } else {
-                return (pose.getX() < FIELD_LENGTH_METERS - FRONT_TRENCH_SIDEX_LINE_DIST_METERS && pose.getY() > FIELD_WIDTH_METERS - TRENCH_SIDEY_LINE_DIST_METERS) && (pose.getX() > FIELD_LENGTH_METERS - BACK_TRENCH_SIDEX_LINE_DIST_METERS);
+            if (AllianceFlip.isBlue()) {
+                return pose.getX() > FRONT_TRENCH_SIDEX_LINE_DIST_METERS
+                        && pose.getY() < TRENCH_SIDEY_LINE_DIST_METERS
+                        && pose.getX() < BACK_TRENCH_SIDEX_LINE_DIST_METERS;
             }
+            return pose.getX() < FIELD_LENGTH_METERS - FRONT_TRENCH_SIDEX_LINE_DIST_METERS
+                    && pose.getY() > FIELD_WIDTH_METERS - TRENCH_SIDEY_LINE_DIST_METERS
+                    && pose.getX() > FIELD_LENGTH_METERS - BACK_TRENCH_SIDEX_LINE_DIST_METERS;
         });
 
-        hoodMechanism = new Mechanism(hoodMotor);
+        ballCounter = new BallCounter(
+                () -> flywheelVelocitySetpoint,
+                () -> filteredFlywheelVelocity);
 
-        hoodSoftLimit = new SoftLimit(() -> HOOD_MIN_ANGLE_LIMIT, () -> {
-            if (volatileTrenchHoodTrigger.getAsBoolean()) {
-                return HOOD_MAX_ANGLE_LIMIT_IN_TRENCH;
-            }
-            return HOOD_MAX_ANGLE_LIMIT;
-        });
+        // v1 LED behavior (blink orange while the flywheel spins) is bound in
+        // RobotContainer — UI concern; this trigger feeds it.
+        flywheelSpinning = new Trigger(() -> flywheel.getVelocityRotationsPerSecond() > 3);
 
-
-        initDistanceTimeOfFlightMap();
-
-        initLowMaps();
-        this.turretRelativeDistanceFromTarget = () -> getTurretToTargetVector().get().getNorm();
-
-        shooterReady = isTurretAligned
-                .and(flyWheelReadyTrigger)
-                .and(hoodAdjustedTrigger);
-
-//                .and(()-> getTurretToTargetVector().get().getNorm() < 3.5);
-
-
-        TurretOffsetGetter.instance.setTurretOffsetSupplier(turretMechanism::getPosition);
-        TurretOffsetGetter.instance.setTurretRotationalVelSup(turretMechanism::logVelocity);
-        TurretOffsetGetter.instance.setRobotRotationalVel(() -> swerveSpeeds.get().omegaRadiansPerSecond);
-
-        setDefaultCommand(defaultCommand().unless(() -> DISABLE_SUBSYSTEMS));
+        // Vision pose conversion still needs the turret angle (consumed by swerve)
+        TurretOffsetGetter.instance.setTurretOffsetSupplier(this::getTurretRotation);
+        TurretOffsetGetter.instance.setTurretRotationalVelSup(
+                () -> turret.getVelocityRotationsPerSecond() * 2 * Math.PI);
+        TurretOffsetGetter.instance.setRobotRotationalVel(
+                () -> swerveSpeeds.get().omegaRadiansPerSecond);
     }
 
+    // ── Interpolation maps (tuning data — DO NOT reformat; edit values only) ─
+
     private void initDistanceTimeOfFlightMap() {
-        // Populate empirical time-of-flight map for HIGH goal (fix A1/B1)
-        // The commented values were empirical measurements — restore them so the lead model runs.
         highDistanceTimeOfFlightMap.put(0.0, 0.0);
         highDistanceTimeOfFlightMap.put(4.01, 1.2);
         highDistanceTimeOfFlightMap.put(4.72, 1.21);
@@ -272,84 +219,77 @@ public class Shooter extends SubsystemBase implements Logged {
     }
 
     private void initLowMaps() {
-            // Flatter than the high-goal map on purpose -> lower apex.
-            // angle decreases slightly with distance to hold apex roughly constant.
-            lowAngleDistanceMap.put(2.0, 0.7);
-            lowAngleDistanceMap.put(3.0, 0.7);
-            lowAngleDistanceMap.put(4.0, 0.6);
-            lowAngleDistanceMap.put(5.0, 0.5);
-            lowAngleDistanceMap.put(6.0, 0.5);
+        // Flatter than the high-goal map on purpose -> lower apex.
+        // angle decreases slightly with distance to hold apex roughly constant.
+        lowAngleDistanceMap.put(2.0, 0.7);
+        lowAngleDistanceMap.put(3.0, 0.7);
+        lowAngleDistanceMap.put(4.0, 0.6);
+        lowAngleDistanceMap.put(5.0, 0.5);
+        lowAngleDistanceMap.put(6.0, 0.5);
 
-            // Comparable to high-goal speeds (flatter shot needs the horizontal reach).
-            // This is the easy empirical knob: short -> raise, long -> lower.
-            lowVelocityDistanceMap.put(2.0, 22.0);
-            lowVelocityDistanceMap.put(3.0, 26.0);
-            lowVelocityDistanceMap.put(4.0, 31.0);
-            lowVelocityDistanceMap.put(5.0, 36.0);
-            lowVelocityDistanceMap.put(6.0, 41.0);
+        // Comparable to high-goal speeds (flatter shot needs the horizontal reach).
+        // This is the easy empirical knob: short -> raise, long -> lower.
+        lowVelocityDistanceMap.put(2.0, 22.0);
+        lowVelocityDistanceMap.put(3.0, 26.0);
+        lowVelocityDistanceMap.put(4.0, 31.0);
+        lowVelocityDistanceMap.put(5.0, 36.0);
+        lowVelocityDistanceMap.put(6.0, 41.0);
 
-            // Flat shot -> shorter hang time than a high arc. MEASURE these on-robot.
-            lowDistanceTimeOfFlightMap.put(2.0, 0.30);
-            lowDistanceTimeOfFlightMap.put(3.0, 0.42);
-            lowDistanceTimeOfFlightMap.put(4.0, 0.54);
-            lowDistanceTimeOfFlightMap.put(5.0, 0.66);
-            lowDistanceTimeOfFlightMap.put(6.0, 0.78);
-        }
-
-    public Command setStateCommand(ShooterStates stateToSet) {
-        return new InstantCommand(() -> this.currentState = stateToSet);
+        // Flat shot -> shorter hang time than a high arc. MEASURE these on-robot.
+        lowDistanceTimeOfFlightMap.put(2.0, 0.30);
+        lowDistanceTimeOfFlightMap.put(3.0, 0.42);
+        lowDistanceTimeOfFlightMap.put(4.0, 0.54);
+        lowDistanceTimeOfFlightMap.put(5.0, 0.66);
+        lowDistanceTimeOfFlightMap.put(6.0, 0.78);
     }
 
-    public Command setTurretPositionCommand(Supplier<Rotation2d> position) {
-        return turretMechanism.setPositionCommand(position);
+    // ── State behavior ───────────────────────────────────────────────────────
+
+    private Command idleCommand() {
+        return run(() -> {
+            setHoodAngle(0);
+            setFlywheelVelocity(0);
+            turret.setGoal(Radians.of(0));
+        }).withName("Shooter Idle");
     }
 
-
-    public Command defaultCommand() {
-        Command defaultCommand = new ConditionalCommand(
-                new ParallelCommandGroup(
-                        setHoodAngleCommand(() -> 0),
-                        flyWheelMechanism.setDynamicVelocityCommand(() -> {
-                            flywheelVelocitySetpoint = () -> 0;
-                            return 0;
-                        }),
-                        setTurretPositionCommand(Rotation2d::new)
-                ).until(() -> !this.currentState.equals(IDLE)),
-                new ParallelCommandGroup(
-                        setAdjustedHoodAngleCommand(),
-                        adjustFlyWheelVelocityCommand(),
-                        setAdjustedTurretAngle()
-                ).until(() -> this.currentState.equals(IDLE)),
-                () -> this.currentState.equals(IDLE));
-        defaultCommand.addRequirements(this);
-        return defaultCommand;
-
+    private Command trackCommand() {
+        return run(() -> {
+            double distance = getTurretToTargetVector().get().getNorm();
+            ShooterStates state = machine.getCurrentState();
+            setHoodAngle(getInterpolatingAngleMap().get(distance));
+            setFlywheelVelocity(state.isShooting ? getWantedVelocityForDistance(distance) : 0);
+            turret.setGoal(Radians.of(getTurretToTargetVector().get().getAngle().getRadians()));
+        }).withName("Shooter Track");
     }
 
-    public Command setAdjustedTurretAngle() {
-        return setTurretPositionCommand(() -> getTurretToTargetVector().get().getAngle());
+    /** Hood goal with the trench-aware dynamic maximum (v1 volatile trench limit). */
+    private void setHoodAngle(double angleRadians) {
+        double max = volatileTrenchHoodTrigger.getAsBoolean()
+                ? HOOD_MAX_ANGLE_IN_TRENCH_RAD : HOOD_MAX_ANGLE_RAD;
+        hoodAngleSetpoint = Math.max(HOOD_MIN_ANGLE_RAD, Math.min(angleRadians, max));
+        hood.setGoal(Radians.of(hoodAngleSetpoint));
     }
 
+    private void setFlywheelVelocity(double rps) {
+        flywheelVelocitySetpoint = rps;
+        flywheel.setVelocityRotationsPerSecond(rps);
+    }
+
+    // ── Targeting math (ported verbatim from v1) ─────────────────────────────
 
     public Supplier<Translation2d> getTurretToTargetVector() {
         return () -> {
-
             ChassisSpeeds robotSpeeds = swerveSpeeds.get();
-
             Pose2d robotPose = robotPositionSupplier.get();
             Rotation2d robotRot = robotPose.getRotation();
 
-            Translation2d turretField =
-                    getTurretOnField().getTranslation();
-
+            Translation2d turretField = getTurretOnField().getTranslation();
             Translation2d fieldVector =
-                    currentState.targetTranslation.get().minus(turretField);
-
-
+                    machine.getCurrentState().targetTranslation.get().minus(turretField);
             Translation2d turretToTarget = fieldVector.rotateBy(robotRot.unaryMinus());
 
-            // Use a small fixed-point iteration to converge the (range <-> time-of-flight <-> lead) loop
-            // instead of a single lookup. This implements B1.
+            // Fixed-point iteration converging the (range <-> time-of-flight <-> lead) loop
             Translation2d aim = turretToTarget;
             for (int i = 0; i < 3; i++) {
                 double tof = getInterpolatingTimeOfFlightMap().get(aim.getNorm());
@@ -359,44 +299,8 @@ public class Shooter extends SubsystemBase implements Logged {
                 ).times(tof);
                 aim = turretToTarget.minus(virtualTargetOffset);
             }
-
             return aim;
         };
-    }
-
-
-    @NT
-    public Pose2d getTurretOnField() {
-        Pose2d robotPose = robotPositionSupplier.get();
-        Translation2d robotTranslation = robotPose.getTranslation();
-        Rotation2d robotRot = robotPose.getRotation();
-
-        // turret position in field coordinates
-        Translation2d turretField =
-                robotTranslation.plus(TURRET_OFFSET_TRANSLATION.rotateBy(robotRot));
-
-        return new Pose2d(turretField, robotPositionSupplier.get().getRotation().minus(turretMechanism.getPosition().unaryMinus()));
-    }
-
-    public Command setHoodAngleCommand(DoubleSupplier angleSetpoint) {
-        return new RunCommand(() -> hoodMechanism.setVoltage(getControlledOutputForAngle(() -> hoodSoftLimit.limit(angleSetpoint.getAsDouble()))));
-    }
-
-
-    public Command adjustFlyWheelVelocityCommand() {
-        return flyWheelMechanism.setDynamicVelocityCommand(
-                () -> {
-                    double distance = turretRelativeDistanceFromTarget.getAsDouble();
-                    double velocity = currentState.isShooting ? getWantedVelocityForDistance(distance) : 0;
-                    flywheelVelocitySetpoint = () -> velocity;
-                    return velocity;
-                }
-        );
-    }
-
-    public double getWantedVelocity(){
-        double distance = turretRelativeDistanceFromTarget.getAsDouble();
-        return currentState.isShooting ? getWantedVelocityForDistance(distance) : 0;
     }
 
     private double getWantedVelocityForDistance(double distance) {
@@ -406,133 +310,95 @@ public class Shooter extends SubsystemBase implements Logged {
         if (range < 1e-9) {
             return nominalVelocity;
         }
-
         Translation2d unitToTarget = turretToTarget.div(range);
         ChassisSpeeds robotSpeeds = swerveSpeeds.get();
         Translation2d robotVelocity = new Translation2d(
                 robotSpeeds.vxMetersPerSecond - TURRET_OFFSET_TRANSLATION.getY() * robotSpeeds.omegaRadiansPerSecond,
-                robotSpeeds.vyMetersPerSecond + TURRET_OFFSET_TRANSLATION.getX() * robotSpeeds.omegaRadiansPerSecond
-        );
-
+                robotSpeeds.vyMetersPerSecond + TURRET_OFFSET_TRANSLATION.getX() * robotSpeeds.omegaRadiansPerSecond);
         double radialVelocity = robotVelocity.getX() * unitToTarget.getX() + robotVelocity.getY() * unitToTarget.getY();
         return nominalVelocity - radialVelocity;
     }
 
-    public Command setAdjustedHoodAngleCommand() {
-        return new RunCommand(() -> {
-            double distance = turretRelativeDistanceFromTarget.getAsDouble();
-            hoodAngleSetpoint = () -> hoodSoftLimit.limit(getInterpolatingAngleMap().get(distance));
-            hoodMechanism.setVoltage(getControlledOutputForAngle(() -> hoodSoftLimit.limit(getInterpolatingAngleMap().get(distance))));
-        });
+    public Pose2d getTurretOnField() {
+        Pose2d robotPose = robotPositionSupplier.get();
+        Translation2d turretField = robotPose.getTranslation()
+                .plus(TURRET_OFFSET_TRANSLATION.rotateBy(robotPose.getRotation()));
+        return new Pose2d(turretField,
+                robotPose.getRotation().minus(getTurretRotation().unaryMinus()));
     }
 
-
-    public double getControlledOutputForAngle(DoubleSupplier angleSetpoint) {
-        double pid = angleController.calculate(hoodMotor.getMotorPosition(), angleSetpoint.getAsDouble());
-        if (pid > 0) {
-            return pid + Math.signum(pid) * 0.375; //ks positive
-        }
-        return pid + Math.signum(pid) * -0.25;
+    public Rotation2d getTurretRotation() {
+        return new Rotation2d(turret.getPosition().in(Radians));
     }
 
-
-    @NT
-    public double getFlyWheelVelocitySetpoint() {
-        return flywheelVelocitySetpoint.getAsDouble();
+    public InterpolatingDoubleTreeMap getInterpolatingTimeOfFlightMap() {
+        return machine.getCurrentState().targetHeight.equals(HIGH)
+                ? highDistanceTimeOfFlightMap : lowDistanceTimeOfFlightMap;
     }
 
-    @NT
-    public double getFlyWheelVelocity() {
-        return flywheelVelocityFilter.getValue();
+    public InterpolatingDoubleTreeMap getInterpolatingVelocityMap() {
+        return machine.getCurrentState().targetHeight.equals(HIGH)
+                ? highVelocityDistanceMap : lowVelocityDistanceMap;
     }
 
-    @NT
-    public double getHoodAngleSetpoint() {
-        return hoodAngleSetpoint.getAsDouble();
+    public InterpolatingDoubleTreeMap getInterpolatingAngleMap() {
+        return machine.getCurrentState().targetHeight.equals(HIGH)
+                ? highAngleDistanceMap : lowAngleDistanceMap;
     }
 
-    @NT
-    public double getHoodAngleSupplier() {
-        return hoodAngleSupplier.getAsDouble();
+    // ── Public API ───────────────────────────────────────────────────────────
+
+    public Command setStateCommand(ShooterStates state) {
+        return machine.requestCommand(state);
     }
 
-    @NT
-    public boolean flyWheelReadyTrigger() {
-        return flyWheelReadyTrigger.getAsBoolean();
-    }
-
-    @NT
-    public boolean hoodAdjustedTrigger() {
-        return hoodAdjustedTrigger.getAsBoolean();
-    }
-
-    @NT
-    public double getLimitedHoodAngle() {
-        return hoodSoftLimit.limit(hoodAngleSetpoint.getAsDouble());
-    }
-
-    @NT
-    public boolean volatileTrenchHoodTrigger() {
-        return volatileTrenchHoodTrigger.getAsBoolean();
-    }
-
-    @NT
-    public String getCurrentShooterState() {
-        return currentState.name();
+    /** Direct request — used by the superstructure's goal fan-out. */
+    public void requestState(ShooterStates state) {
+        machine.request(state);
     }
 
     public Trigger isShooterReady() {
         return shooterReady;
     }
 
-    @NT
-    public Pose2d getHubOnFieldAfterCalc() {
-        Pose2d turretOnField = getTurretOnField();
-        return new Pose2d(turretOnField.getTranslation().plus(turretToHubVector.get().rotateBy(robotPositionSupplier.get().getRotation())), new Rotation2d());
+    /** Manual overrides (used by Superstructure's manual shooting mode). */
+    public Command manualShootingCommand(DoubleSupplier hoodAngleRad, DoubleSupplier flywheelRps) {
+        return run(() -> {
+            setHoodAngle(hoodAngleRad.getAsDouble());
+            setFlywheelVelocity(flywheelRps.getAsDouble());
+            turret.setGoal(Radians.of(getTurretToTargetVector().get().getAngle().getRadians()));
+        }).withName("Shooter Manual");
     }
 
-    @NT
-    public double getDistanceFromHubTarget() {
-        return getTurretToTargetVector().get().getNorm();
+    public Command coastTurretCommand() {
+        return turret.coastCommand(this);
     }
 
-    public Command setFlyWheelVelocity(DoubleSupplier rps) {
-        return flyWheelMechanism.setDynamicVelocityCommand(rps);
-    }
-
-    public InterpolatingDoubleTreeMap getInterpolatingTimeOfFlightMap() {
-        return currentState.targetHeight.equals(HIGH) ? highDistanceTimeOfFlightMap : lowDistanceTimeOfFlightMap;
-    }
-
-    public InterpolatingDoubleTreeMap getInterpolatingVelocityMap() {
-        return currentState.targetHeight.equals(HIGH) ? highVelocityDistanceMap : lowVelocityDistanceMap;
-    }
-
-    public InterpolatingDoubleTreeMap getInterpolatingAngleMap() {
-        return currentState.targetHeight.equals(HIGH) ? highAngleDistanceMap : lowAngleDistanceMap;
-    }
-
-    @NT
-    public boolean isTurretAligned() {
-        return isTurretAligned.getAsBoolean();
-    }
-
-    public Command yoavHatesThisCommandCommand(DoubleSupplier hoodAngleSupplier, DoubleSupplier flywheelVelocitySetpoint) {
-        Command command = new ParallelCommandGroup(
-                setFlyWheelVelocity(flywheelVelocitySetpoint),
-                setHoodAngleCommand(hoodAngleSupplier),
-                setAdjustedTurretAngle()
-        );
-        command.addRequirements(this);
-        return command;
-    }
-
-    @NT
     public int getBallCount() {
         return ballCounter.getBallCount();
     }
 
     public void resetBallCount() {
         ballCounter.resetCount();
+    }
+
+    @Override
+    public void periodic() {
+        flywheel.periodic();
+        hood.periodic();
+        turret.periodic();
+        machine.periodic();
+
+        filteredFlywheelVelocity += EMA_ALPHA * (flywheel.getVelocityRotationsPerSecond() - filteredFlywheelVelocity);
+
+        DogLog.log("Shooter/FlywheelVelocityFiltered", filteredFlywheelVelocity);
+        DogLog.log("Shooter/FlywheelSetpoint", flywheelVelocitySetpoint);
+        DogLog.log("Shooter/HoodSetpointRad", hoodAngleSetpoint);
+        DogLog.log("Shooter/Ready", shooterReady.getAsBoolean());
+        DogLog.log("Shooter/TurretAligned", isTurretAligned.getAsBoolean());
+        DogLog.log("Shooter/TurretOnField", getTurretOnField());
+        DogLog.log("Shooter/DistanceToTarget", getTurretToTargetVector().get().getNorm());
+        DogLog.log("Shooter/BallCount", ballCounter.getBallCount());
+        DogLog.log("Shooter/InTrench", volatileTrenchHoodTrigger.getAsBoolean());
     }
 }

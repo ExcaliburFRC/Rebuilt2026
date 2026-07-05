@@ -32,40 +32,28 @@ Galahad is our proud warrior for the 2026 season. It will represent us in:
 Here's an overview of our code layout:
 
 ```
-src/
-└── main/
-    └── java/
-        └── frc/
-            ├── excalib / ...
-            └── robot/
-                ├── Main.java
-                ├── Robot.java
-                ├── RobotContainer.java
-                ├── Constants.java
-
-                ├── subsystems/
-                            ├── inatke/
-                            │   ├── Intake.java
-                            │   └── IntakeConstants.java
-                            ├── shooter/
-                            │   ├── Shooter.java
-                            │   └── ShooterConstants.java
-                            ├── transport/
-                            │   ├── Transport.java
-                            │   └── TransportConstants.java
-                            └── turret/
-                                ├── Turret.java
-                                └── TurretConstants.java
-
-                ├── superstructure/
-                            └── Superstructure.java
-
-                └── util /
-                            ├── AuroraPoseGetter.java
-                            ├── GameDataClient.java
-                            ├── HubTimerSubsystem.java
-                            └── Target.java (Enum)
+src/main/java/frc/
+├── excalib2/            ← ExcaLib v2 — our library (Phoenix 6 FOC-first). v1 has been removed.
+│   ├── device/          CANDeviceId, Motor, DeviceConfigs (apply+verify+retry), SignalHub
+│   ├── control/         ControlMode, Gains, MotionConstraints (MotionMagic/Expo), CurrentBudget
+│   ├── mechanisms/      MechanismConfig + Positional / Linear / Velocity / Roller archetypes
+│   ├── statemachine/    StateMachine<S> — transition table, guards, enter/while/exit
+│   ├── superstructure/  Superstructure<G> goal-coordinator base
+│   ├── swerve/          SwerveSubsystem (CTRE swerve, drive commands), DriveToPose, MegaTag2
+│   ├── auto/            PathPlanner glue (named commands, auto chooser)
+│   ├── telemetry/       Telemetry (DogLog+SignalLogger), TunableNumber, FaultReporter, LoopTimer
+│   ├── sim/             MechanismSim — TalonFXSimState + WPILib physics models
+│   └── util/            AllianceFlip, Zones, LedStrip
+│
+└── robot/
+    ├── Robot.java / RobotContainer.java / Constants.java / SwerveConfig.java
+    ├── subsystems/      intake / shooter / transport — built on the excalib2 archetypes
+    ├── superstructure/  Superstructure (RobotState goal machine) + RobotState
+    └── util/            ShiftUtil, TurretOffsetGetter, BallCounter, LimelightHelpers
 ```
+
+📖 **Full library reference:** open [docs/EXCALIB_MANUAL.html](docs/EXCALIB_MANUAL.html). Quick recipe: [docs/ADDING_A_SUBSYSTEM.md](docs/ADDING_A_SUBSYSTEM.md).
+📚 Library background: [docs/AUDIT.md](docs/AUDIT.md) · [docs/RESEARCH.md](docs/RESEARCH.md) · [docs/DESIGN.md](docs/DESIGN.md) · credits in [NOTICE.md](NOTICE.md).
 
 ---
 

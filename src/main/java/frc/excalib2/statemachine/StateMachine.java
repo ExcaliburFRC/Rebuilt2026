@@ -230,7 +230,7 @@ public final class StateMachine<S extends Enum<S>> {
         }
         Command command = whileIn.get(state);
         if (command != null) {
-            command.schedule();
+            edu.wpi.first.wpilibj2.command.CommandScheduler.getInstance().schedule(command);
         }
     }
 

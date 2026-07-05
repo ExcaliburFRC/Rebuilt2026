@@ -724,7 +724,8 @@ DeviceConfigs.retry("name", () -&gt; someCtreCall())                      // ret
       <tr><td><code>setBrakeAsync(boolean)</code></td><td>Brake/Coast off the main loop.</td><td>The CTRE call blocks ~ms — this queues it on a worker thread. Never call <code>Motor.setNeutralMode</code> on the loop.</td></tr>
       <tr><td><code>coastCommand(subsystem)</code></td><td>Coast while held, restore configured neutral on release. Works while disabled.</td><td>Bind for the pit crew.</td></tr>
       <tr><td><code>setVolts(double)</code></td><td>Raw voltage out.</td><td>Bring-up and characterization only.</td></tr>
-      <tr><td><code>sysIdQuasistatic / sysIdDynamic (subsystem, direction)</code></td><td>WPILib SysId routines, recorded via Phoenix SignalLogger into the hoot log.</td><td>§35 for the full procedure.</td></tr>
+      <tr><td><code>sysIdQuasistatic / sysIdDynamic (subsystem, direction)</code></td><td><b>Voltage</b> characterization routines (→ volt-based gains for <code>VOLTAGE</code> mode), recorded via Phoenix SignalLogger into the hoot log.</td><td>§35 for the full procedure.</td></tr>
+      <tr><td><code>sysIdQuasistaticTorque / sysIdDynamicTorque (subsystem, direction)</code></td><td><b>Torque-current</b> characterization (→ amp-based gains for <code>TORQUE_CURRENT_FOC</code>), the volts-as-amps idiom, clamped by the budget's torque peaks.</td><td>§35.5. Real hardware only.</td></tr>
       <tr><td><code>name()</code></td><td>The telemetry name.</td><td></td></tr>
     </table></div>
     <div class="box tip"><div class="h">💡 What gets logged automatically, per mechanism, every loop</div><p>Position, velocity, applied volts, supply amps, stator amps, temperature, connected — plus the archetype extras (goal, hasGoal, atGoal / atSpeed / output volts). You add domain-specific logs only.</p></div>
@@ -1355,20 +1356,107 @@ LEDPattern.progressMaskLayer(() -&gt; elevator.getLengthMeters() / MAX_HEIGHT);<
 
   <!-- ==================================================== 35 TUNING -->
   <section id="tuning">
-    <h2><span class="n">35</span>SysId &amp; tuning — the full procedure</h2>
-    <ol class="steps">
-      <li><b class="t">Bench-prep.</b> Mechanism free to move full travel; soft limits verified; someone on the disable key.</li>
-      <li><b class="t">Bind the four routines</b> (temporarily) for the mechanism under test:
-        <div class="code"><div class="code-head"><span class="fname">temporary test bindings</span><button class="copy">Copy</button></div><pre><code>controller.povUp().whileTrue(shooter.hoodSysIdQuasistatic(SysIdRoutine.Direction.kForward));
+    <h2><span class="n">35</span>SysId &amp; tuning — concept, code, and the FOC path</h2>
+    <p class="lead">SysId replaces gain-guessing with measurement. This section covers what it measures, exactly what the library's routines do in code, how to run and analyze a session, and — separately — how to characterize for <b>TorqueCurrentFOC</b>, whose gains are amps-based and need their own routines.</p>
+
+    <h3>35.1 · What SysId measures, and how</h3>
+    <p>The routine drives the mechanism with two stimulus shapes while recording position, velocity, and output:</p>
+    <div class="tbl"><table>
+      <tr><th>Test</th><th>Stimulus</th><th>What it reveals</th></tr>
+      <tr><td><b>Quasistatic</b></td><td>A slow output <em>ramp</em> (acceleration ≈ 0)</td><td><code>kS</code> (the output where motion starts) and <code>kV</code> (the output-vs-velocity slope)</td></tr>
+      <tr><td><b>Dynamic</b></td><td>An output <em>step</em> (constant output)</td><td><code>kA</code> (how much output acceleration costs)</td></tr>
+    </table></div>
+    <p>Each is run <b>forward and reverse</b> — four runs total per mechanism. The analyzer fits <code class="k">output = kS·sign(v) + kV·v + kA·a</code> to the data (plus <code class="k">kG</code> for gravity mechanisms) and hands you the feedforward set; you add feedback (kP/kD) by hand afterwards (§7's symptom table).</p>
+
+    <h3>35.2 · The code — what the routines actually are <span class="lvl deep">DEEP</span></h3>
+    <p>Every mechanism carries two lazily-built WPILib <code class="k">SysIdRoutine</code>s. The <b>voltage</b> routine (for <code class="k">ControlMode.VOLTAGE</code> gains) is, inside the library:</p>
+    <div class="code"><div class="code-head"><span class="fname">inside Mechanism — the voltage routine (you don't write this; know what it does)</span><button class="copy">Copy</button></div><pre><code>new SysIdRoutine(
+    new SysIdRoutine.Config(
+        null,                 // ramp rate: null → WPILib default, 1 V/s (quasistatic)
+        Volts.of(4),          // step size: 4 V (dynamic)
+        null,                 // timeout: null → default 10 s safety cutoff
+        state -&gt; SignalLogger.writeString(config.name + "/SysIdState", state.toString())),
+    new SysIdRoutine.Mechanism(
+        (Voltage volts) -&gt; motor.setVolts(volts.in(Volts)),   // the drive callback
+        null,                 // no WPILib log callback — Phoenix records instead (below)
+        subsystem));          // requirement → interruptible like any command</code></pre></div>
+    <div class="box why"><div class="h">🧠 The three things worth understanding in that snippet</div>
+      <p><b>① The state string is the synchronization key.</b> Each loop, the routine writes its test state (<code class="k">quasistatic-forward</code>, <code class="k">dynamic-reverse</code>, <code class="k">none</code>…) into the hoot via <code class="k">SignalLogger</code>. The analyzer uses this channel to slice the log into the four runs — it's how "which samples belong to which test" is known.</p>
+      <p><b>② The device is the data logger.</b> We pass <code class="k">null</code> for WPILib's per-loop log callback on purpose: the TalonFX's own position/velocity/voltage/current signals are already streaming into the hoot at device rate, which is better data than 50&#160;Hz RIO sampling. The routine only needs to drive and label.</p>
+      <p><b>③ It's just a Command.</b> <code class="k">quasistatic(direction)</code> / <code class="k">dynamic(direction)</code> return Commands that require the subsystem — so they bind to buttons, are interruptible by disable, and can't fight your other commands.</p></div>
+    <p>What you actually write — four temporary bindings:</p>
+    <div class="code"><div class="code-head"><span class="fname">RobotContainer — temporary characterization bindings</span><button class="copy">Copy</button></div><pre><code>// expose the routines on the subsystem (one-liners delegating to the mechanism):
+public Command hoodSysIdQuasistatic(SysIdRoutine.Direction d) { return hood.sysIdQuasistatic(this, d); }
+public Command hoodSysIdDynamic(SysIdRoutine.Direction d)     { return hood.sysIdDynamic(this, d); }
+
+// bind — whileTrue so releasing the button stops the test instantly:
+controller.povUp().whileTrue(shooter.hoodSysIdQuasistatic(SysIdRoutine.Direction.kForward));
 controller.povDown().whileTrue(shooter.hoodSysIdQuasistatic(SysIdRoutine.Direction.kReverse));
 controller.povRight().whileTrue(shooter.hoodSysIdDynamic(SysIdRoutine.Direction.kForward));
 controller.povLeft().whileTrue(shooter.hoodSysIdDynamic(SysIdRoutine.Direction.kReverse));
-// swerve: swerve.sysIdTranslation(dir, dynamic) / swerve.sysIdSteer(dir, dynamic)</code></pre></div></li>
-      <li><b class="t">Run all four</b> (quasistatic = slow ramp; dynamic = step), each direction, letting each reach a limit or steady state. Data records into the <b>hoot</b> log via SignalLogger automatically.</li>
-      <li><b class="t">Analyze</b> the hoot in AdvantageScope's SysId tool (or Tuner X) → <code class="k">kS, kV, kA</code> (and <code class="k">kG</code> for gravity mechanisms).</li>
-      <li><b class="t">Fill the constants:</b> put the results in the subsystem's <code class="k">Gains</code>; start <code class="k">kP</code> modest, raise until tracking is crisp, add <code class="k">kD</code> if it rings (§7's symptom table).</li>
-      <li><b class="t">Then — and only then — flip to FOC:</b> change <code class="k">.controlMode(VOLTAGE)</code> → <code class="k">TORQUE_CURRENT_FOC</code> and <b>re-run SysId</b> (gains are now amps-based — different numbers). Expect crisper control and sag immunity.</li>
-      <li><b class="t">Live-polish with TunableNumber</b> (§28) for setpoint-shaped values (shooter RPM maps, tolerances) — no redeploys.</li>
+
+// drivetrain equivalents (voltage-based, built into SwerveSubsystem):
+controller.triangle().whileTrue(swerve.sysIdTranslation(SysIdRoutine.Direction.kForward, false)); // quasistatic
+controller.square().whileTrue(swerve.sysIdTranslation(SysIdRoutine.Direction.kForward, true));    // dynamic
+// steer motors: swerve.sysIdSteer(direction, dynamic)</code></pre></div>
+
+    <h3>35.3 · Running a session</h3>
+    <ol class="steps">
+      <li><b class="t">Bench-prep.</b> Mechanism free over its full travel; soft limits verified (they're your run-stopper); battery fresh (a sagging battery skews voltage data); someone's hand on the disable key.</li>
+      <li><b class="t">Deploy with the bindings</b>, enable teleop, and run each of the four tests: hold the button, let the mechanism sweep until it reaches a soft limit or steady speed, release. <b>Release at the limit</b> — samples pushed against a stop are garbage the analyzer must not see.</li>
+      <li><b class="t">Between runs, return</b> the mechanism near the opposite end so each run gets full travel.</li>
+      <li><b class="t">Grab the hoot.</b> Phoenix wrote everything to the RIO (or the CANivore's USB drive if attached). Pull it via Tuner X or AdvantageScope's log download.</li>
+    </ol>
+
+    <h3>35.4 · Analyzing</h3>
+    <ol class="steps">
+      <li><b class="t">Open the hoot</b> in AdvantageScope → the <b>SysId</b> tool (or CTRE Tuner X's analyzer).</li>
+      <li><b class="t">Map the fields:</b> test state = <code class="k">&lt;Name&gt;/SysIdState</code> · position/velocity = the device's Position/Velocity signals · applied output = MotorVoltage (or TorqueCurrent for §35.5).</li>
+      <li><b class="t">Read the fit:</b> it yields <code class="k">kS, kV, kA</code> (and <code class="k">kG</code> if you select the arm/elevator mechanism type — it separates gravity from friction using the forward/reverse asymmetry). Sanity-check the fit quality (r²) before trusting numbers.</li>
+      <li><b class="t">Fill the constants:</b> put them in the subsystem's <code class="k">Gains</code>; start <code class="k">kP</code> modest, raise until tracking is crisp, add <code class="k">kD</code> if it rings (§7). Update the MotionConstraints if the measured free speed says your profile was optimistic.</li>
+    </ol>
+
+    <h3>35.5 · FOC-wise — torque-current characterization</h3>
+    <div class="box danger"><div class="h">🚫 Why you cannot reuse the voltage results</div>
+      <p>Voltage SysId answers "volts per unit of speed/accel". FOC closed loops output <b>amps of torque current</b> — a different physical quantity, and the relationship between them shifts with battery state (that immunity is FOC's whole appeal). So FOC needs its own characterization that <em>drives amps</em>, not volts.</p></div>
+    <p>The wrinkle: WPILib's SysId API is volts-typed — there is no amps overload. The standard CTRE idiom (which the library implements for you) is to <b>reinterpret the routine's "volts" as amps</b>:</p>
+    <div class="code"><div class="code-head"><span class="fname">inside Mechanism — the torque routine (the volts-as-amps idiom)</span><button class="copy">Copy</button></div><pre><code>new SysIdRoutine(
+    new SysIdRoutine.Config(
+        Volts.of(5).per(Second),   // read as: 5 AMPS per second quasistatic ramp
+        Volts.of(20),              // read as: a 20 AMP dynamic step
+        null,
+        state -&gt; SignalLogger.writeString(config.name + "/SysIdTorqueState", state.toString())),
+    new SysIdRoutine.Mechanism(
+        (Voltage amps) -&gt; motor.forceAmps(amps.in(Volts)),   // "volts" driven as TorqueCurrentFOC amps
+        null, subsystem));</code></pre></div>
+    <p>You call it exactly like the voltage pair — same binding pattern, different methods:</p>
+    <div class="code"><div class="code-head"><span class="fname">torque-current characterization bindings</span><button class="copy">Copy</button></div><pre><code>controller.povUp().whileTrue(shooter.hoodSysIdQuasistaticTorque(SysIdRoutine.Direction.kForward));
+controller.povDown().whileTrue(shooter.hoodSysIdQuasistaticTorque(SysIdRoutine.Direction.kReverse));
+controller.povRight().whileTrue(shooter.hoodSysIdDynamicTorque(SysIdRoutine.Direction.kForward));
+controller.povLeft().whileTrue(shooter.hoodSysIdDynamicTorque(SysIdRoutine.Direction.kReverse));</code></pre></div>
+    <div class="box why"><div class="h">🧠 The details that make this work</div>
+      <p><b>① It runs while the mechanism is still in VOLTAGE mode.</b> The drive callback uses <code class="k">Motor.forceAmps(…)</code>, which applies a <code class="k">TorqueCurrentFOC</code> request regardless of the configured control mode — so you characterize <em>before</em> the switch, breaking the chicken-and-egg. (Regular <code class="k">setAmps</code> deliberately refuses outside FOC mode; <code class="k">forceAmps</code> is the characterization exception.)</p>
+      <p><b>② The output is clamped by your CurrentBudget's torque peaks</b> (§9) — the 20&#160;A step can't exceed what you declared safe.</p>
+      <p><b>③ In the analyzer, select TorqueCurrent as the "voltage" channel</b> and state = <code class="k">&lt;Name&gt;/SysIdTorqueState</code>. The resulting "volt" gains <b>are amp gains</b> — no conversion, drop them straight in.</p>
+      <p><b>④ Real hardware only.</b> Torque-current isn't meaningfully simulated; run this on the robot.</p></div>
+    <p>Then complete the switch — two edits in the subsystem's constants/config:</p>
+    <div class="code"><div class="code-head"><span class="fname">the FOC switch itself</span><button class="copy">Copy</button></div><pre><code>// 1) the amp gains from the torque analysis (note: these are AMPS per unit):
+public static final Gains HOOD_GAINS_FOC = new Gains(kP_amps, 0, kD_amps, kS_amps, kV_amps, kA_amps)
+        .withGravity(kG_amps, GravityTypeValue.Arm_Cosine);
+
+// 2) in the mechanism config:
+.controlMode(ControlMode.TORQUE_CURRENT_FOC)     // was VOLTAGE
+.gains(HOOD_GAINS_FOC, SIM_GAINS)                // sim set unchanged — sim always runs VOLTAGE
+// keep .withTorquePeaks(...) on the CurrentBudget — it's the output clamp in FOC (§9)</code></pre></div>
+    <p>First enable after the switch: treat it like a new mechanism (§36) — small setpoints, hand on disable. Expect crisper tracking and identical behavior at 12.6&#160;V and 11.2&#160;V; that's the point.</p>
+    <div class="box warn"><div class="h">⚠️ MotionMagicExpo's kV/kA stay in volts</div><p>Even in FOC mode, the <b>profile-shaping</b> <code class="k">MotionConstraints</code> Expo kV/kA are always volt-referenced (a Phoenix convention — they describe the motor, not the loop). Only the <code class="k">Gains</code> change units at the switch.</p></div>
+    <div class="box tip"><div class="h">💡 The drivetrain</div><p><code class="k">swerve.sysIdTranslation / sysIdSteer</code> are the <b>voltage</b> routines (CTRE's stock SysId requests). Torque-current drive characterization for the swerve needs a custom request applying TorqueCurrentFOC per module — a flagged follow-up; until then, drive modules switch to FOC using Tuner X's swerve tuning flow.</p></div>
+
+    <h3>35.6 · After SysId — the polish loop</h3>
+    <ol class="steps">
+      <li><b class="t">Feedback by symptom</b> — §7's table: kP up to crisp, kD against ringing, kI almost never.</li>
+      <li><b class="t">Live-polish with TunableNumber</b> (§28) for setpoint-shaped values (shooter RPM points, tolerances) — no redeploys.</li>
+      <li><b class="t">Log-verify</b>: in AdvantageScope, overlay goal vs position — you're done when the traces hug through the whole profile, not just at the ends.</li>
     </ol>
     <div class="box warn"><div class="h">⚠️ Tuning-sacred data</div><p>The shooter's interpolation maps (distance → hood angle / flywheel RPS / time-of-flight) are competition-proven measurements. Tuning sessions <em>append or adjust points</em>; they never restructure that code.</p></div>
   </section>

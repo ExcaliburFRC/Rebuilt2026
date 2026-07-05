@@ -661,11 +661,61 @@ DeviceConfigs.retry("name", () -&gt; someCtreCall())                      // ret
     <p><b>Default:</b> none — and then the mechanism does not move in simulation (logic runs, physics doesn't). Full model reference in §19. The generic <code class="k">.simModel(factory)</code> is the escape hatch for custom physics.</p>
     <div class="box ok"><div class="h">✅ The minimum viable config per archetype</div>
       <p><b>Roller:</b> name + id + currentBudget + sim model. <b>Velocity:</b> those + gains + tolerance (+ ratio). <b>Positional/Linear:</b> those + feedback ratio (or fused CANcoder) + motion + softLimits. Everything else is refinement.</p></div>
+
+    <h3>13.15 · Where the numbers come from</h3>
+    <div class="tbl"><table>
+      <tr><th>Number</th><th>How to get it</th></tr>
+      <tr><td>CAN ids</td><td>Read/set per device in Phoenix Tuner X.</td></tr>
+      <tr><td><code>rotorToMechanismRatio</code></td><td>Multiply the gearbox stages × any belt/chain ratio. For linear: rotor turns to move exactly 1&#160;m (compute from drum circumference).</td></tr>
+      <tr><td><code>kP kI kD kS kV kA kG</code></td><td>SysId (§35). Until then: modest kP, zeros elsewhere — enough to see motion in sim.</td></tr>
+      <tr><td>Expo <code>kV, kA</code></td><td>Start kV ≈ 12 / free-speed-in-mechanism-units; kA ≈ 0.1–0.5 (raise for a softer stop).</td></tr>
+      <tr><td>Soft limits</td><td>Measure the real travel by hand (coast mode helps), leave a small margin.</td></tr>
+      <tr><td>Current limits</td><td>Stator = "how strong" (§9's table by mechanism kind); supply = breaker size minus margin.</td></tr>
+      <tr><td>Sim MOI / mass / length</td><td>Rough estimates from CAD or intuition — sim is for logic, not physics (§19).</td></tr>
+      <tr><td>Tolerances</td><td>Start ~1° / 1&#160;cm / 2&#160;rot/s; tighten against the real mechanism's noise floor.</td></tr>
+    </table></div>
   </section>
 
   <!-- ==================================================== 14 MECH BASE -->
   <section id="mechbase">
-    <h2><span class="n">14</span><code>Mechanism</code> — the base every archetype shares</h2>
+    <h2><span class="n">14</span><code>Mechanism</code> — choosing an archetype, and the base they share</h2>
+    <p class="lead">Two questions pick the archetype; everything after that is which config fields you set on it (§13).</p>
+    <figure>
+      <svg viewBox="0 0 720 250" role="img">
+        <defs><marker id="a3" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--fg-3)"/></marker></defs>
+        <polygon points="360,10 440,40 360,70 280,40" fill="var(--accent-soft)" stroke="var(--accent)"/>
+        <text x="360" y="45" text-anchor="middle" class="svg-t" fill="var(--fg)" font-weight="700">holds a position?</text>
+        <line x1="300" y1="55" x2="180" y2="95" stroke="var(--fg-3)" marker-end="url(#a3)"/><text x="215" y="72" class="svg-mono" fill="var(--yes)">yes</text>
+        <polygon points="180,90 250,116 180,142 110,116" fill="var(--bg-3)" stroke="var(--border)"/>
+        <text x="180" y="120" text-anchor="middle" class="svg-t" fill="var(--fg)">linear or rotary?</text>
+        <line x1="420" y1="55" x2="540" y2="95" stroke="var(--fg-3)" marker-end="url(#a3)"/><text x="470" y="72" class="svg-mono" fill="var(--no)">no</text>
+        <polygon points="540,90 610,116 540,142 470,116" fill="var(--bg-3)" stroke="var(--border)"/>
+        <text x="540" y="120" text-anchor="middle" class="svg-t" fill="var(--fg)">holds a speed?</text>
+        <g class="svg-t" font-weight="700">
+          <line x1="150" y1="135" x2="95" y2="180" stroke="var(--fg-3)" marker-end="url(#a3)"/><text x="100" y="158" class="svg-mono" fill="var(--fg-2)">rotary</text>
+          <rect x="20" y="180" width="150" height="46" rx="8" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="95" y="200" text-anchor="middle" fill="var(--fg)">PositionalMechanism</text><text x="95" y="216" text-anchor="middle" class="svg-mono" fill="var(--fg-3)">§15 · arm·pivot·hood·turret</text>
+          <line x1="210" y1="135" x2="265" y2="180" stroke="var(--fg-3)" marker-end="url(#a3)"/><text x="250" y="158" class="svg-mono" fill="var(--fg-2)">linear</text>
+          <rect x="190" y="180" width="150" height="46" rx="8" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="265" y="200" text-anchor="middle" fill="var(--fg)">LinearExtension</text><text x="265" y="216" text-anchor="middle" class="svg-mono" fill="var(--fg-3)">§16 · elevator·slide</text>
+          <line x1="515" y1="135" x2="455" y2="180" stroke="var(--fg-3)" marker-end="url(#a3)"/><text x="452" y="158" class="svg-mono" fill="var(--yes)">yes</text>
+          <rect x="380" y="180" width="150" height="46" rx="8" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="455" y="200" text-anchor="middle" fill="var(--fg)">VelocityMechanism</text><text x="455" y="216" text-anchor="middle" class="svg-mono" fill="var(--fg-3)">§17 · flywheel·drum</text>
+          <line x1="565" y1="135" x2="625" y2="180" stroke="var(--fg-3)" marker-end="url(#a3)"/><text x="628" y="158" class="svg-mono" fill="var(--no)">no</text>
+          <rect x="550" y="180" width="150" height="46" rx="8" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="625" y="200" text-anchor="middle" fill="var(--fg)">RollerMechanism</text><text x="625" y="216" text-anchor="middle" class="svg-mono" fill="var(--fg-3)">§18 · intake·feeder</text>
+        </g>
+      </svg>
+      <figcaption>Does it hold a <b>position</b>? (rotary → Positional §15, linear → LinearExtension §16). If not — does it hold a <b>speed</b>? (yes → Velocity §17, no → Roller §18).</figcaption>
+    </figure>
+    <div class="tbl"><table class="matrix">
+      <tr><th>Capability</th><th>Positional §15</th><th>Linear §16</th><th>Velocity §17</th><th>Roller §18</th></tr>
+      <tr><td>Unit</td><td>rad</td><td>m</td><td>rot/s</td><td>duty / V / A</td></tr>
+      <tr><td>Closed loop</td><td class="yeslot">MotionMagic</td><td class="yeslot">MotionMagic</td><td class="yeslot">velocity</td><td class="nolot">open-loop</td></tr>
+      <tr><td>Motion profile</td><td class="yeslot">Expo / Trap</td><td class="yeslot">Expo / Trap</td><td class="mid">optional ramp</td><td class="nolot">—</td></tr>
+      <tr><td>Gravity FF</td><td class="yeslot">Arm_Cosine</td><td class="yeslot">static / dynamic</td><td class="nolot">—</td><td class="nolot">—</td></tr>
+      <tr><td>Soft limits</td><td class="yeslot">angle</td><td class="yeslot">meters</td><td class="nolot">—</td><td class="nolot">—</td></tr>
+      <tr><td>Continuous wrap</td><td class="yeslot">turret</td><td class="nolot">—</td><td class="nolot">—</td><td class="nolot">—</td></tr>
+      <tr><td>"Reached" trigger</td><td><code>atGoal</code></td><td><code>atGoal</code></td><td><code>atSpeed</code></td><td><code>currentSpike</code></td></tr>
+      <tr><td>Sim helper</td><td><code>simArmModel</code></td><td><code>simElevatorModel</code></td><td><code>simRotationalModel</code></td><td><code>simRotationalModel</code></td></tr>
+    </table></div>
+    <h3>The shared base</h3>
     <p class="lead">Whatever archetype you pick, these members exist. This is also the list of everything the library does for you per mechanism.</p>
     <div class="tbl"><table>
       <tr><th>Member</th><th>Does</th><th>Rules</th></tr>

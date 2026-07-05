@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workshop Bring-Up &amp; Test Plan — Galahad / ExcaLib v2</title>
+<style>
+  :root{
+    --accent:#6f8cff; --accent-2:#f0be5c; --accent-soft:#1a2340;
+    --bg:#0a0e1a; --bg-2:#111830; --bg-3:#18213f;
+    --fg:#e8edff; --fg-2:#a7b4d6; --fg-3:#6d7ba0; --border:#233052;
+    --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 30px rgba(0,0,0,.4);
+    --code-bg:#060a15;
+    --in:#7aa2ff; --in-bg:#141d38; --out:#4cc98c; --out-bg:#0f2a1d; --pass:#4cc98c; --fail:#f07070;
+    --tip:#6f8cff; --tip-bg:#141d38; --warn:#e0a94a; --warn-bg:#2a2110;
+    --danger:#f07070; --danger-bg:#2c1414; --ok:#4cc98c; --ok-bg:#0f2a1d;
+    --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  html[data-theme="light"]{
+    --accent:#2a4bd7; --accent-2:#c9820f; --accent-soft:#eaf0ff;
+    --bg:#fff; --bg-2:#f5f7fb; --bg-3:#eef1f7; --fg:#141c2e; --fg-2:#4a5876; --fg-3:#8794ab; --border:#dbe2ee;
+    --shadow:0 1px 3px rgba(20,30,60,.08),0 8px 24px rgba(20,30,60,.06); --code-bg:#0f1729;
+    --in:#2a5bd7; --in-bg:#eaf1ff; --out:#1d9a63; --out-bg:#e7f7ee; --pass:#1d9a63; --fail:#d13b3b;
+    --tip:#2a6bd7; --tip-bg:#eaf1ff; --warn:#c67c05; --warn-bg:#fff6e6;
+    --danger:#d13b3b; --danger-bg:#fdecec; --ok:#1d9a63; --ok-bg:#e7f7ee;
+  }
+  *{box-sizing:border-box}html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);line-height:1.62;font-size:16px}
+  #progress{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--accent),var(--accent-2));z-index:100}
+  .wrap{display:grid;grid-template-columns:280px 1fr;max-width:1360px;margin:0 auto}
+  nav{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;padding:20px 12px 60px 20px;border-right:1px solid var(--border);background:var(--bg-2)}
+  nav .brand{display:flex;align-items:center;gap:10px}nav .brand .s{font-size:22px}nav .brand b{font-size:14.5px}
+  nav .sub{color:var(--fg-3);font-size:12px;margin:2px 0 14px 32px}
+  nav a{display:block;color:var(--fg-2);text-decoration:none;padding:5px 10px;border-radius:7px;font-size:13.5px}
+  nav a:hover{background:var(--bg-3);color:var(--fg)}nav a.active{background:var(--accent);color:#08122b;font-weight:700}
+  nav .grp{margin:14px 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--fg-3);font-weight:700}
+  main{padding:0 min(6vw,60px) 120px;max-width:920px}
+  .hero{padding:48px 0 22px;border-bottom:1px solid var(--border);margin-bottom:12px}
+  .hero .kicker{display:inline-block;background:var(--accent-soft);color:var(--accent);padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;letter-spacing:.4px;text-transform:uppercase}
+  .hero h1{font-size:clamp(26px,4.4vw,40px);line-height:1.12;margin:14px 0 10px;letter-spacing:-.5px}
+  .hero p{font-size:16.5px;color:var(--fg-2);margin:0;max-width:680px}
+  section{padding-top:28px;margin-top:10px;border-top:1px dashed var(--border)}section:first-of-type{border-top:none}
+  h2{font-size:24px;margin:6px 0 4px;scroll-margin-top:16px}
+  h2 .n{display:inline-grid;place-items:center;min-width:32px;height:32px;padding:0 7px;background:var(--accent);color:#08122b;border-radius:9px;font-size:14px;font-weight:800;margin-right:12px;vertical-align:middle}
+  h3{font-size:17.5px;margin:24px 0 4px;scroll-margin-top:16px}
+  p{margin:8px 0}.lead{font-size:16px;color:var(--fg-2)}
+  code.k{background:var(--bg-3);border:1px solid var(--border);border-radius:5px;padding:.1em .42em;font-family:var(--mono);font-size:.84em;color:var(--fg)}
+  a.inline{color:var(--accent);text-decoration:none}a.inline:hover{text-decoration:underline}
+  .box{border-left:4px solid var(--fg-3);background:var(--bg-2);border-radius:8px;padding:12px 15px;margin:14px 0;font-size:14.5px}
+  .box .h{font-weight:700;display:flex;gap:8px;margin-bottom:2px}.box p:last-child{margin-bottom:0}
+  .box.tip{border-color:var(--tip);background:var(--tip-bg)}.box.tip .h{color:var(--tip)}
+  .box.warn{border-color:var(--warn);background:var(--warn-bg)}.box.warn .h{color:var(--warn)}
+  .box.danger{border-color:var(--danger);background:var(--danger-bg)}.box.danger .h{color:var(--danger)}
+  .box.ok{border-color:var(--ok);background:var(--ok-bg)}.box.ok .h{color:var(--ok)}
+  .code{background:var(--code-bg);border-radius:9px;margin:12px 0;overflow:hidden;box-shadow:var(--shadow)}
+  .code-head{display:flex;align-items:center;justify-content:space-between;padding:7px 13px;background:rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.08)}
+  .code-head .fname{font-family:var(--mono);font-size:11.5px;color:#9fb0d8}.code-head .fname::before{content:"›_ ";color:#5a6a92}
+  .copy{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.13);color:#c7d3f0;font-size:11px;padding:3px 9px;border-radius:6px;cursor:pointer;font-family:var(--sans)}
+  .code pre{margin:0;padding:14px 15px;overflow-x:auto}
+  .code code{font-family:var(--mono);font-size:12.5px;line-height:1.6;color:#e6ecff;white-space:pre}
+  .c-kw{color:#ff8fd0}.c-str{color:#8ee6a8}.c-com{color:#6d7fa8;font-style:italic}.c-num{color:#f0b775}.c-ann{color:#ffcf6f}
+  /* test step card */
+  .test{border:1px solid var(--border);border-radius:11px;margin:14px 0;overflow:hidden;background:var(--bg-2)}
+  .test .t-h{padding:10px 15px;font-weight:700;font-size:15px;background:var(--bg-3);border-bottom:1px solid var(--border)}
+  .test .t-b{display:grid;grid-template-columns:auto 1fr;gap:1px;background:var(--border)}
+  .test .lab{padding:9px 12px;font-size:10.5px;font-weight:800;letter-spacing:.4px;text-align:center;background:var(--bg-2);display:flex;align-items:center;justify-content:center;min-width:80px}
+  .test .val{padding:9px 14px;background:var(--bg-2);font-size:14px}
+  .test .val code{font-family:var(--mono);font-size:12px;color:var(--accent);background:var(--bg-3);padding:.1em .4em;border-radius:5px}
+  .lab.in{color:var(--in)}.lab.out{color:var(--out)}.lab.pass{color:var(--pass)}.lab.fail{color:var(--fail)}
+  .tbl{overflow-x:auto;margin:14px 0}
+  table{border-collapse:collapse;width:100%;font-size:13.5px}
+  th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+  th{background:var(--bg-3);font-weight:700;font-size:11.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--fg-2)}
+  td code,th code{font-family:var(--mono);font-size:12px;color:var(--accent)}
+  ol.steps{list-style:none;counter-reset:s;padding:0;margin:14px 0}
+  ol.steps>li{counter-increment:s;position:relative;padding:1px 0 15px 48px;border-left:2px solid var(--border);margin-left:14px}
+  ol.steps>li:last-child{border-left-color:transparent;padding-bottom:2px}
+  ol.steps>li::before{content:counter(s);position:absolute;left:-15px;top:-3px;width:30px;height:30px;background:var(--accent);color:#08122b;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:13px}
+  ol.steps>li b.t{display:block;font-size:15px;margin:-2px 0 2px}
+  ul.check{list-style:none;padding:0;margin:10px 0}
+  ul.check li{padding:6px 0 6px 32px;position:relative;border-bottom:1px solid var(--border)}
+  ul.check li::before{content:"";position:absolute;left:2px;top:9px;width:16px;height:16px;border:2px solid var(--accent);border-radius:5px}
+  kbd{background:var(--bg-3);border:1px solid var(--border);border-bottom-width:2px;border-radius:5px;padding:1px 7px;font-family:var(--mono);font-size:12px;font-weight:700}
+  .toolbar{position:fixed;bottom:20px;right:20px;display:flex;gap:8px;z-index:50}
+  .toolbar button{background:var(--bg-2);border:1px solid var(--border);color:var(--fg);width:44px;height:44px;border-radius:50%;cursor:pointer;font-size:17px;box-shadow:var(--shadow)}
+  .menu-btn{display:none}
+  @media(max-width:900px){.wrap{grid-template-columns:1fr}nav{position:fixed;left:0;top:0;z-index:60;width:270px;transform:translateX(-100%);transition:.25s}nav.open{transform:translateX(0)}main{padding:0 18px 100px}.menu-btn{display:grid;place-items:center}.test .t-b{grid-template-columns:1fr}.test .lab{justify-content:flex-start}}
+  @media print{nav,.toolbar,.copy,#progress{display:none}.wrap{display:block}main{max-width:none}.test,section{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div class="wrap">
+<nav id="nav">
+  <div class="brand"><span class="s">🔧</span><b>Workshop Bring-Up</b></div>
+  <p class="sub">Galahad · ExcaLib v2 · first run</p>
+  <div class="grp">Before power</div>
+  <a href="#safety">Safety rules</a>
+  <a href="#prepower">0 · Pre-power (Tuner X)</a>
+  <div class="grp">First light</div>
+  <a href="#deploy">1 · Deploy &amp; boot</a>
+  <a href="#datalog">2 · Telemetry &amp; the data log</a>
+  <a href="#testmode">3 · The Test-mode harness</a>
+  <div class="grp">Bring up the parts</div>
+  <a href="#mechloop">4 · Per-mechanism recipe</a>
+  <a href="#mechtable">5 · Each mechanism &amp; its keys</a>
+  <a href="#rollers">6 · Rollers &amp; game-piece</a>
+  <a href="#swerve">7 · Swerve (the risky one)</a>
+  <a href="#vision">8 · Vision (MegaTag2)</a>
+  <div class="grp">Integration</div>
+  <a href="#states">9 · State machines &amp; goals</a>
+  <a href="#auto">10 · Autonomous</a>
+  <a href="#sysid">11 · SysId → FOC session</a>
+  <div class="grp">Reference</div>
+  <a href="#iffail">12 · If it fails</a>
+  <a href="#keys">Key cheat-sheet</a>
+</nav>
+
+<main>
+  <div class="hero" id="top">
+    <span class="kicker">🔧 First on-robot run · read before the workshop</span>
+    <h1>Bring-up &amp; test plan — from a powered-off robot to a driving one.</h1>
+    <p class="lead">Ordered by risk, lowest first. Every test says exactly what to <b>do</b> (input) and what to <b>watch</b> in AdvantageScope (output), plus pass/fail and the fix if it fails. This is the "prove each class works on the real robot" pass.</p>
+  </div>
+
+  <section id="safety">
+    <h2><span class="n">!</span>Safety rules — non-negotiable</h2>
+    <ul class="check">
+      <li>One hand on the Driver Station <kbd>Enter</kbd> (disable) key for every first-motion test.</li>
+      <li>First setpoints are <b>tiny</b>. A mechanism that moves the wrong way at full effort breaks things.</li>
+      <li>Bring up <b>one mechanism at a time</b>. Use Test mode (§3) — it isolates them.</li>
+      <li>Nobody's hands in a mechanism's path while it's enabled.</li>
+      <li>If the dashboard shows a red <b>config-verify</b> or <b>disconnect</b> Alert, stop and fix it before enabling.</li>
+      <li>The safety net (soft limits, current limits, verified config) is a backup — never the plan.</li>
+    </ul>
+  </section>
+
+  <!-- 0 PRE-POWER -->
+  <section id="prepower">
+    <h2><span class="n">0</span>Pre-power — Phoenix Tuner X</h2>
+    <p class="lead">Before the code runs, prove the hardware is sane. All of this is in Tuner X, robot powered but disabled.</p>
+    <ul class="check">
+      <li><b>Device inventory.</b> Every device from the hardware map answers: swerve drive 10/20/30/40, steer 12/22/32/42, CANcoders 11/21/31/41, Pigeon 2, and subsystem motors 30/31/32/42/34 (shooter), 10/34/13 (intake), 20/33 (transport). A missing device = wrong id, bad wiring, or unpowered.</li>
+      <li><b>Licenses.</b> Every TalonFX shows <b>Pro + seasonal</b> licensed (we default to FOC eventually; even VOLTAGE needs the seasonal).</li>
+      <li><b>Firmware</b> current and matched across devices.</li>
+      <li><b>Two buses.</b> Swerve devices are on <code class="k">SwerveCANivore</code>; subsystem motors on the RIO bus. IDs repeat across buses (10 exists on both) — that's fine.</li>
+      <li><b>CANcoder magnet health</b> "green" on all steer encoders (you'll need their offsets in §7).</li>
+      <li><b>Battery</b> ≥ 12.5&#160;V resting. A weak battery skews everything, especially SysId.</li>
+    </ul>
+    <div class="box tip"><div class="h">💡 Benchtop-only work?</div><p><code class="k">Constants.DISABLE_SWERVE = true</code> stops the teleop drive command; useful when the drivetrain isn't on the cart. (There's a <code class="k">DISABLE_SUBSYSTEMS</code> flag too, but Test mode is the cleaner isolation — §3.)</p></div>
+  </section>
+
+  <!-- 1 DEPLOY -->
+  <section id="deploy">
+    <h2><span class="n">1</span>Deploy &amp; first boot</h2>
+    <ol class="steps">
+      <li><b class="t">Green build:</b> <code class="k">./gradlew build</code>. Never deploy red.</li>
+      <li><b class="t">Deploy:</b> <code class="k">./gradlew deploy</code> — jar + the <code class="k">deploy/</code> folder (PathPlanner paths) go to the RIO.</li>
+      <li><b class="t">Open AdvantageScope</b> → <b>File ▸ Connect to Robot</b> (roboRIO address). You should see the NT tree populate.</li>
+      <li><b class="t">Read the dashboard before enabling.</b> Expect: <b>zero</b> config-verify alerts, <b>zero</b> disconnect alerts, an alliance set, an auto selected.</li>
+    </ol>
+    <div class="test">
+      <div class="t-h">TEST 1 — clean boot</div>
+      <div class="t-b">
+        <div class="lab in">INPUT</div><div class="val">Deploy, do <b>not</b> enable yet.</div>
+        <div class="lab out">WATCH</div><div class="val">Dashboard Alerts widget · DS console.</div>
+        <div class="lab pass">PASS</div><div class="val">No <code>Device config … FAILED</code> alert, no <code>… motor disconnected</code> alert. DS console shows the DogLog/Signal-Logger start lines (§2).</div>
+        <div class="lab fail">FAIL</div><div class="val">A config-verify alert names a device → that device didn't accept its config (§12). A disconnect alert names a device → CAN/power to it. Fix in Tuner X before continuing.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 DATALOG -->
+  <section id="datalog">
+    <h2><span class="n">2</span>Telemetry &amp; the data log — prove logging works first</h2>
+    <p class="lead">Everything below depends on reading values in AdvantageScope, so verify the pipes before the mechanisms. This exercises <code class="k">Telemetry</code>, DogLog, the WPILib DataLog, Phoenix <code class="k">SignalLogger</code>, <code class="k">SignalHub</code>, <code class="k">FaultReporter</code>, and <code class="k">LoopTimer</code>.</p>
+    <div class="test">
+      <div class="t-h">TEST 2a — DogLog + the .wpilog data log are running</div>
+      <div class="t-b">
+        <div class="lab in">INPUT</div><div class="val">Boot the robot; watch the DS console, then briefly enable teleop.</div>
+        <div class="lab out">WATCH</div><div class="val">Console for <code>[DogLog] LogThread started</code> and <code>DataLog: Logging to '…/logs/FRC_*.wpilog'</code> and <code>[phoenix] Signal Logger Started</code>. In AdvantageScope, the <code>NT:/…</code> tree fills with mechanism keys.</div>
+        <div class="lab pass">PASS</div><div class="val">All three log lines appear; the <code>.wpilog</code> file exists on the RIO and grows; keys like <code>Shooter/Hood/PositionRotations</code> are live.</div>
+        <div class="lab fail">FAIL</div><div class="val">No DataLog line → <code>Telemetry.init(...)</code> not called in the Robot constructor. No keys in NT → you're at competition mode (<code>Telemetry.init(true,…)</code> disables NT publish; use <code>false</code> at the workshop) or not connected to the right address.</div>
+      </div>
+    </div>
+    <div class="box tip"><div class="h">💡 Data log vs NT</div><p>DogLog always writes the <b>DataLog</b> (<code class="k">.wpilog</code> on the RIO — pull it post-session, it's the source of truth). It <em>also</em> publishes to NetworkTables live when not in competition mode. Phoenix <code class="k">SignalLogger</code> writes the high-rate <code class="k">.hoot</code> separately — that's what SysId reads. AdvantageScope opens all three.</p></div>
+    <div class="test">
+      <div class="t-h">TEST 2b — loop &amp; CAN health</div>
+      <div class="t-b">
+        <div class="lab in">INPUT</div><div class="val">Enable teleop, let it idle ~10&#160;s.</div>
+        <div class="lab out">WATCH</div><div class="val"><code>Robot/LoopOverruns</code>, <code>Robot/MaxLoopMs</code>, <code>CAN/RioUtilizationPercent</code>.</div>
+        <div class="lab pass">PASS</div><div class="val"><code>LoopOverruns</code> stays 0 (or barely climbs at startup then stops); <code>MaxLoopMs</code> &lt; 20; CAN utilization comfortably under 90%.</div>
+        <div class="lab fail">FAIL</div><div class="val">Overruns climbing → something blocking on the loop (§12 troubleshooting). CAN &gt; 90% → too many signals; confirm <code>SignalHub.optimizeAll()</code> ran (it's in the Robot constructor).</div>
+      </div>
+    </div>
+    <div class="test">
+      <div class="t-h">TEST 2c — disconnect detection actually fires</div>
+      <div class="t-b">
+        <div class="lab in">INPUT</div><div class="val">Disabled, briefly unplug one non-critical motor's CAN (or power), watch, replug.</div>
+        <div class="lab out">WATCH</div><div class="val">Its <code>&lt;name&gt;/Connected</code> key and the dashboard.</div>
+        <div class="lab pass">PASS</div><div class="val">Within ~0.5&#160;s: <code>Connected</code> → false and a "<i>…&#160;motor disconnected</i>" Alert appears; both clear on replug.</div>
+        <div class="lab fail">FAIL</div><div class="val">No alert → the device never registered (only excalib2 <code>Motor</code>s self-register). Confirms your telemetry safety net for the rest of the day.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 TESTMODE -->
+  <section id="testmode">
+    <h2><span class="n">3</span>The Test-mode bring-up harness</h2>
+    <p class="lead">Enter <b>Test</b> + <b>Enable</b> in the Driver Station. This cancels teleop/auto wiring and activates the bring-up controls (gated to Test mode, so they can never fire while driving). Mechanisms sit idle until you command them — perfect isolation.</p>
+    <div class="tbl"><table>
+      <tr><th>Control (primary controller, Test mode only)</th><th>Does</th></tr>
+      <tr><td><kbd>L1</kbd> (hold)</td><td>Coast the whole robot — swerve + intake four-bar + turret — so you can back-drive/zero by hand.</td></tr>
+      <tr><td><kbd>D-pad ▲ / ▼</kbd></td><td>SysId <b>quasistatic</b> forward / reverse on the <i>mechanism under test</i>.</td></tr>
+      <tr><td><kbd>D-pad ▶ / ◀</kbd></td><td>SysId <b>dynamic</b> forward / reverse on the mechanism under test.</td></tr>
+      <tr><td><kbd>△</kbd> / <kbd>✕</kbd> (hold)</td><td>Intake to <b>OPEN</b> / <b>CLOSE</b> — quick direction &amp; range check.</td></tr>
+      <tr><td><kbd>◯</kbd> (hold)</td><td>Flywheel at a low fixed 10&#160;rot/s — direction &amp; readiness check.</td></tr>
+    </table></div>
+    <div class="box tip"><div class="h">💡 Choosing the "mechanism under test"</div><p>The D-pad SysId targets one mechanism, set in <code class="k">RobotContainer.configureTestBindings()</code>:<br><code class="k">var mut = superstructure.shooter.hood;</code> and <code class="k">var mutSubsystem = superstructure.shooter;</code><br>Change those two lines and redeploy to characterize the turret, flywheel, four-bar, drum, etc. For the FOC pass, swap the four <code class="k">sysIdQuasistatic/Dynamic</code> calls for the <code class="k">…Torque</code> variants (§11).</p></div>
+  </section>
+
+  <!-- 4 MECH LOOP -->
+  <section id="mechloop">
+    <h2><span class="n">4</span>Per-mechanism bring-up recipe</h2>
+    <p class="lead">Run this four-step loop for each articulated mechanism, in Test mode, before ever running the superstructure. It proves feedback, direction, range, and control — in that order, safest first.</p>
+    <ol class="steps">
+      <li><b class="t">Zero-check the feedback.</b> Hold <kbd>L1</kbd> (coast), move the mechanism by hand to a known pose, release. Watch <code class="k">&lt;name&gt;/PositionRotations</code>. Because the intake/hood/turret aren't fused CANcoders yet, they're <b>boot-seeded</b> — so the reported position is only right if the robot booted in the seeded pose. Confirm the number matches reality; if not, the boot seed (or ratio) is off.</li>
+      <li><b class="t">Direction check (tiny).</b> Command a small motion (for intake use <kbd>△</kbd>/<kbd>✕</kbd>; for others, a small setpoint via the harness or a temporary binding). Watch that positive command → the geometrically-positive direction. <b>Wrong way?</b> flip <code class="k">.inverted(...)</code> in the config — never negate setpoints.</li>
+      <li><b class="t">Range / soft limits.</b> Command toward each end. It should stop at the soft limits, not the hard stop. Watch <code class="k">&lt;name&gt;/PositionRotations</code> plateau at the configured min/max and <code class="k">&lt;name&gt;/StatorAmps</code> stay low (not pinned against a stop).</li>
+      <li><b class="t">Closed-loop tracking.</b> Command a mid-range setpoint. Overlay <code class="k">&lt;name&gt;/GoalRotations</code> (or <code>GoalRPS</code>) vs <code class="k">&lt;name&gt;/PositionRotations</code> (or <code>VelocityRPS</code>). They should converge; <code class="k">&lt;name&gt;/AtGoal</code> (or <code>AtSpeed</code>) flips true. Ringing/overshoot → note it for the SysId session (§11).</li>
+    </ol>
+    <div class="box warn"><div class="h">⚠️ Two-motor mechanisms: watch current on the direction check</div><p>The four-bar and flywheel each have a follower. If they were configured with the wrong <code class="k">opposed</code> flag, the direction check shows <b>high <code>StatorAmps</code> and little/no motion</b> — the motors are fighting. Fix the follower flag before anything else.</p></div>
+  </section>
+
+  <!-- 5 MECH TABLE -->
+  <section id="mechtable">
+    <h2><span class="n">5</span>Each mechanism &amp; the exact keys to watch</h2>
+    <div class="tbl"><table>
+      <tr><th>Mechanism</th><th>Type · motors</th><th>Command (Test mode)</th><th>Watch these keys</th><th>Pass</th></tr>
+      <tr><td><b>Shooter / Hood</b></td><td>Positional · #30</td><td>D-pad SysId (default MUT), or a temp setpoint</td><td><code>Shooter/Hood/PositionRotations</code> · <code>/GoalRotations</code> · <code>/AtGoal</code> · <code>/StatorAmps</code></td><td>tracks goal, stops at limits</td></tr>
+      <tr><td><b>Shooter / Turret</b></td><td>Positional (wrap) · #42</td><td>set MUT=turret; or coast + hand-check</td><td><code>Shooter/Turret/PositionRotations</code> · <code>/GoalRotations</code> · <code>Shooter/TurretAligned</code></td><td>takes shortest path, never unwinds past limits</td></tr>
+      <tr><td><b>Shooter / Flywheel</b></td><td>Velocity · #31 + #32(follow)</td><td><kbd>◯</kbd> (10 rot/s)</td><td><code>Shooter/Flywheel/VelocityRPS</code> · <code>/GoalRPS</code> · <code>/AtSpeed</code> · both motors' <code>/StatorAmps</code></td><td>reaches 10 rot/s, atSpeed true, motors share load (not fighting)</td></tr>
+      <tr><td><b>Intake / Four-bar</b></td><td>Positional · #10 + #34(opp)</td><td><kbd>△</kbd>=OPEN, <kbd>✕</kbd>=CLOSE</td><td><code>Intake/FourBar/PositionRotations</code> · <code>/GoalRotations</code> · <code>/AtGoal</code> · <code>Intake/State</code></td><td>reaches OPEN/CLOSE angle, atGoal true</td></tr>
+      <tr><td><b>Transport / Drum</b></td><td>Velocity · #20</td><td>set MUT=drum, or a temp setpoint</td><td><code>Transport/Drum/VelocityRPS</code> · <code>/GoalRPS</code> · <code>/AtSpeed</code></td><td>holds commanded speed</td></tr>
+      <tr><td><b>Transport / Belt</b></td><td>Velocity · #33</td><td>set MUT=transport belt</td><td><code>Transport/Belt/VelocityRPS</code> · <code>/GoalRPS</code> · <code>/AtSpeed</code></td><td>holds commanded speed</td></tr>
+    </table></div>
+    <div class="box tip"><div class="h">💡 The universal per-mechanism keys</div><p>Every mechanism logs <code class="k">…/AppliedVolts</code>, <code class="k">…/SupplyAmps</code>, <code class="k">…/StatorAmps</code>, <code class="k">…/TempCelsius</code>, <code class="k">…/Connected</code> on top of its type-specific ones. Add them to your AdvantageScope layout once and reuse.</p></div>
+  </section>
+
+  <!-- 6 ROLLERS -->
+  <section id="rollers">
+    <h2><span class="n">6</span>Rollers &amp; game-piece detection</h2>
+    <div class="test">
+      <div class="t-h">TEST 6 — intake roller direction &amp; current-spike</div>
+      <div class="t-b">
+        <div class="lab in">INPUT</div><div class="val">Test mode: hold <kbd>△</kbd> (intake OPEN also spins the roller). Then feed a real game piece into the intake.</div>
+        <div class="lab out">WATCH</div><div class="val"><code>Intake/Roller/OutputVolts</code> (direction/sign), <code>Intake/Roller/StatorAmps</code> (baseline vs jammed).</div>
+        <div class="lab pass">PASS</div><div class="val">Roller pulls the piece <b>in</b> (not out). When a piece seats/stalls, <code>StatorAmps</code> jumps clearly above the free-spin baseline.</div>
+        <div class="lab fail">FAIL</div><div class="val">Spins out → flip roller <code>.inverted(...)</code>. Spike buried in noise → note the free-spin vs jammed amps to tune <code>roller.currentSpike(threshold, debounce)</code> thresholds later.</div>
+      </div>
+    </div>
+    <div class="box tip"><div class="h">💡 Tuning <code style="color:inherit">currentSpike</code> from this test</div><p>Read the two current levels off the log: set the threshold between them, and set the debounce just past the start-up inrush spike (~0.1–0.3&#160;s). The transport drum/belt aren't roller-type but verify their direction the same way via their <code class="k">/VelocityRPS</code> sign.</p></div>
+  </section>
+
+  <!-- 7 SWERVE -->
+  <section id="swerve">
+    <h2><span class="n">7</span>Swerve — the riskiest bring-up, do it carefully</h2>
+    <div class="box danger"><div class="h">🚫 Why this gets its own careful section</div><p><code class="k">SwerveConfig</code> was hand-derived from the old library and is <b>not yet robot-verified</b>: module inversions, CANcoder offsets, and the coupling ratio. A wrong steer offset makes a module point 90° off and the robot lurches on first enable. <b>Verify offsets and directions on blocks before the wheels touch the ground.</b></p></div>
+    <h3>7.1 · Steer offsets &amp; angle sanity (robot on blocks)</h3>
+    <ol class="steps">
+      <li><b class="t">Hand-align all four modules</b> so the wheels point dead-ahead (use a straightedge across each pair).</li>
+      <li><b class="t">In Tuner X</b>, read each steer CANcoder's absolute position at this aligned pose → these are your <b>offsets</b>. Put them in <code class="k">SwerveConfig</code> (the module constants' magnet offset). Redeploy.</li>
+      <li><b class="t">Verify:</b> disabled, watch <code class="k">Swerve/ModuleStates</code> — with wheels hand-aligned forward, all four reported angles read ~0. Rotate one module 90° by hand → its state reads ~90°. If a module reads the negative of what you turn, its CANcoder direction is inverted.</li>
+    </ol>
+    <h3>7.2 · Drive &amp; steer direction (still on blocks)</h3>
+    <div class="test">
+      <div class="t-h">TEST 7 — module directions</div>
+      <div class="t-b">
+        <div class="lab in">INPUT</div><div class="val">Teleop (blocks!), <code class="k">DISABLE_SWERVE=false</code>. Push the left stick gently <b>forward</b>.</div>
+        <div class="lab out">WATCH</div><div class="val">All four wheels spin <b>forward</b> (top of wheel moves toward robot front) and stay pointed ahead. <code>Swerve/ModuleTargets</code> vs <code>Swerve/ModuleStates</code> converge.</div>
+        <div class="lab pass">PASS</div><div class="val">All wheels drive forward together, modules hold ~0°. Rotating the stick spins the robot the expected way.</div>
+        <div class="lab fail">FAIL</div><div class="val">A wheel drives backward → that drive motor's inversion. A module snaps 180° off → steer inversion or a bad offset. Fix in <code>SwerveConfig</code>, redeploy, re-verify.</div>
+      </div>
+    </div>
+    <h3>7.3 · On the ground — slow drive, heading, odometry</h3>
+    <ul class="check">
+      <li><b>Slow field-centric drive.</b> Teleop caps are cautious (2&#160;m/s / 1.5&#160;rad/s in <code class="k">SwerveConfig</code>) — leave them for the first drive. Stick forward = robot moves away from you.</li>
+      <li><b>Operator perspective:</b> set alliance to <b>Red</b> in the DS — "forward" should still be away from the driver station (CTRE flips it). Then Blue.</li>
+      <li><b>Odometry sanity:</b> drive a known 1&#160;m; <code class="k">Swerve/Pose</code> should advance ~1&#160;m in the right axis. Spin 360°; heading returns to start.</li>
+      <li><b><code class="k">resetHeadingCommand()</code></b> re-zeros field-forward if the robot's notion of forward drifts.</li>
+    </ul>
+    <div class="box tip"><div class="h">💡 Odometry period as a health read</div><p><code class="k">Swerve/OdometryPeriodSeconds</code> should hover near 0.004&#160;s (the 250&#160;Hz thread). A large or jumpy value means CANivore trouble.</p></div>
+  </section>
+
+  <!-- 8 VISION -->
+  <section id="vision">
+    <h2><span class="n">8</span>Vision — Limelight MegaTag2</h2>
+    <div class="test">
+      <div class="t-h">TEST 8 — pose fusion</div>
+      <div class="t-b">
+        <div class="lab in">INPUT</div><div class="val">Point the turret camera at AprilTags. Drive slowly near known tags.</div>
+        <div class="lab out">WATCH</div><div class="val"><code>Swerve/Vision/TagCount</code>, <code>Swerve/Vision/Rejected</code>, <code>Swerve/Vision/Pose</code>, and whether <code>Swerve/Pose</code> snaps toward truth when tags appear.</div>
+        <div class="lab pass">PASS</div><div class="val"><code>TagCount ≥ 1</code> with tags in view; <code>Rejected</code> false when still; <code>Swerve/Pose</code> corrects toward the tag-based estimate. Spinning fast → <code>Rejected</code> true (the isFast gate working).</div>
+        <div class="lab fail">FAIL</div><div class="val">Nothing → wrong limelight NT name (must be <code>"limelight-turret"</code>) or the MegaTag2 orientation feed isn't reaching it. Pose jumps wrong → the turret-offset heading feed or <code>turretPoseToRobotPose</code> transform is off (the camera rides the turret).</div>
+      </div>
+    </div>
+    <div class="box warn"><div class="h">⚠️ Turret angle must be trustworthy first</div><p>Vision depends on the turret's reported angle (it's fed as the camera platform heading). Bring up the turret (§5) and confirm its position reads correctly before trusting vision.</p></div>
+  </section>
+
+  <!-- 9 STATES -->
+  <section id="states">
+    <h2><span class="n">9</span>State machines &amp; superstructure goals</h2>
+    <p class="lead">With each mechanism proven in isolation, test the coordination. Back to teleop.</p>
+    <div class="test">
+      <div class="t-h">TEST 9 — goal fan-out</div>
+      <div class="t-b">
+        <div class="lab in">INPUT</div><div class="val">Teleop. Trigger a goal — the superstructure buttons are <kbd>R2</kbd> (intake), <kbd>□</kbd> (shift-activate), <kbd>○</kbd> (delivery). (Zone triggers are stubbed on, so button + face buttons drive the goal.)</div>
+        <div class="lab out">WATCH</div><div class="val"><code>Superstructure/State</code>, then <code>Intake/State</code>, <code>Shooter/State</code>, <code>Transport/State</code> — they should switch together to match the goal's tuple.</div>
+        <div class="lab pass">PASS</div><div class="val">Requesting a <code>RobotState</code> flips all three subsystem states to the goal's tuple; the mechanisms move accordingly; <code>Superstructure/RobotAtState</code> goes true when they arrive.</div>
+        <div class="lab fail">FAIL</div><div class="val">A subsystem doesn't switch → check its <code>…/LastDenied</code> (illegal transition) or <code>…/Pending</code> (a guard blocking it, e.g. transport waiting on shooter-ready). The state machine logs the reason.</div>
+      </div>
+    </div>
+    <div class="box tip"><div class="h">💡 Readiness chain</div><p><code class="k">Shooter/Ready</code> = turret aligned ∧ flywheel atSpeed ∧ hood adjusted. Transport only feeds when the shooter is ready — so if the drum/belt "won't run" in a shoot goal, check <code class="k">Shooter/Ready</code> first; it's gating them by design.</p></div>
+  </section>
+
+  <!-- 10 AUTO -->
+  <section id="auto">
+    <h2><span class="n">10</span>Autonomous</h2>
+    <ol class="steps">
+      <li><b class="t">Dry-run on blocks:</b> pick an auto in the chooser, enable Autonomous with wheels off the ground. Watch <code class="k">Swerve/Pose</code> trace the path in AdvantageScope's field and the named commands fire (<code class="k">Superstructure/State</code> changes at the right waypoints).</li>
+      <li><b class="t">Confirm named commands act.</b> If the robot follows the path but never intakes/shoots, a named command isn't registered → a silent no-op. Check the DS console for PathPlanner warnings; every name in the <code class="k">.auto</code> must be in <code class="k">registerCommands()</code>.</li>
+      <li><b class="t">On the ground:</b> a short, simple auto first, hand on disable.</li>
+    </ol>
+  </section>
+
+  <!-- 11 SYSID -->
+  <section id="sysid">
+    <h2><span class="n">11</span>SysId → FOC session</h2>
+    <p class="lead">Once everything moves correctly, characterize for real gains and (optionally, per mechanism) switch to FOC. Full procedure in the manual — this is the on-robot flow using the harness.</p>
+    <ol class="steps">
+      <li><b class="t">Point the harness at the mechanism:</b> set <code class="k">mut</code>/<code class="k">mutSubsystem</code> in <code class="k">configureTestBindings()</code>, redeploy.</li>
+      <li><b class="t">Test mode, run all four D-pad routines</b> (▲▼ quasistatic, ▶◀ dynamic), each until the mechanism reaches a soft limit or steady speed — <b>release at the limit</b>. Data goes to the <code class="k">.hoot</code> automatically.</li>
+      <li><b class="t">Analyze</b> the hoot in AdvantageScope's SysId tool → <code class="k">kS, kV, kA</code> (+<code class="k">kG</code>). Put them in the subsystem's <code class="k">Gains</code>; set kP modest, raise to crisp, add kD if it rings.</li>
+      <li><b class="t">FOC (per mechanism, optional):</b> in <code class="k">configureTestBindings()</code> swap the four routines for the <code class="k">…Torque</code> variants, redeploy, re-run — those gains are <b>amps</b>. Then in the config: <code class="k">.controlMode(TORQUE_CURRENT_FOC)</code> and drop in the amp gains. Treat the first enable after the switch like a new mechanism.</li>
+    </ol>
+    <div class="box warn"><div class="h">⚠️ Don't restructure the shooter maps</div><p>The distance→angle/RPS/time-of-flight interpolation tables are competition-proven. Tune by adjusting points, never by rewriting the code.</p></div>
+    <div class="box ok"><div class="h">✅ Full detail</div><p>The step-by-step SysId chapter (what each routine drives, the volts-as-amps FOC idiom, analyzer channel mapping, the two-edit switch) is <b>§35 of <code>docs/EXCALIB_MANUAL.html</code></b>.</p></div>
+  </section>
+
+  <!-- 12 IFFAIL -->
+  <section id="iffail">
+    <h2><span class="n">12</span>If it fails — quick matrix</h2>
+    <div class="tbl"><table>
+      <tr><th>Symptom</th><th>First thing to check</th></tr>
+      <tr><td>Config-verify Alert on a device</td><td>Wrong id/bus, unpowered, or CAN wiring — Tuner X. It already retried 5×.</td></tr>
+      <tr><td>Mechanism won't move (robot)</td><td>Disconnect Alert? gains zero? soft limit clamping the goal? wrong bus in the CANDeviceId?</td></tr>
+      <tr><td>Moves the wrong direction</td><td><code>.inverted(...)</code> in the config — never negate setpoints.</td></tr>
+      <tr><td>Moves ~15× / 100× too far</td><td>Feedback ratio wrong (<code>rotorToMechanismRatio</code> / fused-CANcoder ratios).</td></tr>
+      <tr><td>Two-motor mechanism: high amps, no motion</td><td>Follower <code>opposed</code> flag inverted.</td></tr>
+      <tr><td>Position reads wrong at boot</td><td>Boot seed pose wrong (no fused CANcoder yet) — boot the robot in the seeded pose, or fix the seed constant.</td></tr>
+      <tr><td>Swerve lurches / a module 90° off</td><td>CANcoder offset or steer inversion (§7). Verify on blocks.</td></tr>
+      <tr><td>State request "does nothing"</td><td><code>…/LastDenied</code> (illegal) or <code>…/Pending</code> (guard blocking) on that machine.</td></tr>
+      <tr><td>Auto drives but doesn't act</td><td>Unregistered named command (silent no-op).</td></tr>
+      <tr><td>Loop overruns climbing</td><td>Blocking call on the loop; brake changes must use <code>setBrakeAsync</code>.</td></tr>
+      <tr><td>No data in the log</td><td><code>Telemetry.init(false, …)</code> at the workshop (true disables NT); confirm the <code>.wpilog</code> line at boot.</td></tr>
+    </table></div>
+    <p style="color:var(--fg-3);font-size:13px">Fuller troubleshooting: §37 of <code class="k">docs/EXCALIB_MANUAL.html</code>. Every class's API + fields: the same manual.</p>
+  </section>
+
+  <!-- KEYS -->
+  <section id="keys">
+    <h2><span class="n">▤</span>Key cheat-sheet</h2>
+    <div class="tbl"><table>
+      <tr><th>Area</th><th>Keys to add to your AdvantageScope layout</th></tr>
+      <tr><td>Any mechanism <code>&lt;name&gt;</code></td><td><code>&lt;name&gt;/PositionRotations</code> · <code>/VelocityRPS</code> · <code>/GoalRotations</code> or <code>/GoalRPS</code> · <code>/AtGoal</code> or <code>/AtSpeed</code> · <code>/AppliedVolts</code> · <code>/SupplyAmps</code> · <code>/StatorAmps</code> · <code>/TempCelsius</code> · <code>/Connected</code></td></tr>
+      <tr><td>State machines</td><td><code>Intake/State</code> · <code>Shooter/State</code> · <code>Transport/State</code> · <code>Superstructure/State</code> · each <code>…/Pending</code> · <code>…/LastDenied</code></td></tr>
+      <tr><td>Shooter targeting</td><td><code>Shooter/Ready</code> · <code>Shooter/TurretAligned</code> · <code>Shooter/DistanceToTarget</code> · <code>Shooter/BallCount</code> · <code>Shooter/FlywheelVelocityFiltered</code> · <code>Shooter/InTrench</code></td></tr>
+      <tr><td>Swerve</td><td><code>Swerve/Pose</code> · <code>Swerve/Speeds</code> · <code>Swerve/ModuleStates</code> · <code>Swerve/ModuleTargets</code> · <code>Swerve/OdometryPeriodSeconds</code></td></tr>
+      <tr><td>Vision</td><td><code>Swerve/Vision/Pose</code> · <code>Swerve/Vision/TagCount</code> · <code>Swerve/Vision/Rejected</code></td></tr>
+      <tr><td>Health</td><td><code>Robot/LoopMs</code> · <code>Robot/MaxLoopMs</code> · <code>Robot/LoopOverruns</code> · <code>CAN/RioUtilizationPercent</code> · <code>CAN/ReceiveErrorCount</code></td></tr>
+      <tr><td>Superstructure gates</td><td><code>Superstructure/RobotAtState</code> · <code>/IntakeRequested</code> · <code>/InAllianceZone</code> · <code>/CloserToCloseDelivery</code></td></tr>
+    </table></div>
+    <div class="box ok" style="margin-top:20px"><div class="h">✅ Session order in one line</div><p>Tuner X inventory → deploy &amp; clean boot → prove logging → Test-mode isolate &amp; bring up each mechanism → verify swerve on blocks → vision → superstructure goals → auto dry-run → SysId. Lowest risk first, hand on disable throughout.</p></div>
+  </section>
+</main>
+</div>
+
+<div class="toolbar">
+  <button id="theme" title="Theme">☀️</button>
+  <button id="totop" title="Top">↑</button>
+  <button class="menu-btn" id="menu" title="Menu">☰</button>
+</div>
+
+<script>
+(function(){
+  var RE=/(\/\/[^\n]*|\/\*[\s\S]*?\*\/)|("(?:\\.|[^"\\])*")|(@\w+)|\b(\d[\d_.]*[fFlLdD]?)\b|\b(public|private|protected|static|final|class|interface|enum|extends|implements|new|return|void|int|long|double|float|boolean|char|if|else|for|while|switch|case|default|this|super|import|package|try|catch|finally|throw|throws|true|false|null|var|record|abstract|instanceof)\b/g;
+  function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  document.querySelectorAll('.code code').forEach(function(c){
+    c.innerHTML=esc(c.textContent).replace(RE,function(m,com,str,ann,num,kw){
+      if(com)return '<span class="c-com">'+com+'</span>';if(str)return '<span class="c-str">'+str+'</span>';
+      if(ann)return '<span class="c-ann">'+ann+'</span>';if(num)return '<span class="c-num">'+num+'</span>';
+      if(kw)return '<span class="c-kw">'+kw+'</span>';return m;});
+  });
+  document.querySelectorAll('.copy').forEach(function(b){
+    b.addEventListener('click',function(){var code=b.closest('.code').querySelector('code');
+      navigator.clipboard.writeText(code.textContent).then(function(){var o=b.textContent;b.textContent='Copied ✓';setTimeout(function(){b.textContent=o;},1200);});});
+  });
+  var links=[].slice.call(document.querySelectorAll('nav a[href^="#"]'));
+  var secs=links.map(function(a){return document.getElementById(a.getAttribute('href').slice(1));});
+  var bar=document.getElementById('progress');
+  function sp(){var y=window.scrollY+120,c=0;for(var i=0;i<secs.length;i++){if(secs[i]&&secs[i].offsetTop<=y)c=i;}
+    links.forEach(function(a){a.classList.remove('active');});if(links[c])links[c].classList.add('active');
+    var h=document.documentElement.scrollHeight-window.innerHeight;bar.style.width=(h>0?window.scrollY/h*100:0)+'%';}
+  window.addEventListener('scroll',sp,{passive:true});sp();
+  var tb=document.getElementById('theme');
+  tb.addEventListener('click',function(){var r=document.documentElement,d=r.getAttribute('data-theme')==='light';
+    r.setAttribute('data-theme',d?'dark':'light');tb.textContent=d?'☀️':'🌙';});
+  document.getElementById('totop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  var nav=document.getElementById('nav');
+  document.getElementById('menu').addEventListener('click',function(){nav.classList.toggle('open');});
+  nav.addEventListener('click',function(e){if(e.target.tagName==='A')nav.classList.remove('open');});
+})();
+</script>
+</body>
+</html>

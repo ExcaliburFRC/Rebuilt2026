@@ -21,7 +21,7 @@ On this Windows machine, Gradle must run on the WPILib JDK for tests/sim (other 
 
 - **`frc.excalib2`** — **ExcaLib v2, the one and only library.** Phoenix-6-native, FOC-first, declarative. All robot subsystems are built on it. Never imports `frc.robot`.
 
-ExcaLib v1 (`frc.excalib`) has been **removed** — the migration is complete and the robot runs entirely on v2. Only Monologue remains as a legacy logging dependency (a separate vendordep; DogLog is the log of record). If you find a reference to `frc.excalib` (no "2"), it's a mistake.
+ExcaLib v1 (`frc.excalib`) has been **removed** — the migration is complete and the robot runs entirely on v2. Monologue has also been retired; **DogLog is the sole telemetry system**. If you find a reference to `frc.excalib` (no "2") or to `monologue`, it's a mistake to fix.
 
 Design history and rationale: `docs/AUDIT.md` (v1 pain points), `docs/RESEARCH.md` (patterns mined from other teams), `docs/DESIGN.md` (approved v2 design), `docs/V1_TO_V2_MAPPING.md` (where each old class went), `docs/EXCALIB_MANUAL.html` (the full reference), `NOTICE.md` (credits).
 
@@ -38,7 +38,7 @@ A subsystem = **mechanism declarations + a state machine**. A mechanism is decla
 
 ### Robot loop (Robot.robotPeriodic order matters)
 
-`SignalHub.refreshAll()` (fresh signals BEFORE commands) → `FaultReporter.poll()` → `ShiftUtil.update()` → `PeriodicScheduler` (legacy) → `CommandScheduler.run()` → `Monologue.updateAll()` (legacy) → `TalonFXMotor.refreshAll()` (legacy v1 motors). `Telemetry.init(...)` and `SignalHub.optimizeAll()` run once at boot.
+`LoopTimer.start()` → `SignalHub.refreshAll()` (fresh signals BEFORE commands) → `FaultReporter.poll()` → `ShiftUtil.update()` → `robotContainer.periodic()` → `CommandScheduler.run()` → `LoopTimer.end()`. `Telemetry.init(...)` and `SignalHub.optimizeAll()` run once at boot.
 
 ### Superstructure & states
 
@@ -54,7 +54,7 @@ A subsystem = **mechanism declarations + a state machine**. A mechanism is decla
 
 ### Logging
 
-**DogLog is the log of record** (+ Phoenix `SignalLogger` hoot for device-rate data; both open in AdvantageScope). Log with `DogLog.log("Subsystem/Thing", value)`; mechanisms auto-log their basics. Live tuning via `frc.excalib2.telemetry.TunableNumber` (enable in dev only). Monologue `@Log.NT` remains only in legacy v1 classes and `RobotContainer` — don't add new Monologue usage.
+**DogLog is the only telemetry system** (+ Phoenix `SignalLogger` hoot for device-rate data; both open in AdvantageScope). DogLog writes the WPILib DataLog (`logs/FRC_*.wpilog`) always, and publishes to NetworkTables when not in competition mode. Log with `DogLog.log("Subsystem/Thing", value)`; mechanisms auto-log their basics. Live tuning via `frc.excalib2.telemetry.TunableNumber` (enable in dev only). Monologue was retired — no `@Log.NT`/`implements Logged` anywhere; don't reintroduce them.
 
 ### Autonomous
 

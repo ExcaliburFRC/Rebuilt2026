@@ -1,6 +1,7 @@
 package frc.robot.subsystems.shooter;
 
 import com.ctre.phoenix6.hardware.CANcoder;
+import dev.doglog.DogLog;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
@@ -46,6 +47,7 @@ public class Shooter extends SubsystemBase implements Logged {
     private final MotorGroup shooterMotorGroup;
     private final CANcoder hoodEncoder, turretEncoder;
     private final PIDController angleController;
+    private final frc.excalib.telemetry.TunableGains hoodTunableGains;
 
     public final Turret turretMechanism;
     public final DoubleSupplier turretAngleSupplier;
@@ -156,6 +158,8 @@ public class Shooter extends SubsystemBase implements Logged {
 
         angleController = new PIDController(HOOD_GAINS.kp, HOOD_GAINS.ki, HOOD_GAINS.kd);
         angleController.setTolerance(0.01);
+        // Live-tunable hood PID (no-op unless TunableNumber.enableTuning() was called at startup).
+        hoodTunableGains = new frc.excalib.telemetry.TunableGains("Shooter/HoodGains", HOOD_GAINS);
 
         hoodMotor.setIdleState(IdleState.BRAKE);
         hoodMotor.setInverted(DirectionState.FORWARD);
@@ -236,7 +240,28 @@ public class Shooter extends SubsystemBase implements Logged {
         TurretOffsetGetter.instance.setTurretRotationalVelSup(turretMechanism::logVelocity);
         TurretOffsetGetter.instance.setRobotRotationalVel(() -> swerveSpeeds.get().omegaRadiansPerSecond);
 
+        // Protect the encoder position signals (read every loop), then register for the
+        // bus-utilization optimize pass run in Robot after construction.
+        frc.excalib.control.motor.PhoenixSignalHub.registerCANcoder(hoodEncoder, 100.0);
+        frc.excalib.control.motor.PhoenixSignalHub.registerCANcoder(turretEncoder, 100.0);
+
         setDefaultCommand(defaultCommand().unless(() -> DISABLE_SUBSYSTEMS));
+    }
+
+    @Override
+    public void periodic() {
+        hoodTunableGains.pollAndApply(hashCode(), g -> angleController.setPID(g.kp, g.ki, g.kd));
+
+        DogLog.log("Shooter/FlywheelVelocityFiltered", flywheelVelocityFilter.getValue());
+        DogLog.log("Shooter/FlywheelSetpoint", flywheelVelocitySetpoint.getAsDouble());
+        DogLog.log("Shooter/HoodAngle", hoodAngleSupplier.getAsDouble());
+        DogLog.log("Shooter/HoodSetpoint", hoodAngleSetpoint.getAsDouble());
+        DogLog.log("Shooter/TurretAngleRad", turretMechanism.getPosition().getRadians());
+        DogLog.log("Shooter/Ready", shooterReady.getAsBoolean());
+        DogLog.log("Shooter/TurretAligned", isTurretAligned.getAsBoolean());
+        DogLog.log("Shooter/DistanceToTarget", turretRelativeDistanceFromTarget.getAsDouble());
+        DogLog.log("Shooter/BallCount", ballCounter.getBallCount());
+        DogLog.log("Shooter/InTrench", volatileTrenchHoodTrigger.getAsBoolean());
     }
 
     private void initDistanceTimeOfFlightMap() {

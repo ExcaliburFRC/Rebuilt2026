@@ -10,8 +10,12 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.excalib.additional_utilities.LEDs;
 import frc.excalib.control.math.periodics.PeriodicScheduler;
+import frc.excalib.control.motor.PhoenixSignalHub;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
 import frc.excalib.additional_utilities.PerformanceMetricsTracker;
+import frc.excalib.telemetry.FaultReporter;
+import frc.excalib.telemetry.LoopTimer;
+import frc.excalib.telemetry.Telemetry;
 import frc.robot.util.ShiftUtil;
 import monologue.Monologue;
 
@@ -27,8 +31,16 @@ public class Robot extends TimedRobot {
     public Robot() {
         robotContainer = new RobotContainer();
 
+        // DogLog + Phoenix SignalLogger + automatic PDH logging. Runs alongside Monologue.
+        // Pass true here at competition to stop NetworkTables publishing (logs to file only).
+        Telemetry.init(false, robotContainer.getPowerDistribution());
+
         performanceMetricsTracker = robotContainer.getPerformanceMetricsTracker();
         LEDs.getInstance().restoreLEDs();
+
+        // Disable every unused Phoenix status signal on all registered motors and CANcoders,
+        // cutting CAN bus utilization. Must run after all devices are constructed.
+        PhoenixSignalHub.optimizeAll();
 
         Monologue.setupMonologue(robotContainer, "Robot", false, false);
     }
@@ -41,6 +53,12 @@ public class Robot extends TimedRobot {
     public void robotPeriodic() {
         // Record loop start time for performance tracking
         performanceMetricsTracker.recordLoopStart();
+        LoopTimer.start();
+
+        // Batch-refresh CAN signals before commands run so they act on fresh data.
+        TalonFXMotor.refreshAll();
+        FaultReporter.poll();
+        Telemetry.logPowerDistribution();
 
         ShiftUtil.update();
         robotContainer.periodic();
@@ -50,9 +68,9 @@ public class Robot extends TimedRobot {
 
         CommandScheduler.getInstance().run();
         Monologue.updateAll();
-        TalonFXMotor.refreshAll();
 
         performanceMetricsTracker.recordLoopEnd();
+        LoopTimer.end();
     }
 
     @Override

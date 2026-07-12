@@ -8,13 +8,17 @@ import com.ctre.phoenix6.configs.*;
 import com.ctre.phoenix6.controls.*;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.excalib.control.gains.Gains;
+import frc.excalib.control.motor.motor_specs.CurrentBudget;
 import frc.excalib.control.motor.motor_specs.DirectionState;
 import frc.excalib.control.motor.motor_specs.IdleState;
+import frc.excalib.control.motor.PhoenixSignalHub;
+import frc.excalib.telemetry.FaultReporter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -95,6 +99,12 @@ public class TalonFXMotor extends TalonFX implements Motor {
         canArrayCache.put(m_canbusName, signals.toArray(new BaseStatusSignal[0]));
 
         motors.add(this);
+
+        // Auto-register for 1 Hz fault scanning (hardware / temp / boot / undervoltage + CAN health).
+        FaultReporter.register("TalonFX-" + deviceId + "@" + m_canbusName, this);
+
+        // Register for the CAN bus-utilization optimize pass (used signals are configured above).
+        PhoenixSignalHub.register(this);
     }
 
     // ── Static lifecycle methods ──────────────────────────────────────────────
@@ -219,6 +229,40 @@ public class TalonFXMotor extends TalonFX implements Motor {
         mm.MotionMagicAcceleration   = acceleration   / m_velocityConversionFactor;
         mm.MotionMagicJerk           = jerk           / m_velocityConversionFactor;
         applyChecked(super.getConfigurator().apply(mm), "configureMotionMagic");
+    }
+
+    /**
+     * Applies a full {@link CurrentBudget} (stator + supply limits, optional time-based supply
+     * reduction, and TorqueCurrentFOC output peaks) in one call. Prefer this over
+     * {@link #setCurrentLimit} when the mechanism's allocation is kept in a named budget table.
+     */
+    public void applyCurrentBudget(CurrentBudget budget) {
+        applyChecked(super.getConfigurator().apply(budget.toCurrentLimitsConfigs()), "applyCurrentBudget(limits)");
+        applyChecked(super.getConfigurator().apply(budget.toTorqueCurrentConfigs()), "applyCurrentBudget(torque)");
+    }
+
+    /**
+     * Fuses a remote CANcoder into this TalonFX's feedback (Phoenix 6 {@code FusedCANcoder}):
+     * the absolute CANcoder sets the mechanism position while the integrated rotor supplies
+     * high-rate velocity, so {@link #getMotorPosition()} returns the absolute mechanism angle
+     * at the rotor's update rate. Used for swerve steering and any absolute-referenced pivot.
+     *
+     * <p>After this call, mechanism position is reported directly by the device — do <b>not</b>
+     * also seed it with {@link #setMotorPosition}. The CANcoder's magnet offset must be burned
+     * into the encoder (this does not set it). ⚠ Verify inversion and ratios on the robot.
+     *
+     * @param cancoderId            CAN id of the CANcoder (same bus as this motor)
+     * @param rotorToSensorRatio    gear ratio from motor rotor to the CANcoder (steer gearing)
+     * @param sensorToMechanismRatio gear ratio from the CANcoder to the mechanism (usually 1.0)
+     */
+    public void configureFusedCANcoder(int cancoderId, double rotorToSensorRatio, double sensorToMechanismRatio) {
+        var feedback = new FeedbackConfigs();
+        if (!refreshChecked(super.getConfigurator().refresh(feedback), "configureFusedCANcoder")) return;
+        feedback.FeedbackSensorSource      = FeedbackSensorSourceValue.FusedCANcoder;
+        feedback.FeedbackRemoteSensorID    = cancoderId;
+        feedback.RotorToSensorRatio        = rotorToSensorRatio;
+        feedback.SensorToMechanismRatio    = sensorToMechanismRatio;
+        applyChecked(super.getConfigurator().apply(feedback), "configureFusedCANcoder");
     }
 
     @Override

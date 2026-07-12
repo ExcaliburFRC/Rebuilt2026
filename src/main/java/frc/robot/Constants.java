@@ -17,6 +17,7 @@ import frc.excalib.additional_utilities.AllianceUtils;
 import frc.excalib.control.gains.Gains;
 import frc.excalib.control.imu.IMU;
 import frc.excalib.control.imu.Pigeon;
+import frc.excalib.control.motor.PhoenixSignalHub;
 import frc.excalib.control.motor.controllers.TalonFXMotor;
 import frc.excalib.swerve.ModulesHolder;
 import frc.excalib.swerve.Swerve;
@@ -106,6 +107,13 @@ public final class Constants {
         private static final IMU GYRO = new Pigeon(GYRO_ID, SWERVE_CANBUS.getName(), new Rotation3d(0, 0, Math.PI / 2));
 
         public static Swerve configureSwerve(Pose2d initialPose) {
+            // Protect the absolute-position signals (read every loop for steering), then register
+            // the encoders for the bus-utilization optimize pass.
+            PhoenixSignalHub.registerCANcoder(FRONT_LEFT_ABS_ENCODER, 100.0);
+            PhoenixSignalHub.registerCANcoder(FRONT_RIGHT_ABS_ENCODER, 100.0);
+            PhoenixSignalHub.registerCANcoder(BACK_LEFT_ABS_ENCODER, 100.0);
+            PhoenixSignalHub.registerCANcoder(BACK_RIGHT_ABS_ENCODER, 100.0);
+
             return new Swerve(
                     new ModulesHolder(
                             new SwerveModule(

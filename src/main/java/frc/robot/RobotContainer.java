@@ -21,8 +21,11 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.PrintCommand;
+import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.excalib.additional_utilities.*;
+import frc.excalib.control.gains.SysidConfig;
 import frc.excalib.control.math.Vector2D;
 import frc.excalib.swerve.Swerve;
 import frc.robot.superstructure.RobotState;
@@ -78,6 +81,7 @@ public class RobotContainer implements Logged {
         //registerCommands();
         setAutoChooser();
         configureBindings();
+        configureTestBindings();   // on-robot bring-up harness — active only in DriverStation Test mode
     }
 
     private void configureBindings() {
@@ -101,6 +105,44 @@ public class RobotContainer implements Logged {
                         () -> true
                 ).unless(() -> DISABLE_SWERVE)
         );
+    }
+
+    /**
+     * On-robot bring-up controls, <b>gated to Test mode</b> ({@link RobotModeTriggers#test()}),
+     * so none of this can fire during teleop or autonomous. Enter "Test" + "Enable" in the
+     * Driver Station to use them.
+     *
+     * <p>Layout on the primary controller (Test mode only):
+     * <ul>
+     *   <li><b>L1</b> — coast the swerve steering and the turret for hand-positioning / zeroing.</li>
+     *   <li><b>D-pad</b> — SysId on front-left module <i>drive</i>: ▲ quasistatic-fwd,
+     *       ▼ quasistatic-rev, ▶ dynamic-fwd, ◀ dynamic-rev. Change the module index / swap to
+     *       {@code angleSysId} to characterize a different mechanism.</li>
+     *   <li><b>△ / ✕</b> — quick superstructure state checks (aim / idle).</li>
+     * </ul>
+     */
+    private void configureTestBindings() {
+        Trigger test = RobotModeTriggers.test();
+
+        // --- coast steering + turret for hand-positioning ---
+        test.and(primary.L1()).whileTrue(
+                swerve.coastCommand().alongWith(superstructure.coastCommand()));
+
+        // --- SysId of the front-left module drive motor (edit index / swap to angleSysId) ---
+        SysidConfig sysidConfig = new SysidConfig(1.0, 4.0, 5.0);
+        int moduleUnderTest = 0;
+        test.and(primary.povUp())
+                .whileTrue(swerve.driveSysId(moduleUnderTest, Direction.kForward, sysidConfig, false));
+        test.and(primary.povDown())
+                .whileTrue(swerve.driveSysId(moduleUnderTest, Direction.kReverse, sysidConfig, false));
+        test.and(primary.povRight())
+                .whileTrue(swerve.driveSysId(moduleUnderTest, Direction.kForward, sysidConfig, true));
+        test.and(primary.povLeft())
+                .whileTrue(swerve.driveSysId(moduleUnderTest, Direction.kReverse, sysidConfig, true));
+
+        // --- quick superstructure checks ---
+        test.and(primary.triangle()).whileTrue(superstructure.setStateCommand(RobotState.NO_INTAKE_AIM_HUB));
+        test.and(primary.cross()).whileTrue(superstructure.setStateCommand(RobotState.IDLE));
     }
 
     public Command getAutonomousCommand() {
@@ -143,6 +185,10 @@ public class RobotContainer implements Logged {
 
     public PerformanceMetricsTracker getPerformanceMetricsTracker() {
         return performanceMetricsTracker;
+    }
+
+    public PowerDistribution getPowerDistribution() {
+        return powerDistributionHub;
     }
 
     @NT

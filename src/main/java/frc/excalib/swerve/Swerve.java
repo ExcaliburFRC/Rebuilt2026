@@ -24,7 +24,7 @@ import frc.excalib.control.gains.SysidConfig;
 import frc.excalib.control.imu.IMU;
 import frc.excalib.control.math.Vector2D;
 import frc.excalib.slam.mapper.Odometry;
-import frc.robot.util.LimelightHelpers;
+import frc.excalib.swerve.vision.LimelightMegaTag2;
 import frc.robot.util.TurretOffsetGetter;
 import monologue.Logged;
 import org.json.simple.parser.ParseException;
@@ -59,6 +59,9 @@ public class Swerve extends SubsystemBase implements Logged {
             TRANSLATION_PID_GAINS.kp, TRANSLATION_PID_GAINS.ki, TRANSLATION_PID_GAINS.kd
     );
     public final Field2d field = new Field2d();
+
+    private static final String LIMELIGHT_NAME = "limelight-turret";
+    private final LimelightMegaTag2 megaTag2 = new LimelightMegaTag2(LIMELIGHT_NAME);
 
     private Supplier<Rotation2d> angleSetpoint = Rotation2d::new;
     private Supplier<Translation2d> m_translationSetpoint = Translation2d::new;
@@ -497,11 +500,27 @@ public class Swerve extends SubsystemBase implements Logged {
         modules.periodic();
         field.setRobotPose(getPose2D());
         updateOdometry();
-        var arrPose = LimelightHelpers.getBotPoseEstimate_wpiBlue("limelight-turret");
-        boolean visionReliable = arrPose.tagCount >= 1
-                && !TurretOffsetGetter.instance.isFast()
-                && (arrPose.tagCount > 1 || (arrPose.rawFiducials.length >= 1 && arrPose.rawFiducials[0].ambiguity < 0.3));
-        if (visionReliable) m_odometry.addVisionMeasurement(turretToRobot(arrPose.pose), arrPose.timestampSeconds);
+        updateMegaTag2Vision();
+    }
+
+    /**
+     * MegaTag2 vision fusion. The camera is turret-mounted, so MT2 is fed the turret's field
+     * heading (robot heading + turret offset) and its returned pose is converted from turret
+     * frame to robot frame by {@link #turretToRobot}. Vision is skipped while the turret/robot
+     * is rotating too fast for a reliable pose; measurements are weighted by distance and tag
+     * count via {@link LimelightMegaTag2#stdDevs}.
+     */
+    private void updateMegaTag2Vision() {
+        Rotation2d turretFieldHeading = getRotation2D().plus(TurretOffsetGetter.instance.getTurretOffset());
+        megaTag2.setRobotOrientation(turretFieldHeading, 0.0);
+        if (TurretOffsetGetter.instance.isFast()) {
+            return;
+        }
+        megaTag2.getEstimate().ifPresent(estimate ->
+                m_odometry.addVisionMeasurement(
+                        turretToRobot(estimate.pose()),
+                        estimate.timestampSeconds(),
+                        LimelightMegaTag2.stdDevs(estimate)));
     }
 
     private Pose2d turretToRobot(Pose2d turretPose){

@@ -499,9 +499,24 @@ public class Swerve extends SubsystemBase implements Logged {
         updateOdometry();
         var arrPose = LimelightHelpers.getBotPoseEstimate_wpiBlue("limelight-turret");
         boolean visionReliable = arrPose.tagCount >= 1
+                && allTagsWithinRange(arrPose)
                 && !TurretOffsetGetter.instance.isFast()
                 && (arrPose.tagCount > 1 || (arrPose.rawFiducials.length >= 1 && arrPose.rawFiducials[0].ambiguity < 0.3));
         if (visionReliable) m_odometry.addVisionMeasurement(turretToRobot(arrPose.pose), arrPose.timestampSeconds);
+    }
+
+    /**
+     * Rejects vision frames that rely on a far AprilTag. Because the MegaTag estimate fuses every
+     * visible tag into a single pose, one distant (noisy) tag degrades the whole result, so any frame
+     * containing a tag beyond {@link frc.robot.Constants.SwerveConstants#MAX_VISION_TAG_DISTANCE_METERS}
+     * is discarded entirely.
+     */
+    private boolean allTagsWithinRange(LimelightHelpers.PoseEstimate poseEstimate) {
+        if (poseEstimate.rawFiducials.length == 0) return false;
+        for (var fiducial : poseEstimate.rawFiducials) {
+            if (fiducial.distToCamera > MAX_VISION_TAG_DISTANCE_METERS) return false;
+        }
+        return true;
     }
 
     private Pose2d turretToRobot(Pose2d turretPose){
